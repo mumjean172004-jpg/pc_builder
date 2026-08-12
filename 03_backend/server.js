@@ -18,6 +18,10 @@ const socket = require('./config/socket');
 const app = express();
 const server = http.createServer(app);
 
+// Trust the platform's reverse proxy (Railway/etc.) so express-rate-limit
+// and req.ip resolve the real client IP from X-Forwarded-For correctly.
+app.set('trust proxy', 1);
+
 // Initialize WebSockets
 socket.init(server);
 
