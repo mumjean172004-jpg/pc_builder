@@ -18,10 +18,11 @@
 * `phone` (VARCHAR(50), Unique, Default Null)
 * `google_id` / `facebook_id` (VARCHAR(255), Unique, Default Null) — สำหรับ Social Login
 * `active_role` (VARCHAR(50), Default `'buyer'`) — `'buyer'` หรือ `'seller'` (สลับได้ในโปรไฟล์)
-* `shop_name`, `seller_avatar_url`, `seller_address_province`, `seller_address_district`, `seller_phone` — ข้อมูลร้านค้า
+* `shop_name`, `seller_avatar_url`, `seller_address_province`, `seller_address_district`, `seller_phone` — ข้อมูลร้านค้า (เขียนโดย `registerSeller`/`updateSellerProfile`)
 * `is_seller_verified` (TINYINT, Default 0) — สถานะยืนยัน KYC ผู้ขาย
-* `seller_id_card`, `seller_full_name`, `seller_bank_name`, `seller_bank_account`, `seller_bank_account_name` — ข้อมูล KYC/บัญชีธนาคารรับเงิน
-* `seller_rating` (DECIMAL(3,2), Default `5.0`) — ⚠️ **ปัจจุบันไม่มีโค้ดจุดใดอัปเดตค่านี้เลย เป็นค่าคงที่ตายตัว ยังไม่มีระบบรีวิว/ให้คะแนนจริงเบื้องหลัง**
+* `seller_id_card`, `seller_full_name`, `seller_bank_name`, `seller_bank_account`, `seller_bank_account_name` — ข้อมูล KYC/บัญชีธนาคารรับเงิน (คอลัมน์ใหม่ที่ buyer-facing แสดงผลจริง — `bookingController.js`/`productController.js` อ่านจากชุดนี้)
+* `id_card_number`, `bank_account_number`, `bank_name`, `bank_account_name`, `kyc_status` (Default `'none'`), `kyc_document_url` — คอลัมน์ **legacy** ที่ `registerSeller`/`verifySellerIdentity` เขียนคู่ขนานไปกับชุดข้างบน (ดู [[08_design_system/UI_UX_Guidelines]] §10 เรื่องบั๊กบัญชีธนาคารซ้อนคอลัมน์) — **เพิ่มเข้า `schema_mysql.sql` เมื่อ 2026-08-13** หลังพบว่า Railway (สร้างจากไฟล์นี้ตรงๆ) ไม่มี 6 คอลัมน์นี้เลย ทำให้สมัครผู้ขาย/ยืนยัน KYC พังบน production จนกว่าจะไล่เพิ่มคอลัมน์ให้ตรงกับเครื่อง local ย้อนหลัง — **ก่อนหน้านี้คอลัมน์เหล่านี้เคยถูกเพิ่มเข้าเครื่อง local ผ่าน migration script แยกโดยไม่เคยใส่กลับเข้าไฟล์นี้ ทำให้ schema ไฟล์นี้กับของจริงไม่ตรงกันมานาน**
+* `seller_rating` (DECIMAL(3,2), Default `0.00`) — คำนวณจากค่าเฉลี่ยของตาราง `reviews` จริง อัปเดตทุกครั้งที่มีรีวิวใหม่/แก้ไข/ลบ (ดู `services/reviewService.js`) ไม่ใช่ค่าคงที่แล้ว
 * `sales_count` (INT, Default 0)
 * `has_seller_badge` (TINYINT, Default 0)
 * `is_phone_verified`, `is_email_verified` (TINYINT, Default 0)
@@ -123,7 +124,7 @@
 ## 👤 ตารางฟีเจอร์ผู้ใช้เพิ่มเติม
 
 ### 15. `buyer_addresses` (ที่อยู่จัดส่งของผู้ซื้อ)
-* `id` (INT, PK), `user_id` (FK → `users.id` ON DELETE CASCADE), `recipient_name`, `phone` (VARCHAR, Not Null), `address_line1` (TEXT, Not Null), `address_line2` (TEXT, Default Null), `district`, `province`, `postal_code` (Not Null), `is_default` (TINYINT, Default 0)
+* `id` (INT, PK), `user_id` (FK → `users.id` ON DELETE CASCADE), `recipient_name`, `phone` (VARCHAR, Not Null), `address_line1` (TEXT, Not Null), `address_line2` (TEXT, Default Null), `sub_district` (VARCHAR(255), Default Null), `district`, `province`, `postal_code` (Not Null), `is_default` (TINYINT, Default 0)
 
 ### 16. `wishlists` (รายการที่ถูกใจ)
 * `id` (INT, PK), `user_id` (FK → `users.id` ON DELETE CASCADE), `product_id` (FK → `products.id` ON DELETE CASCADE), `created_at` — *Constraint*: `UNIQUE(user_id, product_id)` (เพิ่มซ้ำได้อย่างปลอดภัย ไม่ error — endpoint ใช้ `INSERT IGNORE`)
