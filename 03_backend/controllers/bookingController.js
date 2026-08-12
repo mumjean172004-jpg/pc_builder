@@ -359,7 +359,11 @@ exports.getRoomMessages = async (req, res) => {
 
     const room = roomResult.rows[0];
     if (room.buyer_id !== userId && room.seller_id !== userId) {
-      return res.status(403).json({ error: 'You are not a member of this chat' });
+      const roleResult = await pool.query('SELECT role FROM users WHERE id = ?', [userId]);
+      const isAdmin = roleResult.rows?.[0]?.role === 'admin';
+      if (!isAdmin) {
+        return res.status(403).json({ error: 'You are not a member of this chat' });
+      }
     }
 
     const messagesResult = await pool.query(`

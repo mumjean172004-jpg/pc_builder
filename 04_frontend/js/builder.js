@@ -683,7 +683,7 @@ const Builder = {
       });
 
       Toast.success('บันทึกชุดประกอบสำเร็จ!');
-      window.location.href = `/build-detail.html?id=${result.build.id}`;
+      window.location.href = '/profile.html';
     } catch (error) {
       Toast.error('บันทึกไม่สำเร็จ: ' + error.message);
     }
