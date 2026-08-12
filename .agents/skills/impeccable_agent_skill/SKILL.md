@@ -44,3 +44,11 @@ description: Advanced guidelines for impeccable coding, bug fixing, and software
   * ใช้ CSS Variables ในการจัดเก็บชุดสีและระยะเว้นขอบ (Margin/Padding) เพื่อความเป็นระเบียบเรียบร้อยของโค้ดสไตล์ชีท
 * **การเคลื่อนไหวแบบละมุน (Micro-animations):**
   * เพิ่มเอฟเฟกต์การวางเมาส์ (Hover transitions) และการเคลื่อนไหวขนาดเล็กในหน้าต่างเมนู เพื่อสร้างความประทับใจเมื่อใช้งาน
+
+---
+
+## 🚀 4. วินัยการ Deploy และเวอร์ชัน (Deployment & Versioning Discipline)
+
+* **ห้าม bump version เองโดยไม่ถาม**: ก่อน deploy ทุกครั้งต้องถามผู้ใช้ก่อนว่าต้องการ bump เลขเวอร์ชันไหม พร้อมแนะนำระดับที่เหมาะสม (patch/minor/major) และเหตุผล — ดูรายละเอียดที่ [[07_document/AI_Agent_Entry]] หมวด "กฎการตั้งเลขเวอร์ชัน"
+* **ทดสอบหลัง deploy ทุกครั้ง**: อย่างน้อยต้องเช็ค endpoint หลัก (`/`, `/api/health`, endpoint ที่ต่อฐานข้อมูล, endpoint ที่ล็อกอิน) ว่าตอบสนองถูกต้องก่อนถือว่า deploy สำเร็จ — สถานะ "Build successful" ไม่ได้แปลว่าแอปทำงานถูกต้องจริง (พบว่า build ผ่านแต่หน้าเว็บ 404 หรือฐานข้อมูลต่อไม่ติดมาแล้วหลายรอบ)
+* **บันทึกปัญหาที่เจอจริงระหว่าง deploy ไว้เสมอ**: ดู [[07_document/Deployment_Guide]] เป็นตัวอย่าง — ปัญหา infra/build config มักไม่ชัดเจนจน log บอกตรงๆ ต้องมีบันทึกไว้กันแก้ซ้ำ

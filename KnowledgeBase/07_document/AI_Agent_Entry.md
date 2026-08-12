@@ -80,6 +80,7 @@ stateDiagram-v2
 ## 🏷️ กฎการตั้งเลขเวอร์ชัน (Versioning Convention)
 * เลขเวอร์ชันทั้งระบบใช้ **ตัวเดียว** จาก `03_backend/package.json`'s `"version"` field (semver: `major.minor.patch`) — ไม่มีเลขเวอร์ชันแยกของ frontend/admin
 * **Bump ก่อน deploy จริงทุกครั้ง**: รัน `npm run version:patch` (bug fix เล็กๆ), `npm run version:minor` (เพิ่มฟีเจอร์ ไม่ breaking), หรือ `npm run version:major` (breaking change) ในโฟลเดอร์ `03_backend/` — ใช้ `--no-git-tag-version` เจตนา ไม่สร้าง git tag/commit อัตโนมัติ ให้ผู้ใช้เป็นคนสั่ง commit เอง
+* **⚠️ AI agent ห้าม bump version เองอัตโนมัติโดยไม่ถามก่อน** — ต้องถามผู้ใช้ก่อนทุกครั้งที่จะ deploy ว่าต้องการ bump ไหม พร้อมแนะนำระดับที่เหมาะสม (patch/minor/major) และเหตุผลสั้นๆ ประกอบ (ผู้ใช้เป็นนักพัฒนามือใหม่ที่ตั้งใจเรียนรู้หลัก semver ทีละขั้น ไม่ใช่ให้ AI ตัดสินใจแทนเงียบๆ) — การแก้ไขเล็กน้อยบางอย่างผู้ใช้อาจไม่ต้องการให้นับเป็นเวอร์ชันใหม่เลยก็ได้
 * **แสดงผล**: `GET /api/health` คืนค่า `version` จาก `package.json` ตรงๆ (ดู [[07_document/API_Documentation]]) — ฝั่ง frontend (`js/app.js`) ดึงค่านี้มาแปะเป็นป้ายเล็กๆ สีจางมุมขวาล่างอัตโนมัติทุกหน้าที่โหลด `js/app.js` (รวม `admin/index.html` ด้วย เพราะไฟล์นี้ include `js/app.js` เหมือนหน้าอื่น) — **ไม่ต้องแก้ HTML ทีละหน้า** ถ้าจะปรับป้ายนี้ แก้ที่ `js/app.js` จุดเดียวพอ
 
 ---
