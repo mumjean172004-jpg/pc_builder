@@ -1,0 +1,252 @@
+======================================================================
+PC Builder Pro & Second-hand Marketplace — Mermaid Code Sources for Draw.io
+======================================================================
+
+ไฟล์นี้มีรหัสต้นฉบับ (Mermaid Syntax) ของ Flowcharts ทั้ง 7 ระบบ
+คุณสามารถนำรหัสในแต่ละส่วนไป "แทรก" ใน Draw.io เพื่อแก้ไขกล่อง ข้อความ และเส้นเชื่อมต่อได้อิสระครับ
+
+----------------------------------------------------------------------
+💡 วิธีนำรหัสไปใช้ใน Draw.io (ทำได้ทั้งบนเว็บและโปรแกรมเดสก์ท็อป):
+----------------------------------------------------------------------
+1. เปิดโปรแกรมหรือเว็บแอป https://draw.io
+2. ไปที่เมนูด้านบน: จัดเรียง -> แทรก -> ขั้นสูง -> Mermaid... (Arrange -> Insert -> Advanced -> Mermaid...)
+3. คัดลอกรหัส Mermaid ของระบบที่ต้องการด้านล่างนี้ (เลือกเฉพาะบรรทัดที่เป็นโค้ดใต้หัวข้อ) นำไปวางในช่องข้อความ
+4. กดปุ่ม แทรก (Insert)
+5. Draw.io จะทำการแปลงรหัสออกมาเป็นวัตถุ (Shapes) ที่แก้ไขข้อความ สีสัน และลากปรับตำแหน่งได้อย่างอิสระ!
+
+======================================================================
+1. ภาพรวมโครงสร้างสถาปัตยกรรมระบบย่อย (System Subsystems Overview)
+======================================================================
+graph TD
+    User([ผู้ใช้บริการ / สมาชิก]) <--> Auth[1. ระบบจัดการผู้ใช้และสิทธิ์ Auth]
+    User <--> Market[2. ระบบตลาดขายสินค้า C2C]
+    User <--> Builder[3. ระบบจัดสเปกคอมและ Auto-Builder]
+    User <--> Booking[4. ระบบจองสินค้าและแชตสด C2C]
+    Admin([ผู้ดูแลระบบ / Admin]) <--> AdminSys[5. ระบบแอดมินและการจัดการสกรีนทุจริต]
+    
+    Auth <--> DB[(MySQL / MariaDB Database)]
+    Market <--> DB
+    Builder <--> DB
+    Booking <--> DB
+    AdminSys <--> DB
+    
+    Booking <--> WS[Real-time Server Socket.io]
+    WS <--> User
+
+
+======================================================================
+2. ระบบจัดการผู้ใช้และสิทธิ์การเข้าใช้งาน (Authentication & Profile Flow)
+======================================================================
+flowchart TD
+    Start([ผู้ใช้งานเข้าสู่ระบบ/สมัครสมาชิก]) --> ChooseType{สมัครสมาชิกใหม่ หรือ ล็อกอิน?}
+    
+    %% Register Flow
+    ChooseType -- สมัครสมาชิก --> InputReg[กรอกข้อมูล Username, Password, Email/Phone]
+    InputReg --> CheckExist{Username/Email/Phone ซ้ำในระบบหรือไม่?}
+    CheckExist -- ใช่ --> AlertReg[แจ้งเตือนข้อมูลซ้ำ/กรอกใหม่] --> InputReg
+    CheckExist -- ไม่ซ้ำ --> HashPass[เข้ารหัสรหัสผ่านด้วย bcrypt hash]
+    HashPass --> CreateUser[บันทึกข้อมูลผู้ใช้ลงตาราง users]
+    CreateUser --> GenJWT[สร้าง JWT Token]
+    GenJWT --> SaveCookie[บันทึก token ลง HttpOnly Cookie]
+    SaveCookie --> UserHome[เข้าสู่หน้าหลักในสถานะผู้ซื้อ]
+    
+    %% Login Flow
+    ChooseType -- เข้าสู่ระบบปกติ --> InputLogin[กรอก Email/Phone และ Password]
+    InputLogin --> GetUserDB[ค้นหาผู้ใช้ในฐานข้อมูล]
+    GetUserDB --> CheckStatus{สถานะบัญชี = suspended?}
+    CheckStatus -- ใช่ --> AlertSuspended[แจ้งเตือนบัญชีถูกระงับ] --> Start
+    CheckStatus -- ไม่ใช่ --> CheckPass{รหัสผ่านถูกต้อง?}
+    CheckPass -- ไม่ถูกต้อง --> AlertWrongPass[แจ้งเตือนรหัสผ่านผิด] --> InputLogin
+    CheckPass -- ถูกต้อง --> GenJWT
+    
+    %% Social Login
+    ChooseType -- เข้าสู่ระบบโซเชียล --> SocialAuth[ล็อกอินผ่าน Google / Facebook]
+    SocialAuth --> CheckSocialId{มีประวัติ ID นี้ในระบบ?}
+    CheckSocialId -- มีประวัติ --> CheckStatus
+    CheckSocialId -- ไม่มีประวัติ --> AutoCreate[ลงทะเบียนบัญชีใหม่โดยใช้ข้อมูลจากโซเชียลอัตโนมัติ] --> GenJWT
+    
+    %% Seller Switch Role
+    UserHome --> UserAction{ผู้ใช้สลับสิทธิ์เป็นผู้ขาย?}
+    UserAction -- ใช่ --> CheckSellerReg{ลงทะเบียนเป็นผู้ขายแล้ว?}
+    CheckSellerReg -- ยังไม่ได้ลง --> GoRegister[กรอกข้อมูลร้านค้า, บัญชีธนาคาร, แนบภาพบัตรประชาชน]
+    GoRegister --> SaveSeller[บันทึกข้อมูลและรอการอนุมัติ]
+    CheckSellerReg -- ลงทะเบียนแล้ว --> UpdateRole[ปรับฟิลด์ active_role = 'seller' บนฐานข้อมูล] --> ShowSellerUI[เปลี่ยนโหมดแสดงผลเป็นร้านค้าผู้ขาย]
+
+
+======================================================================
+3. ระบบลงขายสินค้าและการสกรีนความโปร่งใส (Product Listing & Anti-Fraud Flow)
+======================================================================
+flowchart TD
+    Start([ผู้ขายเข้าสู่ระบบและเริ่มลงประกาศขาย]) --> InputForm[กรอกข้อมูลสินค้า: หมวดหมู่, สภาพ, ซีเรียลนัมเบอร์, ราคา, รายละเอียด, แนบภาพ]
+    InputForm --> CheckCondition{สภาพสินค้าเป็นสินค้ามือสอง?}
+    
+    %% Photo check
+    CheckCondition -- ใช่ --> CheckPhotoCount{แนบรูปสินค้าอย่างน้อย 3 รูป?}
+    CheckPhotoCount -- ไม่ครบ --> AlertPhotos[ปฏิเสธและเตือน: สินค้ามือสองต้องมีรูปอย่างน้อย 3 รูป] --> InputForm
+    CheckPhotoCount -- ครบถ้วน --> GetMSRP[ดึงราคา MSRP และรายละเอียดสินค้าแนะนำจากตาราง parts]
+    CheckCondition -- เป็นสินค้าใหม่ --> GetMSRP
+    
+    %% Anti-Fraud Price Check
+    GetMSRP --> CheckPriceFloor{ราคาสินค้า < เกณฑ์จำกัดตามสภาพ? <br/>- สินค้าใหม่: < 65% MSRP<br/>- มือสอง 90%: < 50% MSRP<br/>- มือสอง 80%: < 40% MSRP<br/>- มือสอง 70%: < 30% MSRP}
+    CheckPriceFloor -- ต่ำเกินไปจริง --> PenaltyPrice[บวกคะแนนความสงสัย suspicious_score +70 <br/>และเพิ่มเหตุผลราคาต่ำผิดปกติลง Array]
+    CheckPriceFloor -- ราคาเหมาะสม --> CheckSerial
+    
+    %% Anti-Fraud Serial Check
+    PenaltyPrice --> CheckSerial{มีเลข Serial Number ตรงกับสินค้าชิ้นอื่นที่ยังขายไม่หมด?}
+    CheckSerial -- ซ้ำกัน --> PenaltySerial[บวกคะแนนความสงสัย suspicious_score +90 <br/>และเพิ่มเหตุผลซีเรียลซ้ำลง Array]
+    CheckSerial -- ไม่ซ้ำ --> ComputeScore
+    
+    %% Scoring and review
+    PenaltySerial --> ComputeScore[ประมวลผลผลลัพธ์คะแนนความน่าสงสัยรวม]
+    CheckSerial -- ไม่ซ้ำ --> ComputeScore
+    
+    ComputeScore --> CheckSuspicion{คะแนนความน่าสงสัยรวม >= 70?}
+    CheckSuspicion -- ใช่ --> PendingReview[บันทึกสินค้าเป็นสถานะ 'pending_review' <br/>และปักธงลงตาราง product_review_flags เพื่อรอแอดมินอนุมัติ]
+    CheckSuspicion -- ไม่ใช่ --> PublishActive[บันทึกสินค้าเป็นสถานะ 'approved' และเปิดขายสู่หน้าตลาดทันที]
+    
+    PendingReview --> Complete([เสร็จสิ้นกระบวนการลงสินค้า])
+    PublishActive --> Complete
+
+
+======================================================================
+4. บริการตรวจสอบความเข้ากันได้ของอุปกรณ์ (Compatibility Check Workflow)
+======================================================================
+flowchart TD
+    Start([ผู้ใช้เลือกชิ้นส่วนในหน้า Builder]) --> SendAPICheck[ส่งรายการสินค้าเข้าหน้า API /api/builds/compatibility]
+    SendAPICheck --> QuerySpecs[ค้นหา Specs ชนิด JSON ของชิ้นส่วนที่ถูกส่งมา]
+    
+    %% Socket & Motherboard
+    QuerySpecs --> CheckSocket{มี CPU และ Motherboard ครบ?<br/>Socket ตรงกัน?}
+    CheckSocket -- ไม่ตรงกัน --> AddError[บันทึก ERROR: Socket ขัดแย้งกัน]
+    CheckSocket -- ตรงกัน --> CheckChipset{Chipset รองรับ CPU ไหม?}
+    CheckChipset -- ไม่รองรับ/ตระกูลต่ำ --> AddWarning[บันทึก WARNING: Chipset อาจต้องอัปเกรด BIOS]
+    CheckChipset -- รองรับดี --> CheckRAM
+    AddError --> CheckRAM
+    AddWarning --> CheckRAM
+    
+    %% RAM & Motherboard
+    CheckRAM{มี RAM และ Motherboard ครบ?<br/>RAM Type ตรงกับ Ram Slots?}
+    CheckRAM -- ไม่ตรงกัน --> AddRamError[บันทึก ERROR: ประเภท RAM ไม่เข้ากัน]
+    CheckRAM -- ตรงกัน --> CheckRamLimit{ความจุ RAM และจำนวนแถวรวม เกินขีดจำกัดบอร์ด?}
+    CheckRamLimit -- เกินสเปกบอร์ด --> AddRamWarning[บันทึก WARNING: ความจุ/จำนวนแถวเกินลิมิตบอร์ด]
+    CheckRamLimit -- ไม่เกิน --> CheckGPUCase
+    AddRamError --> CheckGPUCase
+    AddRamWarning --> CheckGPUCase
+    
+    %% GPU / Cooler Dimension vs Case
+    CheckGPUCase{มีการ์ดจอ/พัดลม CPU และเคส ครบ?<br/>ขนาดความยาว/ความสูง เกินพื้นที่เคส?}
+    CheckGPUCase -- เกินพิกัดเคส --> AddSizeError[บันทึก ERROR: อุปกรณ์ยาว/สูงเกินพื้นที่เคส]
+    CheckGPUCase -- ใกล้เคียงเคส เกิน 90% --> AddSizeWarning[บันทึก WARNING: ขนาดเบียดพื้นที่เคสเกินไป ติดตั้งยาก]
+    CheckGPUCase -- ขนาดพอดีเคส --> CheckPSU
+    AddSizeError --> CheckPSU
+    AddSizeWarning --> CheckPSU
+    
+    %% PSU Wattage Calculation
+    CheckPSU{มี PSU และอุปกรณ์ใช้ไฟในระบบ?<br/>กำลังวัตต์ PSU เพียงพอ?}
+    CheckPSU --> CalcWatt[คำนวณ TDP รวม = TDP ของ CPU + TDP ของ GPU + 100W สำหรับอุปกรณ์อื่น]
+    CalcWatt --> ComparePSU{วัตต์ PSU < วัตต์ TDP รวม?}
+    ComparePSU -- น้อยกว่าพลังงานขั้นต่ำ --> AddPsuError[บันทึก ERROR: กำลังไฟ PSU ไม่พอกับพลังงานที่ระบบใช้จริง]
+    ComparePSU -- น้อยกว่า วัตต์รวม * 1.2 --> AddPsuWarning[บันทึก WARNING: กำลังไฟ PSU ต่ำกว่าระดับแนะนำสำหรับความเสถียร 20% Headroom]
+    ComparePSU -- วัตต์เหลือเพียงพอ --> SendResult
+    AddPsuError --> SendResult
+    AddPsuWarning --> SendResult
+    
+    SendResult[ส่งข้อมูล Errors และ Warnings ทั้งหมดกลับหน้าบ้านเพื่อแจ้งผู้ใช้] --> End([จบการตรวจสอบ])
+
+
+======================================================================
+5. ระบบจัดสเปกคอมพิวเตอร์อัตโนมัติ (Auto-Builder Solver Workflow)
+======================================================================
+flowchart TD
+    Start(["ผู้ใช้เลือกงบประมาณและลักษณะการใช้งาน"]) --> GetReq["รับงบประมาณ และ Use Case ในหลังบ้าน"]
+    GetReq --> FetchParts["ดึงแคตตาล็อกอะไหล่มาตรฐานและราคามือสองที่ถูกที่สุดในตลาดมาจำลองราคาจริง"]
+    FetchParts --> PairCPUGPU["สร้างคู่แมตช์ระหว่าง CPU และ GPU ทั้งหมด"]
+    
+    PairCPUGPU --> BottleneckCheck{"ประเมินคะแนนประสิทธิภาพ CPU vs GPU <br/>- ความแรงการ์ดจอสูงกว่า CPU เกินเกณฑ์? (คอขวด CPU)<br/>- ความแรง CPU สูงกว่าการ์ดจอเกินเกณฑ์? (คอขวด GPU)"}
+    BottleneckCheck -- "คอขวดรุนแรง เกิน 35%" --> SkipPair["ข้ามคู่ชิ้นส่วนนี้ไป"]
+    BottleneckCheck -- "ความเข้ากันได้สมดุล" --> FindOtherParts["ค้นหาชิ้นส่วนอื่นที่จำเป็นและเข้ากันได้ Socket, RAM Type, Form Factor"]
+    
+    FindOtherParts --> Generate3Options{"กรองและประมวลผลจัดกลุ่มสเปกคอมพิวเตอร์ที่ได้ 3 หมวดหมู่"}
+    
+    %% Cheapest
+    Generate3Options --> CatCheapest["1. สเปกประหยัดสุดในงบ: เลือกอุปกรณ์ราคาถูกที่สุดที่ทํางานเข้ากันได้สมบูรณ์"]
+    %% Value
+    Generate3Options --> CatValue["2. สเปกคุ้มที่สุด: จัดงบเน้นประสิทธิภาพต่อราคาเหมาะสมที่สุด อุปกรณ์แบรนด์แนะนำ"]
+    %% Performance
+    Generate3Options --> CatMax["3. สเปกแรงที่สุดในงบ: ดึงงบไปลงที่ความแรงของ CPU/GPU หลักสูงสุดในข้อจำกัดงบ"]
+    
+    CatCheapest --> BuildFormattedResponse["รวบรวมชิ้นส่วนและจัดรูปแบบ JSON แนะนำสินค้าพร้อมชี้เป้าสินค้าในตลาด"]
+    CatValue --> BuildFormattedResponse
+    CatMax --> BuildFormattedResponse
+    
+    BuildFormattedResponse --> ReturnUI["ส่งตัวเลือกทั้ง 3 รูปแบบไปแสดงผลเปรียบเทียบในฝั่งหน้าบ้าน"] --> EndAuto(["เสร็จสิ้น"])
+
+
+======================================================================
+6. ระบบสั่งจอง เจรจา และโอนเงิน C2C (Order Booking & Live Chat Flow)
+======================================================================
+flowchart TD
+    Start([ผู้ซื้อกดยืนยันสั่งจองสินค้าในตะกร้า]) --> FetchCheck[ดึงข้อมูลเช็คความพร้อมสินค้า]
+    FetchCheck --> CheckStatus{สถานะของสินค้ายังเป็น 'active' และไม่จองตัวเอง?}
+    CheckStatus -- ไม่พร้อมขาย/ซื้อของตนเอง --> RejectBooking[ปฏิเสธคำสั่งสั่งจองและแจ้งเตือน] --> EndBooking([จบการทำงาน])
+    CheckStatus -- พร้อมขาย --> SplitSellers[แยกสินค้าตามผู้ขาย เพื่อสร้างใบสั่งจองแยกตามร้านค้า]
+    
+    SplitSellers --> CreateOrders[1. บันทึกข้อมูลลงตาราง orders สถานะ 'pending' <br/>2. สร้างตาราง order_items <br/>3. อัปเดตตาราง products สถานะสินค้าเป็น 'sold' <br/>4. สร้างห้องแชตคุยในตาราง chat_rooms]
+    CreateOrders --> SendSystemMsg[ส่งข้อความระบบชี้แจงคำสั่งซื้อและยอดชำระเข้าไปในห้องแชตแรกรุ่น]
+    
+    SendSystemMsg --> OrderLifeCycle{การดำเนินขั้นตอนใบจอง}
+    
+    %% Upload Slip Flow
+    OrderLifeCycle -- ผู้ซื้อโอนเงินสำเร็จและส่งสลิป --> UploadSlip[ผู้ซื้ออัปโหลดรูปภาพสลิปใบโอนเงิน]
+    UploadSlip --> UpdateWaiting[ปรับออเดอร์เป็นสถานะ 'waiting_verification']
+    UpdateWaiting --> PushWS1[ส่งการแจ้งเตือนและแชร์สลิปในแชตเรียลไทม์ผ่าน Socket.io]
+    
+    PushWS1 --> VerifySlip{ผู้ขายยืนยันยอดโอนสำเร็จ?}
+    VerifySlip -- ปฏิเสธสลิป / ยอดไม่ตรง --> RejectSlip[ผู้ขายกดปฏิเสธสลิป: ปรับสถานะกลับมาเป็น 'pending' <br/>ลบลิงก์รูปสลิปทิ้ง และแจ้งเตือนให้โอนใหม่] --> OrderLifeCycle
+    VerifySlip -- อนุมัติสลิป --> ApproveSlip[ปรับออเดอร์เป็นสถานะ 'paid']
+    ApproveSlip --> PushWS2[ส่งการแจ้งเตือนเรียลไทม์ ยอดเงินถูกต้อง]
+    
+    %% Shipping Flow
+    PushWS2 --> SellerShip[ผู้ขายห่อของ นำส่งขนส่ง และกรอกบริษัทขนส่ง + เลขพัสดุ Tracking]
+    SellerShip --> UpdateShipped[ปรับออเดอร์เป็นสถานะ 'shipped' และส่งข้อความระบบแจ้งเลขพัสดุ]
+    
+    %% Completed Flow
+    UpdateShipped --> BuyerVerify{ผู้ซื้อได้รับของและกดปุ่มยืนยันยอมรับสินค้า?}
+    BuyerVerify -- ใช่ --> CompleteOrder[ปรับออเดอร์เป็นสถานะ 'completed' เสร็จสิ้นกระบวนการซื้อขาย]
+    
+    %% Cancel Flow
+    OrderLifeCycle -- ผู้ซื้อ/ผู้ขาย กดยกเลิกรายการสั่งจอง <br/>(ทำได้ขณะสถานะ pending/waiting/paid) --> CancelOrder[ปรับออเดอร์เป็นสถานะ 'cancelled']
+    CancelOrder --> RestoreProducts[ระบบหลังบ้านสั่งสแกนสินค้าภายในออเดอร์นั้น <br/>และปรับคืนสถานะ products คืนเป็น 'active' พร้อมขายใหม่]
+    RestoreProducts --> SendCancelMsg[ส่งข้อความระบบแจ้งยกเลิกออเดอร์เข้าห้องแชต]
+    
+    CompleteOrder --> EndBooking
+    SendCancelMsg --> EndBooking
+
+
+======================================================================
+7. ระบบตรวจสอบทุจริตและการดำเนินงานฝั่งแอดมิน (Admin Moderation Flow)
+======================================================================
+flowchart TD
+    Start([แอดมินล็อกอินเข้าสู่ระบบหลังบ้าน]) --> AuthCheck{ผ่าน Middleware ตรวจสิทธิ์แอดมิน?}
+    AuthCheck -- ไม่มีสิทธิ์ --> Block[ส่ง Error 403 Forbidden]
+    AuthCheck -- เป็นแอดมิน --> AdminMenu{เลือกเมนูการดำเนินงาน}
+    
+    %% Flagged Products Menu
+    AdminMenu -- ดูสินค้าที่มีความเสี่ยงทุจริต --> ViewFlagged[ระบบค้นหาและลิสต์สินค้าที่ review_status = 'pending_review']
+    ViewFlagged --> InspectFlags[แอดมินอ่านรายงานการปักธง รายละเอียดสินค้า คะแนน และรูปภาพสลิปที่เกี่ยวข้อง]
+    InspectFlags --> DecisionReview{พิจารณาความถูกต้องของประกาศ?}
+    DecisionReview -- ไม่ผ่าน/ทุจริตจริง --> RejectListing[อัปเดต review_status = 'rejected' <br/>และระงับการแสดงผลสินค้าในตลาด]
+    DecisionReview -- อนุมัติ/ถูกต้องปกติ --> ApproveListing[อัปเดต review_status = 'approved' <br/>และเปิดเผยแพร่สินค้าสู่หน้าตลาด]
+    
+    %% User Management Menu
+    AdminMenu -- จัดการบัญชีผู้ใช้ --> ViewUsers[ดึงรายชื่อสมาชิกทั้งหมดในระบบ]
+    ViewUsers --> SuspendAction{ต้องการระงับผู้ใช้ที่ก่อกวน/โกงเงิน?}
+    SuspendAction -- ใช่ --> SuspendUser[ปรับฟิลด์ status = 'suspended' ในตาราง users <br/>ส่งผลให้ผู้ใช้ถูกตัดจากระบบและไม่สามารถล็อกอินได้]
+    SuspendAction -- ไม่ทำอะไร --> AdminMenu
+    
+    %% Admin Logs
+    RejectListing --> LogAction[บันทึกประวัติการกระทำลงตาราง admin_logs เพื่อตรวจสอบย้อนหลัง]
+    ApproveListing --> LogAction
+    SuspendUser --> LogAction
+    
+    LogAction --> AdminMenu

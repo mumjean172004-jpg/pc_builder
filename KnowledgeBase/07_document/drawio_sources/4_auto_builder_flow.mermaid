@@ -1,0 +1,23 @@
+flowchart TD
+    Start(["ผู้ใช้เลือกงบประมาณและลักษณะการใช้งาน"]) --> GetReq["รับงบประมาณ และ Use Case ในหลังบ้าน"]
+    GetReq --> FetchParts["ดึงแคตตาล็อกอะไหล่มาตรฐานและราคามือสองที่ถูกที่สุดในตลาดมาจำลองราคาจริง"]
+    FetchParts --> PairCPUGPU["สร้างคู่แมตช์ระหว่าง CPU และ GPU ทั้งหมด"]
+    
+    PairCPUGPU --> BottleneckCheck{"ประเมินคะแนนประสิทธิภาพ CPU vs GPU <br/>- ความแรงการ์ดจอสูงกว่า CPU เกินเกณฑ์? (คอขวด CPU)<br/>- ความแรง CPU สูงกว่าการ์ดจอเกินเกณฑ์? (คอขวด GPU)"}
+    BottleneckCheck -- "คอขวดรุนแรง เกิน 35%" --> SkipPair["ข้ามคู่ชิ้นส่วนนี้ไป"]
+    BottleneckCheck -- "ความเข้ากันได้สมดุล" --> FindOtherParts["ค้นหาชิ้นส่วนอื่นที่จำเป็นและเข้ากันได้ Socket, RAM Type, Form Factor"]
+    
+    FindOtherParts --> Generate3Options{"กรองและประมวลผลจัดกลุ่มสเปกคอมพิวเตอร์ที่ได้ 3 หมวดหมู่"}
+    
+    %% Cheapest
+    Generate3Options --> CatCheapest["1. สเปกประหยัดสุดในงบ: เลือกอุปกรณ์ราคาถูกที่สุดที่ทํางานเข้ากันได้สมบูรณ์"]
+    %% Value
+    Generate3Options --> CatValue["2. สเปกคุ้มที่สุด: จัดงบเน้นประสิทธิภาพต่อราคาเหมาะสมที่สุด อุปกรณ์แบรนด์แนะนำ"]
+    %% Performance
+    Generate3Options --> CatMax["3. สเปกแรงที่สุดในงบ: ดึงงบไปลงที่ความแรงของ CPU/GPU หลักสูงสุดในข้อจำกัดงบ"]
+    
+    CatCheapest --> BuildFormattedResponse["รวบรวมชิ้นส่วนและจัดรูปแบบ JSON แนะนำสินค้าพร้อมชี้เป้าสินค้าในตลาด"]
+    CatValue --> BuildFormattedResponse
+    CatMax --> BuildFormattedResponse
+    
+    BuildFormattedResponse --> ReturnUI["ส่งตัวเลือกทั้ง 3 รูปแบบไปแสดงผลเปรียบเทียบในฝั่งหน้าบ้าน"] --> EndAuto(["เสร็จสิ้น"])

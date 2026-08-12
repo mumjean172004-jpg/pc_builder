@@ -1,0 +1,36 @@
+flowchart TD
+    Start([ผู้ซื้อกดยืนยันสั่งจองสินค้าในตะกร้า]) --> FetchCheck[ดึงข้อมูลเช็คความพร้อมสินค้า]
+    FetchCheck --> CheckStatus{สถานะของสินค้ายังเป็น 'active' และไม่จองตัวเอง?}
+    CheckStatus -- ไม่พร้อมขาย/ซื้อของตนเอง --> RejectBooking[ปฏิเสธคำสั่งสั่งจองและแจ้งเตือน] --> EndBooking([จบการทำงาน])
+    CheckStatus -- พร้อมขาย --> SplitSellers[แยกสินค้าตามผู้ขาย เพื่อสร้างใบสั่งจองแยกตามร้านค้า]
+    
+    SplitSellers --> CreateOrders[1. บันทึกข้อมูลลงตาราง orders สถานะ 'pending' <br/>2. สร้างตาราง order_items <br/>3. อัปเดตตาราง products สถานะสินค้าเป็น 'sold' <br/>4. สร้างห้องแชตคุยในตาราง chat_rooms]
+    CreateOrders --> SendSystemMsg[ส่งข้อความระบบชี้แจงคำสั่งซื้อและยอดชำระเข้าไปในห้องแชตแรกรุ่น]
+    
+    SendSystemMsg --> OrderLifeCycle{การดำเนินขั้นตอนใบจอง}
+    
+    %% Upload Slip Flow
+    OrderLifeCycle -- ผู้ซื้อโอนเงินสำเร็จและส่งสลิป --> UploadSlip[ผู้ซื้ออัปโหลดรูปภาพสลิปใบโอนเงิน]
+    UploadSlip --> UpdateWaiting[ปรับออเดอร์เป็นสถานะ 'waiting_verification']
+    UpdateWaiting --> PushWS1[ส่งการแจ้งเตือนและแชร์สลิปในแชตเรียลไทม์ผ่าน Socket.io]
+    
+    PushWS1 --> VerifySlip{ผู้ขายยืนยันยอดโอนสำเร็จ?}
+    VerifySlip -- ปฏิเสธสลิป / ยอดไม่ตรง --> RejectSlip[ผู้ขายกดปฏิเสธสลิป: ปรับสถานะกลับมาเป็น 'pending' <br/>ลบลิงก์รูปสลิปทิ้ง และแจ้งเตือนให้โอนใหม่] --> OrderLifeCycle
+    VerifySlip -- อนุมัติสลิป --> ApproveSlip[ปรับออเดอร์เป็นสถานะ 'paid']
+    ApproveSlip --> PushWS2[ส่งการแจ้งเตือนเรียลไทม์ ยอดเงินถูกต้อง]
+    
+    %% Shipping Flow
+    PushWS2 --> SellerShip[ผู้ขายห่อของ นำส่งขนส่ง และกรอกบริษัทขนส่ง + เลขพัสดุ Tracking]
+    SellerShip --> UpdateShipped[ปรับออเดอร์เป็นสถานะ 'shipped' และส่งข้อความระบบแจ้งเลขพัสดุ]
+    
+    %% Completed Flow
+    UpdateShipped --> BuyerVerify{ผู้ซื้อได้รับของและกดปุ่มยืนยันยอมรับสินค้า?}
+    BuyerVerify -- ใช่ --> CompleteOrder[ปรับออเดอร์เป็นสถานะ 'completed' เสร็จสิ้นกระบวนการซื้อขาย]
+    
+    %% Cancel Flow
+    OrderLifeCycle -- ผู้ซื้อ/ผู้ขาย กดยกเลิกรายการสั่งจอง <br/>(ทำได้ขณะสถานะ pending/waiting/paid) --> CancelOrder[ปรับออเดอร์เป็นสถานะ 'cancelled']
+    CancelOrder --> RestoreProducts[ระบบหลังบ้านสั่งสแกนสินค้าภายในออเดอร์นั้น <br/>และปรับคืนสถานะ products คืนเป็น 'active' พร้อมขายใหม่]
+    RestoreProducts --> SendCancelMsg[ส่งข้อความระบบแจ้งยกเลิกออเดอร์เข้าห้องแชต]
+    
+    CompleteOrder --> EndBooking
+    SendCancelMsg --> EndBooking

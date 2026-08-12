@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ลงประกาศขายสินค้า | PC Builder Pro</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* === Listing mode tabs === */
+    .listing-mode-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+    /* === Prebuilt spec card === */
+    .specs-card {
+      background: var(--bg-tertiary);
+      padding: 1.2rem;
+      border-radius: var(--radius);
+      margin-bottom: 1.2rem;
+    }
+    .specs-card-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+      color: var(--highlight);
+    }
+
+    /* === Safety / proof-of-possession card === */
+    .safety-card {
+      background: rgba(18, 184, 134, 0.05);
+      border: 1px solid rgba(18, 184, 134, 0.2);
+      padding: 1.2rem;
+      border-radius: var(--radius);
+      margin: 1.2rem 0;
+    }
+    .dark-mode .safety-card {
+      background: rgba(46, 204, 113, 0.05);
+      border-color: rgba(46, 204, 113, 0.2);
+    }
+    .safety-card-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      color: var(--success);
+    }
+    .safety-card-desc {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+    }
+
+    /* === Field labels / hints === */
+    .field-label-icon {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .field-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+    .compat-desc {
+      font-size: 0.85rem;
+    }
+
+    /* === Buttons === */
+    .btn-full { width: 100%; }
+    .upload-preview-wrap { margin-top: 8px; }
+
+    /* === Upload preview thumbnails (proof / SN) === */
+    .upload-preview-thumb {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 2px solid var(--success);
+    }
+    .upload-preview-thumb.thumb-highlight {
+      border-color: var(--highlight);
+    }
+    .upload-preview-caption {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      color: var(--success);
+      margin-top: 4px;
+    }
+    .upload-preview-caption.caption-highlight {
+      color: var(--highlight);
+    }
+    .upload-preview-caption .icon {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* === Gallery photo previews === */
+    .photo-previews-container {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .photo-preview-item {
+      position: relative;
+      width: 85px;
+      height: 85px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--bg-card);
+    }
+    .photo-preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .photo-preview-remove {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: rgba(250, 82, 82, 0.9);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .dark-mode .photo-preview-remove {
+      background: rgba(231, 76, 60, 0.9);
+    }
+
+    /* === Seller KYC card === */
+    .kyc-card {
+      margin: 1rem 0;
+      padding: 1rem;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+    }
+    .kyc-shop-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .kyc-verified-badge {
+      width: 15px;
+      height: 15px;
+      color: var(--success);
+    }
+    .kyc-bank {
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    .kyc-secure-note {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      color: var(--success);
+      margin-top: 6px;
+    }
+    .kyc-secure-note .icon {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* === Mobile bottom nav icons === */
+    .bottom-nav-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .bottom-nav-icon .icon {
+      width: 20px;
+      height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <!-- เมนูนำทาง -->
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <a href="/index.html" class="navbar-logo">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        ประกอบ PC <span>Pro</span>
+      </a>
+      <button class="mobile-menu-toggle" id="mobile-menu-btn" aria-label="Toggle menu">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="4" y1="6" x2="20" y2="6"></line>
+          <line x1="4" y1="12" x2="20" y2="12"></line>
+          <line x1="4" y1="18" x2="20" y2="18"></line>
+        </svg>
+      </button>
+      <ul class="navbar-links">
+        <li><a href="/index.html">หน้าแรก</a></li>
+        <li><a href="/products.html">Marketplace</a></li>
+        <li><a href="/builder.html">ประกอบ PC</a></li>
+
+        <li><a href="/sell-product.html" class="active">ลงขายสินค้า</a></li>
+        <li><a href="/inbox.html">ข้อความเจรจา</a></li>
+      </ul>
+      <div class="navbar-auth" id="navbar-auth"></div>
+    </div>
+  </nav>
+
+  <section class="section container">
+    <div class="listing-form-layout">
+      <main class="listing-form-panel">
+        <div class="section-header">
+          <div>
+            <h1 class="section-title field-label-icon">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path>
+                <path d="M12 22V12"></path>
+                <polyline points="3.29 7 12 12 20.71 7"></polyline>
+                <path d="m7.5 4.27 9 5.15"></path>
+              </svg>
+              ลงประกาศขายสินค้า & คอมเซ็ต
+            </h1>
+            <p class="text-muted">ลงประกาศขายอุปกรณ์คอมพิวเตอร์และคอมเซ็ตสำเร็จรูป พร้อมระบบยืนยันตัวตนและความปลอดภัย</p>
+          </div>
+        </div>
+
+        <!-- เลือกประเภทการลงขาย -->
+        <div class="listing-mode-tabs">
+          <button type="button" id="tab-single" class="btn btn-primary" onclick="switchListingMode('single')">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path>
+              <path d="M12 22V12"></path>
+              <polyline points="3.29 7 12 12 20.71 7"></polyline>
+              <path d="m7.5 4.27 9 5.15"></path>
+            </svg>
+            ลงขายอะไหล่เดี่ยว
+          </button>
+          <button type="button" id="tab-prebuilt" class="btn btn-outline" onclick="switchListingMode('prebuilt')">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            ลงขายคอมเซ็ตประกอบสำเร็จรูป
+          </button>
+        </div>
+
+        <form id="listing-form">
+          <!-- Section 1: Single Part Fields -->
+          <div id="single-part-fields">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="listing-category">หมวดหมู่อะไหล่ <span class="text-danger">*</span></label>
+                <select class="form-input" id="listing-category"></select>
+              </div>
+              <div class="form-group">
+                <label for="listing-part">ยี่ห้อ / รุ่นสินค้าจากแคตตาล็อก <span class="text-danger">*</span></label>
+                <select class="form-input" id="listing-part"></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Prebuilt PC Fields -->
+          <div id="prebuilt-fields" class="hidden">
+            <div class="card specs-card">
+              <h3 class="specs-card-title">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"></path>
+                </svg>
+                ระบุสเปกคอมพิวเตอร์ครบชุด
+              </h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>ซีพียู (CPU)</label>
+                  <div class="form-input-group">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M12 20v2"></path><path d="M12 2v2"></path><path d="M17 20v2"></path><path d="M17 2v2"></path>
+                      <path d="M2 12h2"></path><path d="M2 17h2"></path><path d="M2 7h2"></path>
+                      <path d="M20 12h2"></path><path d="M20 17h2"></path><path d="M20 7h2"></path>
+                      <path d="M7 20v2"></path><path d="M7 2v2"></path>
+                      <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+                      <rect x="8" y="8" width="8" height="8" rx="1"></rect>
+                    </svg>
+                    <input type="text" class="form-input" id="prebuilt-cpu" placeholder="เช่น Intel Core i5-13400F / Ryzen 5 7600">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>การ์ดจอ (GPU)</label>
+                  <div class="form-input-group">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M15.914 4a1.5 1.5 0 0 0-2.474-1.561l-9 9A1.5 1.5 0 0 0 5.5 14h4.002a.5.5 0 0 1 .471.666L8.086 20a1.5 1.5 0 0 0 2.475 1.56l9-9A1.5 1.5 0 0 0 18.5 10h-3.997a.5.5 0 0 1-.472-.667z"></path>
+                    </svg>
+                    <input type="text" class="form-input" id="prebuilt-gpu" placeholder="เช่น RTX 4060 8GB / RX 7600">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>เมนบอร์ด (Motherboard)</label>
+                  <div class="form-input-group">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+                      <path d="M11 9h4a2 2 0 0 0 2-2V3"></path>
+                      <circle cx="9" cy="9" r="2"></circle>
+                      <path d="M7 21v-4a2 2 0 0 1 2-2h4"></path>
+                      <circle cx="15" cy="15" r="2"></circle>
+                    </svg>
+                    <input type="text" class="form-input" id="prebuilt-mb" placeholder="เช่น B760M DDR4 / B650">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>แรม (RAM)</label>
+                  <div class="form-input-group">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M12 12v-2"></path><path d="M12 18v-2"></path><path d="M16 12v-2"></path><path d="M16 18v-2"></path>
+                      <path d="M2 11h1.5"></path><path d="M20 18v-2"></path><path d="M20.5 11H22"></path>
+                      <path d="M4 18v-2"></path><path d="M8 12v-2"></path><path d="M8 18v-2"></path>
+                      <rect x="2" y="6" width="20" height="10" rx="2"></rect>
+                    </svg>
+                    <input type="text" class="form-input" id="prebuilt-ram" placeholder="เช่น 16GB (8x2) DDR4 3200MHz">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>ความจุ (SSD/Storage)</label>
+                  <div class="form-input-group">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M10 16h.01"></path>
+                      <path d="M2.212 11.577a2 2 0 0 0-.212.896V18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5.527a2 2 0 0 0-.212-.896L18.55 5.11A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+                      <path d="M21.946 12.013H2.054"></path>
+                      <path d="M6 16h.01"></path>
+                    </svg>
+                    <input type="text" class="form-input" id="prebuilt-storage" placeholder="เช่น M.2 NVMe 500GB / 1TB">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>พาวเวอร์ซัพพลาย (PSU)</label>
+                  <div class="form-input-group">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M12 22v-5"></path><path d="M15 8V2"></path>
+                      <path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z"></path>
+                      <path d="M9 8V2"></path>
+                    </svg>
+                    <input type="text" class="form-input" id="prebuilt-psu" placeholder="เช่น 650W 80+ Bronze">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>เคสและชุดระบายความร้อน</label>
+                  <div class="form-input-group">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
+                      <path d="m3.3 7 8.7 5 8.7-5"></path>
+                      <path d="M12 22V12"></path>
+                    </svg>
+                    <input type="text" class="form-input" id="prebuilt-case" placeholder="เช่น เคสฝาข้างใส พัดลม RGB 4 ตัว">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>ชื่อชุดคอมเซ็ต / หัวข้อประกาศ</label>
+                  <div class="form-input-group">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M12 4v16"></path>
+                      <path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"></path>
+                      <path d="M9 20h6"></path>
+                    </svg>
+                    <input type="text" class="form-input" id="prebuilt-title" placeholder="เช่น คอมเล่นเกมงบประหยัด เล่นได้ทุกเกม">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: General Details -->
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="listing-condition">สภาพสินค้า <span class="text-danger">*</span></label>
+              <select class="form-input" id="listing-condition" required>
+                <option value="new">มือหนึ่ง (New / Sealed)</option>
+                <option value="used_90" selected>มือสอง สภาพ 90%+ (สวยมาก)</option>
+                <option value="used_80">มือสอง สภาพ 80%+ (ใช้งานปกติ)</option>
+                <option value="used_70">มือสอง สภาพ 70% (มีริ้วรอยตามการใช้งาน)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="listing-warranty">ระยะเวลาประกันคงเหลือ (เดือน)</label>
+              <div class="form-input-group">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path>
+                  <path d="m9 12 2 2 4-4"></path>
+                </svg>
+                <input type="number" class="form-input" id="listing-warranty" min="0" step="1" value="0" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="listing-price">ราคาขายสุทธิ (บาท) <span class="text-danger">*</span></label>
+              <div class="form-input-group">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"></path>
+                  <circle cx="7.5" cy="7.5" r=".5" fill="currentColor"></circle>
+                </svg>
+                <input type="number" class="form-input" id="listing-price" min="1" step="1" placeholder="ระบุราคาเป็นตัวเลข" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="listing-serial">หมายเลขซีเรียลนัมเบอร์ (Serial Number / SN) <span class="text-danger">*</span></label>
+              <div class="form-input-group">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="4" y1="9" x2="20" y2="9"></line>
+                  <line x1="4" y1="15" x2="20" y2="15"></line>
+                  <line x1="10" y1="3" x2="8" y2="21"></line>
+                  <line x1="16" y1="3" x2="14" y2="21"></line>
+                </svg>
+                <input type="text" class="form-input" id="listing-serial" placeholder="เช่น SN123456789 หรือรหัสเครื่อง" required>
+              </div>
+              <div class="field-hint">ระบบจะตรวจสอบการลงขายซ้ำเพื่อป้องกันมิจฉาชีพ</div>
+            </div>
+          </div>
+
+          <!-- Section 4: Proof of Possession & SN Upload (Safety Mandate) -->
+          <div class="card safety-card">
+            <h3 class="safety-card-title">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path>
+              </svg>
+              มาตรการความปลอดภัยและหลักฐานการครอบครอง (Proof of Possession)
+            </h3>
+            <p class="safety-card-desc">
+              เพื่อสร้างความน่าเชื่อถือและป้องกันมิจฉาชีพนำรูปผู้อื่นมาแอบอ้าง กรุณาแนบภาพถ่ายสินค้าคู่กับป้ายกระดาษเขียนชื่อร้าน/วันที่
+            </p>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="field-label-icon">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"></path>
+                    <circle cx="12" cy="13" r="3"></circle>
+                  </svg>
+                  รูปถ่ายสินค้าคู่ป้ายชื่อร้าน/กระดาษเขียนชื่อ <span class="text-danger">*</span>
+                </label>
+                <input type="file" id="proof-image-file" accept="image/*" class="hidden">
+                <button type="button" class="btn btn-outline btn-sm btn-full" id="upload-proof-btn">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                  อัปโหลดรูปถ่ายคู่ป้ายชื่อ
+                </button>
+                <div id="proof-preview-wrap" class="upload-preview-wrap"></div>
+                <input type="hidden" id="proof-image-url">
+              </div>
+
+              <div class="form-group">
+                <label class="field-label-icon">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="4" y1="9" x2="20" y2="9"></line>
+                    <line x1="4" y1="15" x2="20" y2="15"></line>
+                    <line x1="10" y1="3" x2="8" y2="21"></line>
+                    <line x1="16" y1="3" x2="14" y2="21"></line>
+                  </svg>
+                  รูปถ่ายสติกเกอร์ Serial Number (SN) ชัดเจน
+                </label>
+                <input type="file" id="sn-image-file" accept="image/*" class="hidden">
+                <button type="button" class="btn btn-outline btn-sm btn-full" id="upload-sn-btn">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                  อัปโหลดรูปสติกเกอร์ SN
+                </button>
+                <div id="sn-preview-wrap" class="upload-preview-wrap"></div>
+                <input type="hidden" id="sn-image-url">
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 5: Gallery Photos -->
+          <div class="form-group">
+            <label class="field-label-icon">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+                <circle cx="9" cy="9" r="2"></circle>
+                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+              </svg>
+              รูปภาพสินค้าเพิ่มเติม (มุมอื่นๆ)
+            </label>
+            <input type="file" id="listing-photo-file" accept="image/*" multiple class="hidden">
+            <button type="button" class="btn btn-outline btn-full" id="listing-photo-upload-btn">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              เลือกและอัปโหลดไฟล์ภาพสินค้า
+            </button>
+            <div id="photo-previews-container" class="photo-previews-container"></div>
+            <textarea id="listing-photos" class="hidden"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="listing-description" class="field-label-icon">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 5H3"></path>
+                <path d="M15 12H3"></path>
+                <path d="M17 19H3"></path>
+              </svg>
+              รายละเอียดสินค้าเพิ่มเติม / สภาพ / อุปกรณ์ที่ได้รับ
+            </label>
+            <textarea class="form-input" id="listing-description" rows="3" placeholder="ระบุรายละเอียดเพิ่มเติม เช่น มีกล่องครบ ใช้งานมือเดียว ไม่เคยผ่านการขุด หรือสถานที่นัดรับมือ"></textarea>
+          </div>
+
+          <div id="listing-error" class="form-error mb-2"></div>
+          <button type="submit" class="btn btn-primary btn-lg btn-full" id="listing-submit-btn">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            ลงประกาศขายสินค้า
+          </button>
+        </form>
+      </main>
+
+      <aside class="builder-summary listing-review-panel">
+        <h3 class="field-label-icon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path>
+          </svg>
+          ข้อมูลผู้ขาย & ความปลอดภัย
+        </h3>
+        <div id="seller-kyc-card" class="kyc-card">
+          <div class="kyc-shop-line">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5"></path>
+              <path d="M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244"></path>
+              <path d="M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05"></path>
+            </svg>
+            <span id="seller-shop-display">กำลังโหลดร้านค้า...</span>
+            <svg class="icon kyc-verified-badge hidden" id="seller-verified-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="m9 12 2 2 4-4"></path>
+            </svg>
+          </div>
+          <div class="kyc-bank" id="seller-bank-display">บัญชีรับเงิน: —</div>
+          <div class="kyc-secure-note">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            ผู้ซื้อจะโอนเงินตรงเข้าบัญชีนี้และตรวจสอบสลิปผ่านระบบ Slip Verification
+          </div>
+        </div>
+
+        <div class="summary-part">
+          <span class="summary-part-label">ราคาอ้างอิงตลาด</span>
+          <span id="reference-price">-</span>
+        </div>
+        <div class="summary-part">
+          <span class="summary-part-label">ข้อกำหนดรูปภาพ</span>
+          <span id="photo-rule">อย่างน้อย 3 รูป</span>
+        </div>
+        <div class="compat-panel" id="listing-review-hint">
+          <h4 class="compat-ok-title field-label-icon">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="m9 12 2 2 4-4"></path>
+            </svg>
+            พร้อมลงประกาศ
+          </h4>
+          <p class="text-muted compat-desc">ระบบจะตรวจสอบความถูกต้องของ Serial Number และราคาเพื่ออนุมัติทันที</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="mobile-bottom-nav">
+    <a href="/index.html" class="bottom-nav-item">
+      <div class="bottom-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+      </div>
+      <span>หน้าแรก</span>
+    </a>
+    <a href="/products.html" class="bottom-nav-item">
+      <div class="bottom-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="8" cy="21" r="1"></circle>
+          <circle cx="19" cy="21" r="1"></circle>
+          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+        </svg>
+      </div>
+      <span>ตลาด</span>
+    </a>
+    <a href="/builder.html" class="bottom-nav-item">
+      <div class="bottom-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"></path>
+        </svg>
+      </div>
+      <span>จัดสเปก</span>
+    </a>
+    <a href="/inbox.html" class="bottom-nav-item">
+      <div class="bottom-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"></path>
+        </svg>
+      </div>
+      <span>ข้อความ</span>
+    </a>
+    <a href="/profile.html" class="bottom-nav-item">
+      <div class="bottom-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 21a8 8 0 0 0-16 0"></path>
+          <circle cx="12" cy="8" r="5"></circle>
+        </svg>
+      </div>
+      <span>โปรไฟล์</span>
+    </a>
+  </nav>
+
+  <script src="/js/app.js"></script>
+  <script>
+    let metadata = { categories: [], parts: [] };
+    let uploadedUrls = [];
+    let currentMode = 'single'; // 'single' or 'prebuilt'
+    let currentProfile = null;
+
+    // === UI Helpers: button loading state + field validation state ===
+    function setBtnLoading(btn, loading) {
+      if (!btn) return;
+      if (loading) {
+        btn.dataset.originalText = btn.dataset.originalText || btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>';
+      } else {
+        btn.disabled = false;
+        if (btn.dataset.originalText) btn.innerHTML = btn.dataset.originalText;
+      }
+    }
+
+    function setFieldError(id, hasError) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('has-error', hasError);
+    }
+
+    function clearFieldErrors(ids) {
+      ids.forEach(id => setFieldError(id, false));
+    }
+
+    function switchListingMode(mode) {
+      currentMode = mode;
+      const tabSingle = document.getElementById('tab-single');
+      const tabPrebuilt = document.getElementById('tab-prebuilt');
+      const singleFields = document.getElementById('single-part-fields');
+      const prebuiltFields = document.getElementById('prebuilt-fields');
+
+      if (mode === 'single') {
+        tabSingle.className = 'btn btn-primary';
+        tabPrebuilt.className = 'btn btn-outline';
+        singleFields.classList.remove('hidden');
+        prebuiltFields.classList.add('hidden');
+      } else {
+        tabSingle.className = 'btn btn-outline';
+        tabPrebuilt.className = 'btn btn-primary';
+        singleFields.classList.add('hidden');
+        prebuiltFields.classList.remove('hidden');
+      }
+      renderReviewHint();
+    }
+
+    function selectedPart() {
+      if (currentMode === 'prebuilt') return null;
+      const id = Number(document.getElementById('listing-part').value);
+      return metadata.parts.find(part => part.id === id);
+    }
+
+    function renderModels() {
+      const category = document.getElementById('listing-category').value;
+      const partSelect = document.getElementById('listing-part');
+      const parts = metadata.parts.filter(part => part.category_slug === category);
+      partSelect.innerHTML = parts.map(part =>
+        `<option value="${part.id}">${escapeHtml(part.brand)} - ${escapeHtml(part.model || part.name)} (฿${Number(part.price).toLocaleString()})</option>`
+      ).join('');
+      renderReviewHint();
+    }
+
+    function renderReviewHint() {
+      const part = selectedPart();
+      const condition = document.getElementById('listing-condition').value;
+      const price = Number(document.getElementById('listing-price').value || 0);
+      const proofUrl = document.getElementById('proof-image-url').value;
+      const panel = document.getElementById('listing-review-hint');
+
+      document.getElementById('reference-price').textContent = part ? formatPrice(part.price) : (currentMode === 'prebuilt' ? 'ตามสเปกครบชุด' : '-');
+      document.getElementById('photo-rule').textContent = 'รูปถ่ายคู่ป้ายชื่อ + อะไหล่';
+
+      if (!proofUrl) {
+        panel.innerHTML = '<h4 class="compat-warn-title field-label-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>แนะนำแนบรูปคู่ป้ายชื่อ</h4><div class="compat-item warning">การแนบรูปคู่ป้ายชื่อร้านจะช่วยให้ประกาศของคุณได้รับป้าย Verified และขายออกได้เร็วกว่า</div>';
+        return;
+      }
+
+      panel.innerHTML = '<h4 class="compat-ok-title field-label-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>ข้อมูลครบถ้วน</h4><p class="text-muted compat-desc">ระบบพร้อมส่งประกาศขึ้น Marketplace ทันที</p>';
+    }
+
+    async function submitListing(event) {
+      event.preventDefault();
+      const error = document.getElementById('listing-error');
+      error.textContent = '';
+      clearFieldErrors(['listing-serial', 'listing-price']);
+
+      if (!Auth.isLoggedIn()) {
+        window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+      }
+
+      const serial = document.getElementById('listing-serial').value.trim();
+      const price = Number(document.getElementById('listing-price').value);
+
+      if (!serial) {
+        error.textContent = 'กรุณาระบุ Serial Number ของอุปกรณ์';
+        setFieldError('listing-serial', true);
+        return;
+      }
+
+      if (!price || price <= 0) {
+        error.textContent = 'กรุณาระบุราคาขายที่ถูกต้อง';
+        setFieldError('listing-price', true);
+        return;
+      }
+
+      const submitBtn = document.getElementById('listing-submit-btn');
+      setBtnLoading(submitBtn, true);
+      try {
+        let payload = {
+          condition: document.getElementById('listing-condition').value,
+          remaining_warranty_months: Number(document.getElementById('listing-warranty').value),
+          price: price,
+          stock_quantity: 1,
+          serial_number: serial,
+          proof_image_url: document.getElementById('proof-image-url').value || null,
+          sn_image_url: document.getElementById('sn-image-url').value || null,
+          photos: uploadedUrls,
+          description: document.getElementById('listing-description').value.trim()
+        };
+
+        if (currentMode === 'single') {
+          payload.category = document.getElementById('listing-category').value;
+          payload.part_id = Number(document.getElementById('listing-part').value);
+          payload.is_prebuilt_set = 0;
+        } else {
+          payload.category = 'full-pc';
+          payload.is_prebuilt_set = 1;
+          const prebuiltSpecs = {
+            cpu: document.getElementById('prebuilt-cpu').value.trim(),
+            gpu: document.getElementById('prebuilt-gpu').value.trim(),
+            motherboard: document.getElementById('prebuilt-mb').value.trim(),
+            ram: document.getElementById('prebuilt-ram').value.trim(),
+            storage: document.getElementById('prebuilt-storage').value.trim(),
+            psu: document.getElementById('prebuilt-psu').value.trim(),
+            case: document.getElementById('prebuilt-case').value.trim()
+          };
+          payload.prebuilt_specs = prebuiltSpecs;
+          const prebuiltTitle = document.getElementById('prebuilt-title').value.trim();
+          payload.description = prebuiltTitle ? `${prebuiltTitle}\n${payload.description}` : payload.description;
+        }
+
+        const result = await API.post('/products', payload);
+
+        if (result.product.review_status === 'pending_review') {
+          Toast.warning(result.message);
+        } else {
+          Toast.success(result.message);
+        }
+        window.location.href = '/products.html';
+      } catch (err) {
+        error.textContent = err.message;
+        setBtnLoading(submitBtn, false);
+      }
+    }
+
+    function renderPreviews() {
+      const container = document.getElementById('photo-previews-container');
+      container.innerHTML = uploadedUrls.map((url, index) => `
+        <div class="photo-preview-item">
+          <img src="${url}">
+          <button type="button" class="photo-preview-remove" onclick="deletePhoto(${index})">&times;</button>
+        </div>
+      `).join('');
+
+      document.getElementById('listing-photos').value = uploadedUrls.join('\n');
+      renderReviewHint();
+    }
+
+    window.deletePhoto = function(index) {
+      uploadedUrls.splice(index, 1);
+      renderPreviews();
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!Auth.isLoggedIn()) {
+        window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+      }
+
+      try {
+        const profile = await API.get('/auth/profile');
+        if (profile) {
+          Auth.setUser(profile);
+          currentProfile = profile;
+          document.getElementById('seller-shop-display').textContent = profile.shop_name || profile.username;
+          document.getElementById('seller-verified-badge').classList.toggle('hidden', !profile.is_seller_verified);
+          document.getElementById('seller-bank-display').textContent = `ธนาคาร: ${profile.seller_bank_name || 'ธนาคารไทย'} • ${profile.seller_bank_account || 'ยังไม่ระบุ'}`;
+        }
+        const isSellerRegistered = profile && (profile.is_seller_verified === 1 || (profile.shop_name && profile.seller_bank_account));
+        if (!isSellerRegistered) {
+          alert('คุณยังไม่ได้ลงทะเบียนเปิดร้านค้าเป็นผู้ขาย กรุณาลงทะเบียนเป็นผู้ขายก่อนลงประกาศขายสินค้า');
+          window.location.href = '/profile.html?openSellerReg=true';
+          return;
+        }
+      } catch (err) {
+        console.error('Profile check error:', err);
+      }
+
+      metadata = await API.get('/products/metadata');
+      const validCategories = metadata.categories.filter(c => c.slug !== 'full-pc');
+      document.getElementById('listing-category').innerHTML = validCategories.map(cat =>
+        `<option value="${cat.slug}">${escapeHtml(cat.name)}</option>`
+      ).join('');
+      renderModels();
+
+      // Proof Upload Setup
+      document.getElementById('upload-proof-btn').addEventListener('click', () => {
+        document.getElementById('proof-image-file').click();
+      });
+      document.getElementById('proof-image-file').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('image', file);
+        try {
+          const res = await fetch('/api/upload', { method: 'POST', body: formData });
+          const data = await res.json();
+          document.getElementById('proof-image-url').value = data.url;
+          document.getElementById('proof-preview-wrap').innerHTML = `
+            <img src="${data.url}" class="upload-preview-thumb">
+            <div class="upload-preview-caption"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>แนบภาพคู่ป้ายชื่อแล้ว</div>
+          `;
+          renderReviewHint();
+        } catch (err) {
+          alert('อัปโหลดภาพไม่สำเร็จ: ' + err.message);
+        }
+      });
+
+      // SN Upload Setup
+      document.getElementById('upload-sn-btn').addEventListener('click', () => {
+        document.getElementById('sn-image-file').click();
+      });
+      document.getElementById('sn-image-file').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('image', file);
+        try {
+          const res = await fetch('/api/upload', { method: 'POST', body: formData });
+          const data = await res.json();
+          document.getElementById('sn-image-url').value = data.url;
+          document.getElementById('sn-preview-wrap').innerHTML = `
+            <img src="${data.url}" class="upload-preview-thumb thumb-highlight">
+            <div class="upload-preview-caption caption-highlight"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>แนบภาพ SN แล้ว</div>
+          `;
+        } catch (err) {
+          alert('อัปโหลดภาพไม่สำเร็จ: ' + err.message);
+        }
+      });
+
+      // Gallery Photos Upload
+      document.getElementById('listing-photo-upload-btn').addEventListener('click', () => {
+        document.getElementById('listing-photo-file').click();
+      });
+
+      document.getElementById('listing-photo-file').addEventListener('change', async (e) => {
+        const files = e.target.files;
+        if (!files.length) return;
+
+        const error = document.getElementById('listing-error');
+        error.textContent = '';
+        document.getElementById('listing-photo-upload-btn').disabled = true;
+        document.getElementById('listing-photo-upload-btn').innerHTML = '<span class="spinner"></span> กำลังอัปโหลดรูปภาพ...';
+
+        for (const file of files) {
+          const formData = new FormData();
+          formData.append('image', file);
+
+          try {
+            const response = await fetch('/api/upload', {
+              method: 'POST',
+              body: formData
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Upload failed');
+            uploadedUrls.push(data.url);
+          } catch (err) {
+            error.textContent = 'ไม่สามารถอัปโหลดบางไฟล์ได้: ' + err.message;
+          }
+        }
+
+        document.getElementById('listing-photo-upload-btn').disabled = false;
+        document.getElementById('listing-photo-upload-btn').innerHTML = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> เลือกและอัปโหลดไฟล์ภาพสินค้า';
+        e.target.value = '';
+        renderPreviews();
+      });
+
+      ['listing-category', 'listing-part', 'listing-condition', 'listing-price'].forEach(id => {
+        document.getElementById(id).addEventListener('input', id === 'listing-category' ? renderModels : renderReviewHint);
+        document.getElementById(id).addEventListener('change', id === 'listing-category' ? renderModels : renderReviewHint);
+      });
+      document.getElementById('listing-form').addEventListener('submit', submitListing);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,2225 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>โปรไฟล์ของฉัน | PC Builder Pro</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* Profile specific styles */
+    .profile-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .profile-sidebar {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      text-align: center;
+      height: fit-content;
+      position: sticky;
+      top: 80px;
+    }
+    .profile-avatar {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--highlight) 0%, #a01a30 100%);
+      color: white;
+      font-size: 2.2rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      border: 3px solid var(--border);
+    }
+    .profile-name {
+      font-size: 1.25rem;
+      font-weight: bold;
+      margin-bottom: 0.25rem;
+      color: var(--text-primary);
+    }
+    .profile-email {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+    .role-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+    }
+    .role-buyer {
+      background: rgba(46, 204, 113, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(46, 204, 113, 0.3);
+    }
+    .role-seller {
+      background: rgba(233, 69, 96, 0.15);
+      color: var(--highlight);
+      border: 1px solid rgba(233, 69, 96, 0.3);
+    }
+    .verified-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(243, 156, 18, 0.15);
+      color: var(--warning);
+      border: 1px solid rgba(243, 156, 18, 0.3);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+    .btn-toggle-role {
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .profile-stats {
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .profile-stat-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.5rem;
+    }
+    .profile-stat-val {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: var(--text-primary);
+    }
+    .profile-stat-lbl {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    
+    /* Tabs & Content */
+    .profile-main {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      min-height: 50vh;
+    }
+    .sub-tabs {
+      display: flex;
+      gap: 15px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+      overflow-x: auto;
+    }
+    .sub-tab {
+      padding: 0.75rem 0.5rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-weight: 600;
+      position: relative;
+      white-space: nowrap;
+    }
+    .sub-tab.active {
+      color: var(--highlight);
+    }
+    .sub-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--highlight);
+    }
+
+    /* Addresses list */
+    .address-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      transition: var(--transition);
+    }
+    .address-card.default {
+      border-color: var(--success);
+    }
+    .address-info {
+      flex: 1;
+    }
+    .address-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .badge-default-address {
+      background: rgba(46, 204, 113, 0.15);
+      color: var(--success);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+
+    /* Wishlist grid */
+    .wishlist-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1.25rem;
+    }
+    .wish-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .wish-image {
+      height: 120px;
+      background: var(--bg-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      position: relative;
+    }
+    .wish-body {
+      padding: 1rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Orders styling */
+    .order-list-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .order-status-badge {
+      font-size: 0.75rem;
+      font-weight: bold;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+    .status-pending { background: rgba(243, 156, 18, 0.15); color: var(--warning); }
+    .status-paid { background: rgba(52, 152, 219, 0.15); color: #3498db; }
+    .status-shipped { background: rgba(155, 89, 182, 0.15); color: #9b59b6; }
+    .status-completed { background: rgba(46, 204, 113, 0.15); color: var(--success); }
+    .status-cancelled { background: rgba(231, 76, 60, 0.15); color: var(--danger); }
+
+    /* Modal styles */
+    .address-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      align-items: center;
+      justify-content: center;
+      z-index: 2500;
+    }
+    .modal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      width: 90%;
+      max-width: 500px;
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Icon + text inline layout helpers */
+    .section-header h3 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sub-tab {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .empty-state-icon .icon {
+      width: 42px;
+      height: 42px;
+      color: var(--text-muted);
+    }
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .profile-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-bottom: 1.5rem;
+      text-align: left;
+    }
+    .stat-inline-icon {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .stat-inline-icon .icon {
+      width: 14px;
+      height: 14px;
+      color: var(--warning);
+    }
+    .kyc-verified-icon {
+      color: var(--success);
+    }
+    .kyc-verified-icon .icon {
+      width: 42px;
+      height: 42px;
+    }
+    .kyc-info-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 5px;
+    }
+    .kyc-info-row .icon {
+      color: var(--text-muted);
+    }
+    .upload-preview-thumb {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 2px solid var(--success);
+      margin-top: 10px;
+    }
+    .upload-preview-caption {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      color: var(--success);
+      margin-top: 4px;
+    }
+    .upload-preview-caption .icon {
+      width: 14px;
+      height: 14px;
+    }
+    .card-icon-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-muted);
+    }
+    .card-icon-placeholder .icon {
+      width: 32px;
+      height: 32px;
+    }
+    .card-badge {
+      position: absolute;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .card-badge .icon {
+      width: 12px;
+      height: 12px;
+    }
+    .build-card-stats span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .info-line {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Seller registration modal */
+    .seller-reg-modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+    }
+    .seller-reg-modal-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      width: 92%;
+      max-width: 550px;
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+    .seller-reg-close-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .seller-reg-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .seller-reg-header .icon {
+      width: 40px;
+      height: 40px;
+      color: var(--highlight);
+      margin-bottom: 0.5rem;
+    }
+    .seller-reg-header h3 {
+      font-size: 1.35rem;
+      color: var(--text-primary);
+      margin-bottom: 0.35rem;
+    }
+    .seller-reg-header p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+    .seller-reg-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .seller-reg-field label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      margin-bottom: 0.35rem;
+      font-weight: 600;
+    }
+    .seller-reg-field label .icon {
+      width: 15px;
+      height: 15px;
+      color: var(--text-muted);
+    }
+    .seller-reg-field .form-input {
+      width: 100%;
+    }
+    .required-mark {
+      color: var(--danger);
+    }
+    .seller-reg-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .seller-reg-error {
+      color: var(--danger);
+      font-size: 0.85rem;
+      margin-top: 1rem;
+      text-align: center;
+    }
+    .seller-reg-btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 1.5rem;
+    }
+    .seller-reg-btn-row .btn:first-child {
+      flex: 1;
+    }
+    .seller-reg-btn-row .btn:last-child {
+      flex: 2;
+    }
+
+    /* Build card: like / comment / owner actions */
+    .build-action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: inherit;
+      font-family: inherit;
+      transition: var(--transition);
+    }
+    .build-action-btn:hover {
+      color: var(--highlight);
+    }
+    .build-action-btn.liked {
+      color: var(--danger);
+    }
+    .build-action-btn.liked .icon {
+      fill: var(--danger);
+    }
+    .build-action-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .build-owner-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+    .build-owner-actions .btn {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      min-height: unset;
+    }
+    .build-comments-section {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+    .build-comments-list {
+      max-height: 180px;
+      overflow-y: auto;
+      margin-bottom: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .build-comment-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+    .build-comment-author {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-right: 6px;
+    }
+    .build-comment-text {
+      color: var(--text-secondary);
+    }
+    .build-comment-date {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      margin-top: 2px;
+    }
+    .build-comments-empty,
+    .build-comments-loading {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 0.5rem;
+    }
+    .build-comment-form {
+      display: flex;
+      gap: 8px;
+    }
+    .build-comment-form .form-input {
+      flex: 1;
+    }
+
+    /* Settings: change password card */
+    .settings-section-divider {
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+    }
+    .settings-section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+    .settings-section-title .icon {
+      width: 18px;
+      height: 18px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- เมนูนำทาง -->
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <a href="/index.html" class="navbar-logo">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        ประกอบ PC <span>Pro</span>
+      </a>
+      <button class="mobile-menu-toggle" id="mobile-menu-btn" aria-label="Toggle menu">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="4" y1="6" x2="20" y2="6"></line>
+          <line x1="4" y1="12" x2="20" y2="12"></line>
+          <line x1="4" y1="18" x2="20" y2="18"></line>
+        </svg>
+      </button>
+      <ul class="navbar-links">
+        <li><a href="/index.html">หน้าแรก</a></li>
+        <li><a href="/builder.html">ประกอบ PC</a></li>
+
+        <li><a href="/products.html">Marketplace</a></li>
+        <li><a href="/sell-product.html">Sell</a></li>
+      </ul>
+      <div class="navbar-auth" id="navbar-auth">
+        <a href="/login.html" class="btn btn-ghost btn-sm">เข้าสู่ระบบ</a>
+        <a href="/login.html?register" class="btn btn-primary btn-sm">สมัครสมาชิก</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- เนื้อหาหลักโปรไฟล์ -->
+  <div class="profile-layout" id="profile-container">
+    <div class="loading-overlay" style="grid-column: 1 / -1; min-height: 50vh;">
+      <div class="spinner"></div>
+      <p>กำลังโหลดโปรไฟล์ของคุณ...</p>
+    </div>
+  </div>
+
+  <!-- Modal สำหรับ เพิ่ม/แก้ไขที่อยู่จัดส่ง -->
+  <div class="address-modal" id="address-modal">
+    <div class="modal-card">
+      <h3 class="modal-title-row">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path>
+          <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        </svg>
+        <span id="address-modal-title">เพิ่มที่อยู่จัดส่งใหม่</span>
+      </h3>
+      <form id="address-form" onsubmit="handleAddressSubmit(event)">
+        <input type="hidden" id="address-id">
+        <div class="form-group">
+          <label>ชื่อผู้รับ</label>
+          <input type="text" class="form-input" id="addr-name" placeholder="ชื่อ-นามสกุล" required>
+        </div>
+        <div class="form-group">
+          <label>เบอร์โทรศัพท์ผู้รับ</label>
+          <input type="tel" class="form-input" id="addr-phone" placeholder="08XXXXXXXX" required>
+        </div>
+        <div class="form-group">
+          <label>ที่อยู่ (บ้านเลขที่, ถนน, ซอย)</label>
+          <input type="text" class="form-input" id="addr-line1" placeholder="ระบุบ้านเลขที่ หมู่ที่ ซอย ถนน" required>
+        </div>
+        <div class="form-group">
+          <label>รายละเอียดเพิ่มเติม (เช่น อาคาร ชั้น - ถ้ามี)</label>
+          <input type="text" class="form-input" id="addr-line2" placeholder="ระบุชื่อตึก คอนโด ชั้น (ถ้ามี)">
+        </div>
+        <div class="grid grid-cols-2 gap-1">
+          <div class="form-group">
+            <label>ตำบล / แขวง</label>
+            <input type="text" class="form-input" id="addr-subdistrict" placeholder="ตำบล/แขวง" required>
+          </div>
+          <div class="form-group">
+            <label>อำเภอ / เขต</label>
+            <input type="text" class="form-input" id="addr-district" placeholder="อำเภอ/เขต" required>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-1">
+          <div class="form-group">
+            <label>จังหวัด</label>
+            <input type="text" class="form-input" id="addr-province" placeholder="จังหวัด" required>
+          </div>
+          <div class="form-group">
+            <label>รหัสไปรษณีย์</label>
+            <input type="text" class="form-input" id="addr-postal" placeholder="10XXX" required pattern="[0-9]{5}">
+          </div>
+        </div>
+        <div class="form-group" style="display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" id="addr-default" style="width:16px; height:16px;">
+          <label for="addr-default" style="margin-bottom:0; cursor:pointer;">ตั้งเป็นที่อยู่หลักสำหรับการจัดส่ง</label>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:1.5rem;">
+          <button type="button" class="btn btn-outline" style="flex:1;" onclick="closeAddressModal()">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary" style="flex:1;">บันทึก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal สำหรับ ให้คะแนน/แก้ไขรีวิวร้านค้า -->
+  <div class="address-modal" id="review-modal">
+    <div class="modal-card">
+      <h3 class="modal-title-row">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path></svg>
+        <span>ให้คะแนนร้านค้า</span>
+      </h3>
+      <input type="hidden" id="review-order-id">
+      <div class="form-group">
+        <label>ให้คะแนน</label>
+        <div id="review-star-picker" style="display:flex; gap:6px; font-size:2rem; cursor:pointer;"></div>
+      </div>
+      <div class="form-group">
+        <label>ความคิดเห็นเพิ่มเติม (ถ้ามี)</label>
+        <textarea class="form-input" id="review-comment" rows="3" placeholder="บอกเล่าประสบการณ์การซื้อขายกับร้านนี้"></textarea>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:1.5rem;">
+        <button type="button" class="btn btn-outline" style="flex:1;" onclick="closeReviewModal()">ยกเลิก</button>
+        <button type="button" class="btn btn-primary" style="flex:1;" id="review-submit-btn" onclick="submitReviewModal()">บันทึกรีวิว</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ส่วนท้าย -->
+  <footer style="text-align: center; padding: 2rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem; margin-top: 3rem;">
+    <p style="display:flex; align-items:center; justify-content:center; gap:6px;">
+      PC Builder Pro — ประกอบอย่างฉลาด ประกอบอย่างเข้ากันได้
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+        <line x1="8" y1="21" x2="16" y2="21"></line>
+        <line x1="12" y1="17" x2="12" y2="21"></line>
+      </svg>
+    </p>
+  </footer>
+
+  <script src="/js/app.js"></script>
+  <script>
+    let currentUserProfile = null;
+    let buyerAddresses = [];
+    let wishlistItems = [];
+    let myBuilds = [];
+    let currentSubTab = 'builds'; // default sub-tab for buyer, or 'listings' for seller
+
+    // Client-side state for build likes/comments (builds tab interactivity)
+    let likedBuildIds = new Set(); // optimistic like-state per build.id, synced with server truth when comments are expanded
+    let buildCommentsCache = {}; // build.id -> array of comment objects already fetched/added this session
+
+    // === UI Helpers: button loading state + field validation state ===
+    // (shared pattern per KnowledgeBase/08_design_system/UI_UX_Guidelines.md - was referenced
+    // by handleUpdateProfileSubmit / handleSellerKycSubmit but never defined on this page, fixed here)
+    function setBtnLoading(btn, loading) {
+      if (!btn) return;
+      if (loading) {
+        btn.dataset.originalText = btn.dataset.originalText || btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>';
+      } else {
+        btn.disabled = false;
+        if (btn.dataset.originalText) btn.innerHTML = btn.dataset.originalText;
+      }
+    }
+
+    function setFieldError(id, hasError) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('has-error', hasError);
+    }
+
+    function clearFieldErrors(ids) {
+      ids.forEach(id => setFieldError(id, false));
+    }
+
+    async function loadProfileData() {
+      if (!Auth.isLoggedIn()) {
+        window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+      }
+
+      const container = document.getElementById('profile-container');
+
+      try {
+        // ดึงข้อมูลโปรไฟล์หลังบ้าน
+        currentUserProfile = await API.get('/auth/profile');
+        
+        // โหลดข้อมูลเสริมขึ้นอยู่กับ Active Role
+        if (currentUserProfile.active_role === 'buyer') {
+          const [addresses, wishlist, builds] = await Promise.all([
+            API.get('/auth/addresses'),
+            API.get('/auth/wishlist'),
+            API.get('/builds/user/' + currentUserProfile.id)
+          ]);
+          buyerAddresses = addresses;
+          wishlistItems = wishlist;
+          myBuilds = builds;
+        } else {
+          // โหลดข้อมูลสินค้าที่ผู้ขายรายนี้ตั้งขาย
+          const allProducts = await API.get('/products?include_review=true');
+          myBuilds = []; // ไม่โหลดสเปคจัดคอมในแท็บผู้ขาย
+          wishlistItems = [];
+          
+          // กรองเอาเฉพาะสินค้าของ Seller รายนี้
+          currentUserProfile.listings = allProducts.filter(p => p.seller_id === currentUserProfile.id);
+        }
+
+        renderProfileUI();
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('openSellerReg') === 'true') {
+          openSellerRegistrationModal();
+        }
+      } catch (error) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1; min-height: 50vh;">
+            <div class="empty-state-icon">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path>
+                <path d="M12 9v4"></path>
+                <path d="M12 17h.01"></path>
+              </svg>
+            </div>
+            <h3>โหลดข้อมูลโปรไฟล์ไม่สำเร็จ</h3>
+            <p>${escapeHtml(error.message)}</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderProfileUI() {
+      const container = document.getElementById('profile-container');
+      const p = currentUserProfile;
+      const initial = p.username ? p.username.charAt(0).toUpperCase() : '?';
+      
+      const isSeller = p.active_role === 'seller';
+      const roleBadgeClass = isSeller ? 'role-badge role-seller' : 'role-badge role-buyer';
+      const iconTag = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"></path><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"></circle></svg>';
+      const iconCart = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>';
+      const iconRefresh = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg>';
+      const iconStore = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5"></path><path d="M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244"></path><path d="M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05"></path></svg>';
+      const roleText = isSeller ? `${iconTag} ผู้ขาย (Seller)` : `${iconCart} ผู้ซื้อ (Buyer)`;
+      const isRegisteredSeller = p.is_seller_verified === 1 || (p.shop_name && p.seller_bank_account);
+      let roleActionBtnHtml = '';
+      if (isSeller) {
+        roleActionBtnHtml = `<button class="btn btn-outline btn-toggle-role" onclick="handleRoleSwitch('buyer')">${iconRefresh} สลับเป็นบทบาทผู้ซื้อ</button>`;
+      } else if (isRegisteredSeller) {
+        roleActionBtnHtml = `<button class="btn btn-primary btn-toggle-role" onclick="handleRoleSwitch('seller')">${iconRefresh} สลับเป็นบทบาทผู้ขาย</button>`;
+      } else {
+        roleActionBtnHtml = `<button class="btn btn-outline btn-toggle-role" onclick="openSellerRegistrationModal()" style="border-color: var(--highlight); color: var(--highlight); font-weight: 600;">${iconStore} สมัครเปิดร้านค้า / ผู้ขาย</button>`;
+      }
+
+      // สร้างส่วน Sidebar
+      const sidebarHtml = `
+        <aside class="profile-sidebar">
+          <div class="profile-avatar">${initial}</div>
+          <div class="profile-name">
+            ${escapeHtml(p.username)}
+            ${p.has_seller_badge && isSeller ? '<div class="verified-badge"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:12px;height:12px;"><path d="M20 6 9 17l-5-5"></path></svg> ยืนยันตัวตนร้านค้า</div>' : ''}
+          </div>
+          <div class="profile-email">${escapeHtml(p.email)}</div>
+
+          <div class="${roleBadgeClass}">${roleText}</div>
+
+          ${roleActionBtnHtml}
+
+          <div class="profile-meta-row">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;">
+              <path d="M8 2v3"></path>
+              <path d="M16 2v3"></path>
+              <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+              <path d="M3 9h18"></path>
+            </svg>
+            สมาชิกตั้งแต่: ${formatDate(p.created_at)}
+          </div>
+
+          <div class="profile-stats">
+            ${!isSeller ? `
+              <div class="profile-stat-box">
+                <div class="profile-stat-val">${p.stats?.total_builds || 0}</div>
+                <div class="profile-stat-lbl">สเปคที่จัด</div>
+              </div>
+              <div class="profile-stat-box">
+                <div class="profile-stat-val">${p.stats?.public_builds || 0}</div>
+                <div class="profile-stat-lbl">สเปคสาธารณะ</div>
+              </div>
+            ` : `
+              <div class="profile-stat-box">
+                <div class="profile-stat-val">${p.sales_count || 0}</div>
+                <div class="profile-stat-lbl">ขายสำเร็จ (ชิ้น)</div>
+              </div>
+              <div class="profile-stat-box">
+                <div class="profile-stat-val stat-inline-icon">${Number(p.seller_rating) > 0 ? `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path></svg> ${Number(p.seller_rating).toFixed(1)}` : '—'}</div>
+                <div class="profile-stat-lbl">คะแนนรีวิว</div>
+              </div>
+            `}
+          </div>
+        </aside>
+      `;
+
+      // สร้างส่วน Main Area แยกตามบทบาท
+      let mainHtml = '';
+      if (!isSeller) {
+        mainHtml = renderBuyerMain();
+      } else {
+        mainHtml = renderSellerMain();
+      }
+
+      container.innerHTML = sidebarHtml + mainHtml;
+    }
+
+    // === 1. Render Buyer Section ===
+    function renderBuyerMain() {
+      // ตรวจสอบ Tab ย่อยในระบบผู้ซื้อ
+      if (['builds', 'wishlist', 'addresses', 'orders', 'settings'].indexOf(currentSubTab) === -1) {
+        currentSubTab = 'builds';
+      }
+
+      const buildTabActive = currentSubTab === 'builds' ? 'active' : '';
+      const wishTabActive = currentSubTab === 'wishlist' ? 'active' : '';
+      const addrTabActive = currentSubTab === 'addresses' ? 'active' : '';
+      const orderTabActive = currentSubTab === 'orders' ? 'active' : '';
+      const setTabActive = currentSubTab === 'settings' ? 'active' : '';
+
+      let subContent = '';
+      
+      if (currentSubTab === 'builds') {
+        subContent = `
+          <div class="section-header">
+            <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"></path></svg> ชุดจัดสเปคคอมพิวเตอร์ที่บันทึกไว้</h3>
+            <a href="/builder.html" class="btn btn-primary btn-sm">+ จัดสเปคเพิ่ม</a>
+          </div>
+          <div class="card-grid" style="margin-top:1.5rem;">
+            ${myBuilds.length > 0 ? myBuilds.map(build => {
+              const isOwner = currentUserProfile && build.user_id === currentUserProfile.id;
+              const isLiked = likedBuildIds.has(build.id);
+              return `
+              <div class="build-card" data-build-id="${build.id}">
+                <div class="build-card-image" style="position: relative;">
+                  <div class="card-icon-placeholder">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                      <line x1="8" y1="21" x2="16" y2="21"></line>
+                      <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                  </div>
+                  ${build.is_public ? '' : '<span class="card-badge" style="top: 8px; right: 8px; background: rgba(0,0,0,0.7); color: #fff;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> ส่วนตัว</span>'}
+                </div>
+                <div class="build-card-body">
+                  <h4 class="build-card-title"><a href="/build-detail.html?id=${build.id}">${escapeHtml(build.name)}</a></h4>
+                  <div class="build-card-meta">
+                    <span class="build-card-price">${formatPrice(build.total_price)}</span>
+                  </div>
+                  <div class="build-card-footer">
+                    <div class="build-card-stats">
+                      <button type="button" class="build-action-btn build-like-btn ${isLiked ? 'liked' : ''}" id="build-like-btn-${build.id}" onclick="toggleBuildLike(${build.id})" aria-pressed="${isLiked}" aria-label="ถูกใจชุดจัดสเปคนี้">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"></path></svg>
+                        <span id="build-like-count-${build.id}">${build.likes_count || 0}</span>
+                      </button>
+                      <button type="button" class="build-action-btn" onclick="toggleBuildComments(${build.id})" aria-label="ดูความคิดเห็น">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"></path></svg>
+                        <span id="build-comment-count-${build.id}">${build.comments_count || 0}</span>
+                      </button>
+                    </div>
+                    <span class="text-muted" style="font-size: 0.75rem;">${formatDate(build.created_at)}</span>
+                  </div>
+                  ${isOwner ? `
+                    <div class="build-owner-actions">
+                      <button type="button" class="btn btn-ghost" style="color:var(--warning);" onclick="editBuildPrompt(${build.id})">แก้ไข</button>
+                      <button type="button" class="btn btn-ghost" style="color:var(--danger);" onclick="deleteBuildCard(${build.id})">ลบ</button>
+                    </div>
+                  ` : ''}
+                  <div class="build-comments-section hidden" id="build-comments-${build.id}">
+                    <div class="build-comments-list" id="build-comments-list-${build.id}">
+                      <div class="build-comments-loading">กำลังโหลดความคิดเห็น...</div>
+                    </div>
+                    <form class="build-comment-form" onsubmit="return submitBuildComment(event, ${build.id})">
+                      <input type="text" class="form-input build-comment-input" id="build-comment-input-${build.id}" placeholder="แสดงความคิดเห็นเกี่ยวกับชุดจัดสเปคนี้..." maxlength="500">
+                      <button type="submit" class="btn btn-primary btn-sm">ส่ง</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            `; }).join('') : `
+              <div class="empty-state" style="grid-column: 1 / -1; padding: 2rem;">
+                <div class="empty-state-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"></path></svg></div>
+                <h4>ยังไม่มีชุดจัดสเปคคอมพิวเตอร์</h4>
+                <p>สร้างชุดคอมพิวเตอร์ในฝันของคุณเลยวันนี้!</p>
+                <a href="/builder.html" class="btn btn-primary btn-sm mt-1">เริ่มจัดสเปค</a>
+              </div>
+            `}
+          </div>
+        `;
+      } 
+      else if (currentSubTab === 'wishlist') {
+        subContent = `
+          <div class="section-header">
+            <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"></path></svg> รายการสินค้า Marketplace ที่ถูกใจ (Wishlist)</h3>
+          </div>
+          <div class="wishlist-grid" style="margin-top:1.5rem;">
+            ${wishlistItems.length > 0 ? wishlistItems.map(item => {
+              const photo = item.photos && item.photos.length > 0 ? item.photos[0] : '';
+              return `
+                <div class="wish-card">
+                  <div class="wish-image">
+                    ${photo ? `<img src="${photo}" style="width:100%; height:100%; object-fit:cover;">` : '<div class="card-icon-placeholder"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-5"></path><path d="M15 8V2"></path><path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z"></path><path d="M9 8V2"></path></svg></div>'}
+                  </div>
+                  <div class="wish-body">
+                    <h4 style="font-size:0.9rem; margin-bottom:0.25rem;"><a href="/product-detail.html?id=${item.id}">${escapeHtml(item.brand)} ${escapeHtml(item.model || item.part_name)}</a></h4>
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem;">ผู้ขาย: ${escapeHtml(item.seller_name)}</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto;">
+                      <span style="font-weight:bold; color:var(--success);">${formatPrice(item.price)}</span>
+                      <button class="btn btn-ghost" onclick="handleRemoveWishlist(${item.id})" style="padding:4px 8px; color:var(--danger); border-color:var(--danger); min-height:unset; background:none;">ลบออก</button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('') : `
+              <div class="empty-state" style="grid-column: 1 / -1; padding: 2rem;">
+                <div class="empty-state-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"></path></svg></div>
+                <h4>ไม่มีสินค้าในรายการที่ถูกใจ</h4>
+                <p>ถูกใจสินค้าชิ้นที่โดนใจในหน้าตลาดซื้อขาย เพื่อบันทึกเก็บไว้ดูภายหลัง!</p>
+                <a href="/products.html" class="btn btn-primary btn-sm mt-1">ไปที่ Marketplace</a>
+              </div>
+            `}
+          </div>
+        `;
+      } 
+      else if (currentSubTab === 'addresses') {
+        subContent = `
+          <div class="section-header">
+            <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg> ที่อยู่จัดส่งของฉัน</h3>
+            <button class="btn btn-primary btn-sm" onclick="openAddressModal()">+ เพิ่มที่อยู่ใหม่</button>
+          </div>
+          <div style="margin-top:1.5rem;">
+            ${buyerAddresses.length > 0 ? buyerAddresses.map(addr => `
+              <div class="address-card ${addr.is_default ? 'default' : ''}">
+                <div class="address-info">
+                  <div style="font-weight:bold; display:flex; align-items:center; margin-bottom:4px;">
+                    ${escapeHtml(addr.recipient_name)}
+                    <span style="color:var(--text-muted); font-weight:normal; margin-left:10px;">(${escapeHtml(addr.phone)})</span>
+                    ${addr.is_default ? '<span class="badge-default-address">ที่อยู่หลัก</span>' : ''}
+                  </div>
+                  <div style="font-size:0.9rem; color:var(--text-secondary);">
+                    ${escapeHtml(addr.address_line1)} ${addr.address_line2 ? escapeHtml(addr.address_line2) : ''}
+                    อำเภอ/เขต: ${escapeHtml(addr.district)}, จังหวัด: ${escapeHtml(addr.province)}, รหัสไปรษณีย์: ${escapeHtml(addr.postal_code)}
+                  </div>
+                </div>
+                <div class="address-actions">
+                  ${!addr.is_default ? `<button class="btn btn-outline" style="font-size:0.75rem; padding:4px 8px; min-height:unset;" onclick="setDefaultAddress(${addr.id})">ตั้งเป็นที่อยู่หลัก</button>` : ''}
+                  <button class="btn btn-ghost" style="font-size:0.75rem; padding:4px 8px; min-height:unset; color:var(--warning);" onclick="editAddress(${JSON.stringify(addr).replace(/"/g, '&quot;')})">แก้ไข</button>
+                  <button class="btn btn-ghost" style="font-size:0.75rem; padding:4px 8px; min-height:unset; color:var(--danger);" onclick="deleteAddress(${addr.id})">ลบ</button>
+                </div>
+              </div>
+            `).join('') : `
+              <div class="empty-state" style="padding: 2rem;">
+                <div class="empty-state-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg></div>
+                <h4>ยังไม่มีข้อมูลที่อยู่จัดส่ง</h4>
+                <p>กรุณาเพิ่มข้อมูลที่อยู่จัดส่งสำหรับการซื้อสินค้าบนระบบตลาดคอมพิวเตอร์มือสอง</p>
+                <button class="btn btn-primary btn-sm mt-1" onclick="openAddressModal()">เพิ่มที่อยู่ชิ้นแรก</button>
+              </div>
+            `}
+          </div>
+        `;
+      } 
+      else if (currentSubTab === 'orders') {
+        const orders = currentUserProfile.buyer_orders || [];
+        subContent = `
+          <div class="section-header">
+            <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><path d="m7.5 4.27 9 5.15"></path></svg> ประวัติการสั่งซื้อและสั่งจองของฉัน</h3>
+          </div>
+          <div style="margin-top:1.5rem;">
+            ${orders.length > 0 ? orders.map(ord => {
+              let statusThai = '';
+              let statusClass = '';
+              switch (ord.status) {
+                case 'pending': statusThai = 'รอผู้ขายตอบรับ/เจรจา'; statusClass = 'status-pending'; break;
+                case 'paid': statusThai = 'โอนเงินแล้ว'; statusClass = 'status-paid'; break;
+                case 'shipped': statusThai = 'ส่งของแล้ว'; statusClass = 'status-shipped'; break;
+                case 'completed': statusThai = 'เสร็จสมบูรณ์'; statusClass = 'status-completed'; break;
+                case 'cancelled': statusThai = 'ยกเลิก'; statusClass = 'status-cancelled'; break;
+              }
+
+              return `
+                <div class="order-list-card">
+                  <div class="order-header">
+                    <div>
+                      <span style="font-weight:bold; color:var(--highlight);">ใบสั่งจอง #BO-${ord.id}</span>
+                      <span style="color:var(--text-muted); font-size:0.8rem; margin-left:10px;">วันที่สั่งจอง: ${formatDate(ord.created_at)}</span>
+                    </div>
+                    <span class="order-status-badge ${statusClass}">${statusThai}</span>
+                  </div>
+                  <div style="margin-bottom:0.75rem;">
+                    <div style="font-size:0.9rem; font-weight:600; margin-bottom:4px;">ผู้ขาย: ${escapeHtml(ord.seller_name)}</div>
+                    <div style="font-size:0.85rem; color:var(--text-secondary);">
+                      <strong>รายการสินค้าสั่งซื้อ:</strong>
+                      ${ord.items.map(item => `
+                        <div style="margin-left:10px; margin-top:2px;">
+                          - ${escapeHtml(item.brand)} ${escapeHtml(item.model || item.part_name)} (ราคา: ${formatPrice(item.price)})
+                        </div>
+                      `).join('')}
+                    </div>
+                    <div class="info-line" style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">
+                      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                      จัดส่งที่: ${escapeHtml(ord.shipping_address)} · โทรศัพท์: ${escapeHtml(ord.contact_phone)}
+                    </div>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:0.75rem;">
+                    <div>
+                      <span style="font-size:0.85rem; color:var(--text-muted);">ราคารวมทั้งหมด: </span>
+                      <strong style="font-size:1.1rem; color:var(--success);">${formatPrice(ord.total_price)}</strong>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                      <a href="/inbox.html" class="btn btn-outline btn-sm"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"></path></svg> ไปที่ห้องแชท</a>
+                      ${ord.status === 'shipped' ? `<button class="btn btn-primary btn-sm" onclick="confirmDeliveryCompleted(${ord.id})"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg> ได้รับของและยืนยันแล้ว</button>` : ''}
+                      ${ord.status === 'pending' ? `<button class="btn btn-ghost btn-sm" style="color:var(--danger); border-color:var(--danger);" onclick="cancelBooking(${ord.id})">ยกเลิกรายการ</button>` : ''}
+                      ${ord.status === 'completed' ? (ord.review_id
+                        ? `<button class="btn btn-outline btn-sm" onclick="openReviewModal(${ord.id})">แก้ไขรีวิว (${ord.review_rating}★)</button>`
+                        : `<button class="btn btn-primary btn-sm" onclick="openReviewModal(${ord.id})">ให้คะแนนร้านค้า</button>`) : ''}
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('') : `
+              <div class="empty-state" style="padding: 2rem;">
+                <div class="empty-state-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><path d="m7.5 4.27 9 5.15"></path></svg></div>
+                <h4>ไม่มีประวัติการสั่งจองสินค้า</h4>
+                <p>ไปคุยต่อรองสเปคหรือจองซื้อสินค้าจาก Marketplace คอมพิวเตอร์ประกอบชิ้นหลักๆ ได้เลย</p>
+                <a href="/products.html" class="btn btn-primary btn-sm mt-1">ช้อปสินค้า Marketplace</a>
+              </div>
+            `}
+          </div>
+        `;
+      } 
+      else if (currentSubTab === 'settings') {
+        subContent = `
+          <div class="section-header">
+            <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"></path><circle cx="12" cy="12" r="3"></circle></svg> ตั้งค่าข้อมูลสมาชิก</h3>
+          </div>
+          <div style="margin-top:1.5rem; max-width:600px;">
+            <form onsubmit="return handleUpdateProfileSubmit(event)">
+              <div class="form-group">
+                <label>ชื่อผู้ใช้ (Username)</label>
+                <div class="form-input-group">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="8" r="5"></circle></svg>
+                  <input type="text" class="form-input" id="set-username" value="${escapeHtml(currentUserProfile.username)}" required minlength="3">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>อีเมล (Email)</label>
+                <div class="form-input-group">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 6-10 7L2 6"></path></svg>
+                  <input type="email" class="form-input" id="set-email" value="${escapeHtml(currentUserProfile.email || '')}" placeholder="ไม่มีอีเมลระบุ">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>เบอร์โทรศัพท์ (Phone)</label>
+                <div class="form-input-group">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                  <input type="text" class="form-input" id="set-phone" value="${escapeHtml(currentUserProfile.phone || '')}" placeholder="ไม่มีเบอร์โทรศัพท์ระบุ">
+                </div>
+              </div>
+              <div id="set-profile-error" class="form-error"></div>
+              <button type="submit" class="btn btn-primary btn-sm" id="set-profile-submit-btn">อัปเดตข้อมูลบัญชี</button>
+            </form>
+
+            <div class="settings-section-divider">
+              <h4 class="settings-section-title">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                เปลี่ยนรหัสผ่าน
+              </h4>
+              <form onsubmit="return handleChangePasswordSubmit(event)">
+                <div class="form-group">
+                  <label>รหัสผ่านปัจจุบัน</label>
+                  <div class="form-input-group">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <input type="password" class="form-input" id="pwd-current" placeholder="ใส่รหัสผ่านปัจจุบันของคุณ" required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>รหัสผ่านใหม่</label>
+                  <div class="form-input-group">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <input type="password" class="form-input" id="pwd-new" placeholder="อย่างน้อย 8 ตัวอักษร" required minlength="8">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>ยืนยันรหัสผ่านใหม่</label>
+                  <div class="form-input-group">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <input type="password" class="form-input" id="pwd-confirm" placeholder="ใส่รหัสผ่านใหม่อีกครั้ง" required>
+                  </div>
+                </div>
+                <div id="pwd-change-error" class="form-error"></div>
+                <button type="submit" class="btn btn-primary btn-sm" id="pwd-change-submit-btn">เปลี่ยนรหัสผ่าน</button>
+              </form>
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <main class="profile-main">
+          <ul class="sub-tabs">
+            <li class="sub-tab ${buildTabActive}" onclick="switchSubTab('builds')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"></path></svg> สเปคที่บันทึกไว้</li>
+            <li class="sub-tab ${wishTabActive}" onclick="switchSubTab('wishlist')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"></path></svg> รายการที่ถูกใจ</li>
+            <li class="sub-tab ${addrTabActive}" onclick="switchSubTab('addresses')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg> ที่อยู่จัดส่ง</li>
+            <li class="sub-tab ${orderTabActive}" onclick="switchSubTab('orders')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><path d="m7.5 4.27 9 5.15"></path></svg> ประวัติการซื้อ</li>
+            <li class="sub-tab ${setTabActive}" onclick="switchSubTab('settings')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"></path><circle cx="12" cy="12" r="3"></circle></svg> ตั้งค่าบัญชี</li>
+          </ul>
+          <div class="profile-tab-content">
+            ${subContent}
+          </div>
+        </main>
+      `;
+    }
+
+    // === 2. Render Seller Section ===
+    function renderSellerMain() {
+      if (['listings', 'orders', 'kyc', 'settings'].indexOf(currentSubTab) === -1) {
+        currentSubTab = 'listings';
+      }
+
+      const listTabActive = currentSubTab === 'listings' ? 'active' : '';
+      const orderTabActive = currentSubTab === 'orders' ? 'active' : '';
+      const kycTabActive = currentSubTab === 'kyc' ? 'active' : '';
+      const setTabActive = currentSubTab === 'settings' ? 'active' : '';
+
+      let subContent = '';
+
+      if (currentSubTab === 'listings') {
+        const listings = currentUserProfile.listings || [];
+        subContent = `
+          <div class="section-header">
+            <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"></path><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"></circle></svg> รายการสินค้าประกาศขายของคุณ</h3>
+            <a href="/sell-product.html" class="btn btn-primary btn-sm">+ ลงประกาศขายใหม่</a>
+          </div>
+          <div class="card-grid" style="margin-top:1.5rem;">
+            ${listings.length > 0 ? listings.map(item => {
+              const photo = item.photos && item.photos.length > 0 ? item.photos[0] : '';
+              let statusText = '';
+              let badgeStyle = '';
+              switch (item.status) {
+                case 'active': statusText = 'กำลังขาย'; badgeStyle = 'background:var(--success); color:white;'; break;
+                case 'sold': statusText = 'ขายแล้ว'; badgeStyle = 'background:var(--text-muted); color:white;'; break;
+                case 'paused': statusText = 'พักชั่วคราว'; badgeStyle = 'background:var(--warning); color:white;'; break;
+              }
+
+              return `
+                <div class="build-card" style="border:1px solid var(--border);">
+                  <div class="build-card-image" style="position:relative;">
+                    ${photo ? `<img src="${photo}" style="width:100%; height:100%; object-fit:cover;">` : '<div class="card-icon-placeholder"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-5"></path><path d="M15 8V2"></path><path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z"></path><path d="M9 8V2"></path></svg></div>'}
+                    <span class="card-badge" style="top:8px; left:8px; ${badgeStyle}">${statusText}</span>
+                    ${item.review_status === 'pending_review' ? '<span class="card-badge" style="top:8px; right:8px; background:var(--warning); color:black;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> รอรีวิว</span>' : ''}
+                  </div>
+                  <div class="build-card-body" style="padding:1rem;">
+                    <h4 class="build-card-title"><a href="/product-detail.html?id=${item.id}">${escapeHtml(item.brand)} ${escapeHtml(item.model || item.part_name)}</a></h4>
+                    <div style="font-weight:bold; color:var(--success); margin: 0.5rem 0;">${formatPrice(item.price)}</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:1rem;">Serial: ${escapeHtml(item.serial_number)}</div>
+                    <div style="display:flex; gap:6px;">
+                      ${item.status === 'active' ? `<button class="btn btn-outline btn-sm" style="flex:1; font-size:0.75rem;" onclick="updateProductStatus(${item.id}, 'paused')">หยุดขาย</button>` : ''}
+                      ${item.status === 'paused' ? `<button class="btn btn-outline btn-sm" style="flex:1; font-size:0.75rem; border-color:var(--success); color:var(--success);" onclick="updateProductStatus(${item.id}, 'active')">เปิดขายใหม่</button>` : ''}
+                      <button class="btn btn-ghost btn-sm" style="color:var(--danger); border-color:var(--danger); font-size:0.75rem;" onclick="deleteProductListing(${item.id})">ลบ</button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('') : `
+              <div class="empty-state" style="grid-column: 1 / -1; padding: 2rem;">
+                <div class="empty-state-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"></path><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"></circle></svg></div>
+                <h4>ไม่มีสินค้าลงประกาศขายในร้านของคุณ</h4>
+                <p>วางสเปค/อะไหล่ เก่าที่ใช้แล้ว สภาพดีของคุณลงตลาด Marketplace ได้แล้วตอนนี้!</p>
+                <a href="/sell-product.html" class="btn btn-primary btn-sm mt-1">เริ่มลงประกาศขาย</a>
+              </div>
+            `}
+          </div>
+        `;
+      } 
+      else if (currentSubTab === 'orders') {
+        const orders = currentUserProfile.seller_orders || [];
+        subContent = `
+          <div class="section-header">
+            <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path></svg> รายการลูกค้าสั่งจองอะไหล่ร้านคุณ</h3>
+          </div>
+          <div style="margin-top:1.5rem;">
+            ${orders.length > 0 ? orders.map(ord => {
+              let statusThai = '';
+              let statusClass = '';
+              switch (ord.status) {
+                case 'pending': statusThai = 'รอเจรจาโอนเงิน'; statusClass = 'status-pending'; break;
+                case 'paid': statusThai = 'ลูกค้าโอนเงินแล้ว'; statusClass = 'status-paid'; break;
+                case 'shipped': statusThai = 'จัดส่งสิ่งของแล้ว'; statusClass = 'status-shipped'; break;
+                case 'completed': statusThai = 'เสร็จสมบูรณ์เรียบร้อย'; statusClass = 'status-completed'; break;
+                case 'cancelled': statusThai = 'ยกเลิกรายการ'; statusClass = 'status-cancelled'; break;
+              }
+
+              return `
+                <div class="order-list-card">
+                  <div class="order-header">
+                    <div>
+                      <span style="font-weight:bold; color:var(--highlight);">ใบสั่งจอง #BO-${ord.id}</span>
+                      <span style="color:var(--text-muted); font-size:0.8rem; margin-left:10px;">วันที่ทำรายการ: ${formatDate(ord.created_at)}</span>
+                    </div>
+                    <span class="order-status-badge ${statusClass}">${statusThai}</span>
+                  </div>
+                  <div style="margin-bottom:0.75rem;">
+                    <div style="font-size:0.9rem; font-weight:600; margin-bottom:4px;">ผู้สั่งจอง: ${escapeHtml(ord.buyer_name)}</div>
+                    <div style="font-size:0.85rem; color:var(--text-secondary);">
+                      <strong>รายการชิ้นงาน:</strong>
+                      ${ord.items.map(item => `
+                        <div style="margin-left:10px; margin-top:2px;">
+                          - ${escapeHtml(item.brand)} ${escapeHtml(item.model || item.part_name)} (ราคา: ${formatPrice(item.price)})
+                        </div>
+                      `).join('')}
+                    </div>
+                    <div class="info-line" style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">
+                      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                      ปลายทางผู้รับ: ${escapeHtml(ord.shipping_address)} · ติดต่อ: ${escapeHtml(ord.contact_phone)}
+                    </div>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:0.75rem;">
+                    <div>
+                      <span style="font-size:0.85rem; color:var(--text-muted);">รายรับสุทธิ: </span>
+                      <strong style="font-size:1.1rem; color:var(--success);">${formatPrice(ord.total_price)}</strong>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                      <a href="/inbox.html" class="btn btn-outline btn-sm"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"></path></svg> ไปที่ห้องแชท</a>
+                      ${ord.status === 'pending' ? `<button class="btn btn-primary btn-sm" onclick="confirmPaymentReceived(${ord.id})"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg> ได้รับยอดโอนแล้ว</button>` : ''}
+                      ${ord.status === 'paid' ? `<button class="btn btn-primary btn-sm" style="background:#8e44ad; border-color:#8e44ad;" onclick="confirmOrderShipped(${ord.id})"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path><path d="M15 18H9"></path><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="18" r="2"></circle></svg> จัดส่งพัสดุแล้ว</button>` : ''}
+                      ${ord.status === 'pending' || ord.status === 'paid' ? `<button class="btn btn-ghost btn-sm" style="color:var(--danger); border-color:var(--danger);" onclick="cancelBooking(${ord.id})">ยกเลิกคำสั่ง</button>` : ''}
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('') : `
+              <div class="empty-state" style="padding: 2rem;">
+                <div class="empty-state-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path></svg></div>
+                <h4>ไม่มีลูกค้าสั่งจองสินค้าในระบบของคุณในขณะนี้</h4>
+                <p>สินค้าประกาศขายของคุณจะแสดงในหน้าหลักของ Marketplace เมื่อมีผู้สนใจจะเปิดแชทติดต่อเข้ามา</p>
+              </div>
+            `}
+          </div>
+        `;
+      } 
+      else if (currentSubTab === 'kyc') {
+        const isVerified = currentUserProfile.is_seller_verified === 1;
+        subContent = `
+          <div class="section-header">
+            <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg> ตรวจสอบการยืนยันตัวตนผู้ขาย (Seller Identity KYC)</h3>
+          </div>
+          <div style="margin-top:1.5rem; max-width:600px;">
+            ${isVerified ? `
+              <div style="background:rgba(46, 204, 113, 0.1); border:1px solid var(--success); border-radius:var(--radius-lg); padding:2rem; text-align:center;">
+                <div class="kyc-verified-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg></div>
+                <h4 style="margin-top:1rem; color:var(--success);">คุณได้รับการยืนยันตัวตนเป็นผู้ขายที่ถูกต้องเรียบร้อยแล้ว</h4>
+                <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.5rem;">ระบบตรวจสอบข้อมูลเลขบัตรประชาชนและการผูกบัญชีธนาคารเพื่อความปลอดภัยเรียบร้อย ร้านค้าจะแสดงสัญลักษณ์ Badge พิเศษในการจองและประกาศซื้อขาย</p>
+                <div style="margin-top:1.5rem; text-align:left; font-size:0.9rem; border-top:1px solid var(--border); padding-top:1rem;">
+                  <div class="kyc-info-row"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:15px;height:15px;"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg> บัตรประชาชนผู้ขาย: <span style="font-family:monospace; color:var(--text-primary);">************</span></div>
+                  <div class="kyc-info-row"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:15px;height:15px;"><path d="M10 18v-7"></path><path d="M11.119 2.205a2 2 0 0 1 1.762 0l7.84 3.846A.5.5 0 0 1 20.5 7h-17a.5.5 0 0 1-.22-.949z"></path><path d="M14 18v-7"></path><path d="M18 18v-7"></path><path d="M3 22h18"></path><path d="M6 18v-7"></path></svg> บัญชีธนาคารรับเงิน: <span style="color:var(--text-primary); font-weight:bold;">${escapeHtml(currentUserProfile.seller_bank_account || 'ไม่ได้ระบุ')}</span></div>
+                  <div class="kyc-info-row"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:15px;height:15px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> เบอร์โทรศัพท์: <span style="color:var(--text-primary); font-weight:bold;">${escapeHtml(currentUserProfile.seller_phone || '')}</span></div>
+                </div>
+              </div>
+            ` : `
+              <div style="background:var(--bg-tertiary); border:1px solid var(--border); border-radius:var(--radius-lg); padding:1.5rem;">
+                <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:1.5rem;">
+                  เพื่อความโปร่งใสและสร้างความมั่นใจให้กับลูกค้าในการสั่งจองสินค้า กรุณากรอกยืนยันตัวตน (KYC) ผู้ขาย โดยระบบจะทำการบันทึกข้อมูลเพื่อความปลอดภัย
+                </p>
+                <form onsubmit="handleSellerKycSubmit(event)">
+                  <div class="form-group">
+                    <label>ชื่อ-นามสกุล (ตรงตามบัตรประชาชน)</label>
+                    <div class="form-input-group">
+                      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="8" r="5"></circle></svg>
+                      <input type="text" class="form-input" id="kyc-fullname" placeholder="เช่น สมชาย ใจดี">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>เลขบัตรประจำตัวประชาชน</label>
+                    <div class="form-input-group">
+                      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg>
+                      <input type="text" class="form-input" id="kyc-idcard" required minlength="13" maxlength="13" pattern="[0-9]{13}" placeholder="เลขบัตร 13 หลัก">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>ธนาคาร</label>
+                    <div class="form-input-group">
+                      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 18v-7"></path><path d="M11.119 2.205a2 2 0 0 1 1.762 0l7.84 3.846A.5.5 0 0 1 20.5 7h-17a.5.5 0 0 1-.22-.949z"></path><path d="M14 18v-7"></path><path d="M18 18v-7"></path><path d="M3 22h18"></path><path d="M6 18v-7"></path></svg>
+                      <select class="form-input" id="kyc-bankname">
+                        <option value="">-- เลือกธนาคาร --</option>
+                        <option value="กสิกรไทย">กสิกรไทย (KBANK)</option>
+                        <option value="ไทยพาณิชย์">ไทยพาณิชย์ (SCB)</option>
+                        <option value="กรุงเทพ">กรุงเทพ (BBL)</option>
+                        <option value="กรุงไทย">กรุงไทย (KTB)</option>
+                        <option value="กรุงศรีอยุธยา">กรุงศรีอยุธยา (BAY)</option>
+                        <option value="ทหารไทยธนชาต">ทหารไทยธนชาต (TTB)</option>
+                        <option value="ออมสิน">ออมสิน (GSB)</option>
+                        <option value="พร้อมเพย์">พร้อมเพย์ (PromptPay)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>เลขที่บัญชีธนาคารรับเงิน</label>
+                    <div class="form-input-group">
+                      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M2 10h20"></path></svg>
+                      <input type="text" class="form-input" id="kyc-bankaccount" required placeholder="เช่น 012-3-45678-9">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>ชื่อบัญชีธนาคาร</label>
+                    <div class="form-input-group">
+                      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="8" r="5"></circle></svg>
+                      <input type="text" class="form-input" id="kyc-bankaccountname" placeholder="เช่น นายสมชาย ใจดี">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>เบอร์โทรศัพท์ร้านค้า/ผู้ขาย</label>
+                    <div class="form-input-group">
+                      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                      <input type="tel" class="form-input" id="kyc-phone" required pattern="[0-9]{9,10}" placeholder="08XXXXXXXX">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>เอกสารยืนยันตัวตน (รูปถ่ายบัตรประชาชน)</label>
+                    <input type="file" id="kyc-doc-file" accept="image/*" class="hidden" onchange="handleKycDocUpload(event)">
+                    <input type="hidden" id="kyc-docurl">
+                    <button type="button" class="btn btn-outline btn-block" id="kyc-doc-upload-btn" onclick="document.getElementById('kyc-doc-file').click()">
+                      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                      อัปโหลดรูปบัตรประชาชน
+                    </button>
+                    <div id="kyc-doc-preview"></div>
+                  </div>
+
+                  <div id="kyc-error" style="color:var(--danger); font-size:0.85rem; margin-bottom:1rem;"></div>
+                  <button type="submit" class="btn btn-primary btn-block" id="kyc-submit-btn">ส่งข้อมูลยืนยันตัวตน</button>
+                </form>
+              </div>
+            `}
+          </div>
+        `;
+      }
+      else if (currentSubTab === 'settings') {
+        subContent = `
+          <div class="section-header">
+            <h3 style="display: flex; align-items: center; gap: 8px;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"></path><circle cx="12" cy="12" r="3"></circle></svg> ตั้งค่ารายละเอียดร้านค้าผู้ขาย</h3>
+          </div>
+          <div style="margin-top:1.5rem; max-width:600px;">
+            <form onsubmit="handleSellerProfileUpdate(event)">
+              <div class="form-group">
+                <label>ชื่อร้านค้า (Shop Name)</label>
+                <input type="text" class="form-input" id="set-shopname" value="${escapeHtml(currentUserProfile.shop_name || '')}" placeholder="กำหนดชื่อร้านค้าของคุณ" required>
+              </div>
+              <div class="form-group">
+                <label>เบอร์โทรศัพท์ติดต่อร้านค้า</label>
+                <input type="tel" class="form-input" id="set-sellerphone" value="${escapeHtml(currentUserProfile.seller_phone || '')}" placeholder="เบอร์โทรติดต่อสำหรับติดต่อจัดส่ง">
+              </div>
+              <div class="form-group">
+                <label>บัญชีธนาคาร / พร้อมเพย์รับเงิน (Bank Account / PromptPay)</label>
+                <input type="text" class="form-input" id="set-sellerbank" value="${escapeHtml(currentUserProfile.seller_bank_account || '')}" placeholder="ระบุธนาคาร เลขที่บัญชี หรือเลขพร้อมเพย์รับเงิน" required>
+              </div>
+              <div class="grid grid-cols-2 gap-1">
+                <div class="form-group">
+                  <label>อำเภอ / เขต (ร้านค้า)</label>
+                  <input type="text" class="form-input" id="set-sellerdistrict" value="${escapeHtml(currentUserProfile.seller_address_district || '')}" placeholder="เช่น ปทุมวัน" required>
+                </div>
+                <div class="form-group">
+                  <label>จังหวัด (ร้านค้า)</label>
+                  <input type="text" class="form-input" id="set-sellerprovince" value="${escapeHtml(currentUserProfile.seller_address_province || '')}" placeholder="เช่น กรุงเทพมหานคร" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>ลิงก์รูปภาพโลโก้ร้านค้า</label>
+                <input type="url" class="form-input" id="set-selleravatar" value="${escapeHtml(currentUserProfile.seller_avatar_url || '')}" placeholder="URL รูปโลโก้ร้านค้า (ปล่อยว่างถ้าจะใช้รูปโปรไฟล์ปกติ)">
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm">บันทึกข้อมูลร้านค้า</button>
+            </form>
+          </div>
+        `;
+      }
+
+      return `
+        <main class="profile-main">
+          <ul class="sub-tabs">
+            <li class="sub-tab ${listTabActive}" onclick="switchSubTab('listings')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"></path><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"></circle></svg> รายการสินค้า</li>
+            <li class="sub-tab ${orderTabActive}" onclick="switchSubTab('orders')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path></svg> คำสั่งจองของลูกค้า</li>
+            <li class="sub-tab ${kycTabActive}" onclick="switchSubTab('kyc')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg> ยืนยันตัวตน (KYC)</li>
+            <li class="sub-tab ${setTabActive}" onclick="switchSubTab('settings')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"></path><circle cx="12" cy="12" r="3"></circle></svg> ข้อมูลร้านค้า</li>
+          </ul>
+          <div class="profile-tab-content">
+            ${subContent}
+          </div>
+        </main>
+      `;
+    }
+
+    function switchSubTab(tabName) {
+      currentSubTab = tabName;
+      renderProfileUI();
+    }
+
+    // === Role toggling ===
+    async function handleRoleSwitch(targetRole) {
+      try {
+        await Auth.switchRole(targetRole);
+        currentSubTab = targetRole === 'seller' ? 'listings' : 'builds';
+        Toast.success(`เปลี่ยนเป็นบทบาท ${targetRole === 'seller' ? 'ผู้ขาย (Seller)' : 'ผู้ซื้อ (Buyer)'} แล้ว`);
+        await loadProfileData();
+        Auth.updateUI();
+      } catch (err) {
+        if (err.requires_seller_registration || (err.message && err.message.includes('ลงทะเบียน'))) {
+          openSellerRegistrationModal();
+        } else {
+          Toast.error('ล้มเหลวในการสลับบทบาท: ' + err.message);
+        }
+      }
+    }
+
+    // === Seller Registration Modal Handlers ===
+    function openSellerRegistrationModal() {
+      const modal = document.getElementById('seller-reg-modal');
+      if (modal) {
+        modal.style.display = 'flex';
+        // Pre-fill phone if available
+        if (currentUserData && currentUserData.phone && !document.getElementById('reg-sellerphone').value) {
+          document.getElementById('reg-sellerphone').value = currentUserData.phone;
+        }
+      }
+    }
+
+    function closeSellerRegModal() {
+      const modal = document.getElementById('seller-reg-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    async function handleSellerRegistrationSubmit(e) {
+      e.preventDefault();
+      const errEl = document.getElementById('seller-reg-error');
+      if (errEl) errEl.textContent = '';
+      const submitBtn = document.getElementById('seller-reg-submit-btn');
+
+      const data = {
+        shop_name: document.getElementById('reg-shopname').value.trim(),
+        seller_phone: document.getElementById('reg-sellerphone').value.trim(),
+        seller_bank_name: document.getElementById('reg-bankname').value.trim(),
+        seller_bank_account: document.getElementById('reg-bankaccount').value.trim(),
+        seller_bank_account_name: document.getElementById('reg-bankaccountname').value.trim(),
+        seller_address_province: document.getElementById('reg-province').value.trim(),
+        seller_address_district: document.getElementById('reg-district').value.trim(),
+        sub_district: document.getElementById('reg-subdistrict').value.trim(),
+        zipcode: document.getElementById('reg-zipcode').value.trim()
+      };
+
+      setBtnLoading(submitBtn, true);
+      try {
+        const result = await API.post('/auth/register-seller', data);
+        Toast.success(result.message || 'ลงทะเบียนผู้ขายสำเร็จ!');
+        closeSellerRegModal();
+        if (result.user) Auth.setUser(result.user);
+        currentSubTab = 'listings';
+        await loadProfileData();
+        Auth.updateUI();
+      } catch (err) {
+        if (errEl) errEl.textContent = err.message;
+        Toast.error(err.message);
+      } finally {
+        setBtnLoading(submitBtn, false);
+      }
+    }
+
+    // === Buyer: Manage Addresses ===
+    let addressModalMode = 'add'; // 'add' or 'edit'
+
+    function openAddressModal(addr = null) {
+      const modal = document.getElementById('address-modal');
+      const title = document.getElementById('address-modal-title');
+      const form = document.getElementById('address-form');
+
+      form.reset();
+      document.getElementById('address-id').value = '';
+
+      if (addr) {
+        addressModalMode = 'edit';
+        title.textContent = 'แก้ไขข้อมูลที่อยู่จัดส่ง';
+        document.getElementById('address-id').value = addr.id;
+        document.getElementById('addr-name').value = addr.recipient_name;
+        document.getElementById('addr-phone').value = addr.phone;
+        document.getElementById('addr-line1').value = addr.address_line1;
+        document.getElementById('addr-line2').value = addr.address_line2 || '';
+        document.getElementById('addr-district').value = addr.district;
+        document.getElementById('addr-subdistrict').value = addr.sub_district || '';
+        document.getElementById('addr-province').value = addr.province;
+        document.getElementById('addr-postal').value = addr.postal_code;
+        document.getElementById('addr-default').checked = addr.is_default === 1;
+      } else {
+        addressModalMode = 'add';
+        title.textContent = 'เพิ่มที่อยู่จัดส่งใหม่';
+      }
+
+      modal.style.display = 'flex';
+      document.getElementById('addr-name').focus();
+    }
+
+    function closeAddressModal() {
+      document.getElementById('address-modal').style.display = 'none';
+    }
+
+    async function handleAddressSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('address-id').value;
+      const data = {
+        recipient_name: document.getElementById('addr-name').value.trim(),
+        phone: document.getElementById('addr-phone').value.trim(),
+        address_line1: document.getElementById('addr-line1').value.trim(),
+        address_line2: document.getElementById('addr-line2').value.trim(),
+        district: document.getElementById('addr-district').value.trim(),
+        sub_district: document.getElementById('addr-subdistrict').value.trim(),
+        province: document.getElementById('addr-province').value.trim(),
+        postal_code: document.getElementById('addr-postal').value.trim(),
+        is_default: document.getElementById('addr-default').checked ? 1 : 0
+      };
+
+      try {
+        if (addressModalMode === 'add') {
+          await API.post('/auth/addresses', data);
+          Toast.success('เพิ่มที่อยู่จัดส่งเรียบร้อย!');
+        } else {
+          await API.put(`/auth/addresses/${id}`, data);
+          Toast.success('อัปเดตที่อยู่จัดส่งเรียบร้อย!');
+        }
+        closeAddressModal();
+        await loadProfileData();
+      } catch (error) {
+        Toast.error('เกิดข้อผิดพลาด: ' + error.message);
+      }
+    }
+
+    async function setDefaultAddress(id) {
+      try {
+        await API.put(`/auth/addresses/${id}`, { is_default: 1 });
+        Toast.success('ตั้งเป็นที่อยู่หลักเรียบร้อย');
+        await loadProfileData();
+      } catch (err) {
+        Toast.error('ล้มเหลว: ' + err.message);
+      }
+    }
+
+    async function deleteAddress(id) {
+      if (!confirm('คุณแน่ใจว่าต้องการลบที่อยู่นี้หรือไม่?')) return;
+      try {
+        await API.delete(`/auth/addresses/${id}`);
+        Toast.success('ลบที่อยู่แล้ว');
+        await loadProfileData();
+      } catch (err) {
+        Toast.error('ล้มเหลว: ' + err.message);
+      }
+    }
+
+    function editAddress(addr) {
+      openAddressModal(addr);
+    }
+
+    // === Buyer: Builds - like / comment / edit / delete ===
+    async function toggleBuildLike(buildId) {
+      const btn = document.getElementById(`build-like-btn-${buildId}`);
+      const countEl = document.getElementById(`build-like-count-${buildId}`);
+      const wasLiked = likedBuildIds.has(buildId);
+
+      // Optimistic UI update
+      if (btn) {
+        btn.classList.toggle('liked', !wasLiked);
+        btn.disabled = true;
+      }
+
+      try {
+        const result = wasLiked
+          ? await API.delete(`/builds/${buildId}/like`)
+          : await API.post(`/builds/${buildId}/like`);
+
+        if (wasLiked) likedBuildIds.delete(buildId);
+        else likedBuildIds.add(buildId);
+
+        if (countEl) countEl.textContent = result.likes_count;
+        const build = myBuilds.find(b => b.id === buildId);
+        if (build) build.likes_count = result.likes_count;
+      } catch (err) {
+        // revert optimistic change on failure
+        if (btn) btn.classList.toggle('liked', wasLiked);
+        Toast.error('ล้มเหลว: ' + err.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function toggleBuildComments(buildId) {
+      const section = document.getElementById(`build-comments-${buildId}`);
+      if (!section) return;
+
+      const isHidden = section.classList.contains('hidden');
+      if (isHidden) {
+        section.classList.remove('hidden');
+        if (!buildCommentsCache[buildId]) {
+          await loadBuildComments(buildId);
+        }
+      } else {
+        section.classList.add('hidden');
+      }
+    }
+
+    async function loadBuildComments(buildId) {
+      const listEl = document.getElementById(`build-comments-list-${buildId}`);
+      try {
+        // GET /builds/:id returns the full detail incl. real comment history + user_liked,
+        // so use it to sync true like-state too (list endpoint used to populate the tab only
+        // returns counts, not per-user like status).
+        const detail = await API.get(`/builds/${buildId}`);
+        buildCommentsCache[buildId] = detail.comments || [];
+
+        if (detail.user_liked) likedBuildIds.add(buildId);
+        else likedBuildIds.delete(buildId);
+        const likeBtn = document.getElementById(`build-like-btn-${buildId}`);
+        if (likeBtn) likeBtn.classList.toggle('liked', !!detail.user_liked);
+
+        renderBuildComments(buildId);
+      } catch (err) {
+        if (listEl) listEl.innerHTML = `<div class="build-comments-empty">โหลดความคิดเห็นไม่สำเร็จ: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function renderBuildComments(buildId) {
+      const listEl = document.getElementById(`build-comments-list-${buildId}`);
+      if (!listEl) return;
+      const comments = buildCommentsCache[buildId] || [];
+      listEl.innerHTML = comments.length > 0 ? comments.map(c => `
+        <div class="build-comment-item">
+          <span class="build-comment-author">${escapeHtml(c.username)}</span>
+          <span class="build-comment-text">${escapeHtml(c.content)}</span>
+          <span class="build-comment-date">${formatDate(c.created_at)}</span>
+        </div>
+      `).join('') : `<div class="build-comments-empty">ยังไม่มีความคิดเห็น เป็นคนแรกที่แสดงความคิดเห็น!</div>`;
+    }
+
+    async function submitBuildComment(e, buildId) {
+      e.preventDefault();
+      const input = document.getElementById(`build-comment-input-${buildId}`);
+      const content = input.value.trim();
+      if (!content) return false;
+
+      const btn = e.target.querySelector('button[type="submit"]');
+      setBtnLoading(btn, true);
+      try {
+        const comment = await API.post(`/builds/${buildId}/comments`, { content });
+        if (!buildCommentsCache[buildId]) buildCommentsCache[buildId] = [];
+        buildCommentsCache[buildId].unshift(comment); // newest-first, matches GET /builds/:id ordering
+        renderBuildComments(buildId);
+        input.value = '';
+
+        const build = myBuilds.find(b => b.id === buildId);
+        if (build) build.comments_count = (build.comments_count || 0) + 1;
+        const countEl = document.getElementById(`build-comment-count-${buildId}`);
+        if (countEl) countEl.textContent = build ? build.comments_count : comment.id;
+      } catch (err) {
+        Toast.error('ล้มเหลว: ' + err.message);
+      } finally {
+        setBtnLoading(btn, false);
+      }
+      return false;
+    }
+
+    async function editBuildPrompt(buildId) {
+      const build = myBuilds.find(b => b.id === buildId);
+      if (!build) return;
+
+      const newName = prompt('แก้ไขชื่อชุดจัดสเปค:', build.name);
+      if (newName === null) return; // cancelled
+      const trimmedName = newName.trim();
+      if (!trimmedName) {
+        Toast.error('กรุณากรอกชื่อชุดจัดสเปค');
+        return;
+      }
+
+      const makePublic = confirm('ต้องการตั้งให้ชุดนี้เป็นสาธารณะ (ผู้อื่นมองเห็นได้) หรือไม่?\n\nกด "ตกลง" = สาธารณะ\nกด "ยกเลิก" = ส่วนตัว');
+
+      try {
+        // NOTE: intentionally omit `parts` so PUT /builds/:id leaves the existing part list untouched
+        await API.put(`/builds/${buildId}`, { name: trimmedName, is_public: makePublic ? 1 : 0 });
+        Toast.success('แก้ไขชุดจัดสเปคเรียบร้อยแล้ว');
+        await loadProfileData();
+      } catch (err) {
+        Toast.error('เกิดข้อผิดพลาด: ' + err.message);
+      }
+    }
+
+    async function deleteBuildCard(buildId) {
+      if (!confirm('คุณแน่ใจว่าต้องการลบชุดจัดสเปคนี้หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้')) return;
+      try {
+        await API.delete(`/builds/${buildId}`);
+        Toast.success('ลบชุดจัดสเปคเรียบร้อยแล้ว');
+        myBuilds = myBuilds.filter(b => b.id !== buildId);
+        delete buildCommentsCache[buildId];
+        likedBuildIds.delete(buildId);
+        renderProfileUI();
+      } catch (err) {
+        Toast.error('ล้มเหลว: ' + err.message);
+      }
+    }
+
+    // === Buyer: Wishlist ===
+    async function handleRemoveWishlist(productId) {
+      try {
+        await API.delete(`/auth/wishlist/${productId}`);
+        Toast.success('ลบสินค้าออกจากรายการที่ถูกใจแล้ว');
+        await loadProfileData();
+      } catch (error) {
+        Toast.error('เกิดข้อผิดพลาด: ' + error.message);
+      }
+    }
+
+    // === Profile Setup forms ===
+    async function handleUpdateProfileSubmit(e) {
+      e.preventDefault();
+      const errorDiv = document.getElementById('set-profile-error');
+      const btn = document.getElementById('set-profile-submit-btn');
+      if (errorDiv) errorDiv.textContent = '';
+      clearFieldErrors(['set-username', 'set-email', 'set-phone']);
+
+      const username = document.getElementById('set-username').value.trim();
+      const email = document.getElementById('set-email').value.trim();
+      const phone = document.getElementById('set-phone').value.trim();
+
+      setBtnLoading(btn, true);
+      try {
+        const result = await API.put('/auth/profile', { username, email, phone });
+        Auth.setUser(result.user);
+        Toast.success('อัปเดตข้อมูลบัญชีสำเร็จ!');
+        await loadProfileData();
+        Auth.updateUI();
+      } catch (error) {
+        if (errorDiv) errorDiv.textContent = error.message;
+        setFieldError('set-username', true);
+        Toast.error('เกิดข้อผิดพลาด: ' + error.message);
+        setBtnLoading(btn, false);
+      }
+    }
+
+    // === Buyer/Seller: Change Password ===
+    // Uses a raw fetch() instead of API.put() on purpose: PUT /api/auth/change-password
+    // returns 401 for "wrong current password", but API.request() treats ANY 401 as an
+    // expired/invalid session and force-redirects to /login.html, clearing the token - which
+    // would wipe out this form's ability to show the "current password incorrect" error.
+    async function handleChangePasswordSubmit(e) {
+      e.preventDefault();
+      const errorDiv = document.getElementById('pwd-change-error');
+      const btn = document.getElementById('pwd-change-submit-btn');
+      if (errorDiv) errorDiv.textContent = '';
+      clearFieldErrors(['pwd-current', 'pwd-new', 'pwd-confirm']);
+
+      const currentPassword = document.getElementById('pwd-current').value;
+      const newPassword = document.getElementById('pwd-new').value;
+      const confirmPassword = document.getElementById('pwd-confirm').value;
+
+      if (newPassword.length < 8) {
+        if (errorDiv) errorDiv.textContent = 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 8 ตัวอักษร';
+        setFieldError('pwd-new', true);
+        return false;
+      }
+      if (newPassword !== confirmPassword) {
+        if (errorDiv) errorDiv.textContent = 'รหัสผ่านใหม่และการยืนยันรหัสผ่านไม่ตรงกัน';
+        setFieldError('pwd-new', true);
+        setFieldError('pwd-confirm', true);
+        return false;
+      }
+
+      setBtnLoading(btn, true);
+      try {
+        const token = Auth.getToken();
+        const res = await fetch('/api/auth/change-password', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || `ข้อผิดพลาด HTTP ${res.status}`);
+        }
+
+        Toast.success(data.message || 'เปลี่ยนรหัสผ่านสำเร็จ!');
+        document.getElementById('pwd-current').value = '';
+        document.getElementById('pwd-new').value = '';
+        document.getElementById('pwd-confirm').value = '';
+      } catch (error) {
+        if (errorDiv) errorDiv.textContent = error.message;
+        setFieldError('pwd-current', true);
+        setFieldError('pwd-new', true);
+        Toast.error('เปลี่ยนรหัสผ่านไม่สำเร็จ: ' + error.message);
+      } finally {
+        setBtnLoading(btn, false);
+      }
+      return false;
+    }
+
+    // === Seller: Profile Update ===
+    async function handleSellerProfileUpdate(e) {
+      e.preventDefault();
+      const data = {
+        shop_name: document.getElementById('set-shopname').value.trim(),
+        seller_phone: document.getElementById('set-sellerphone').value.trim(),
+        seller_bank_account: document.getElementById('set-sellerbank').value.trim(),
+        seller_address_district: document.getElementById('set-sellerdistrict').value.trim(),
+        seller_address_province: document.getElementById('set-sellerprovince').value.trim(),
+        seller_avatar_url: document.getElementById('set-selleravatar').value.trim()
+      };
+
+      try {
+        await API.put('/auth/seller-profile', data);
+        Toast.success('บันทึกรายละเอียดร้านค้าเรียบร้อย!');
+        await loadProfileData();
+      } catch (error) {
+        Toast.error('เกิดข้อผิดพลาด: ' + error.message);
+      }
+    }
+
+    // === Seller: KYC Verification ===
+    let kycOtpExpected = '';
+    async function sendKycOtp() {
+      const phone = document.getElementById('kyc-phone').value.trim();
+      if (!phone) {
+        alert('กรุณากรอกเบอร์โทรศัพท์เพื่อขอรับ OTP');
+        return;
+      }
+
+      try {
+        const result = await API.post('/auth/send-otp', { email_or_phone: phone });
+        kycOtpExpected = result.code;
+        
+        document.getElementById('kyc-otp-notice').textContent = `[Mock] รหัส OTP ทดสอบ: ${result.code}`;
+        document.getElementById('kyc-otp-block').style.display = 'block';
+        document.getElementById('kyc-otpcode').focus();
+        Toast.success('รหัส OTP สำหรับ KYC ถูกส่งแล้ว');
+      } catch (err) {
+        Toast.error('ล้มเหลวในการส่ง OTP: ' + err.message);
+      }
+    }
+
+    async function handleSellerKycSubmit(e) {
+      e.preventDefault();
+      const errorDiv = document.getElementById('kyc-error');
+      const btn = document.getElementById('kyc-submit-btn');
+      if (errorDiv) errorDiv.textContent = '';
+      clearFieldErrors(['kyc-idcard', 'kyc-bankaccount', 'kyc-phone']);
+
+      const docUrl = document.getElementById('kyc-docurl').value.trim();
+      if (!docUrl) {
+        errorDiv.textContent = 'กรุณาอัปโหลดรูปบัตรประชาชนก่อนส่งข้อมูล';
+        return;
+      }
+
+      setBtnLoading(btn, true);
+      try {
+        const idCard = document.getElementById('kyc-idcard').value.trim();
+        const fullName = document.getElementById('kyc-fullname').value.trim();
+        const bankName = document.getElementById('kyc-bankname').value.trim();
+        const bankAccount = document.getElementById('kyc-bankaccount').value.trim();
+        const bankAccountName = document.getElementById('kyc-bankaccountname').value.trim();
+        const phone = document.getElementById('kyc-phone').value.trim();
+
+        await API.post('/auth/verify-seller', {
+          id_card: idCard,
+          full_name: fullName,
+          bank_name: bankName,
+          bank_account: bankAccount,
+          bank_account_name: bankAccountName,
+          phone: phone,
+          kyc_document_url: docUrl
+        });
+
+        Toast.success('ยืนยันตัวตนร้านค้าผู้ขายสำเร็จ! สัญลักษณ์ตรวจสอบสิทธิแสดงเรียบร้อย');
+        await loadProfileData();
+      } catch (err) {
+        if (errorDiv) errorDiv.textContent = err.message;
+        setFieldError('kyc-idcard', true);
+        setFieldError('kyc-bankaccount', true);
+        setFieldError('kyc-phone', true);
+        setBtnLoading(btn, false);
+      }
+    }
+
+    async function handleKycDocUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const previewEl = document.getElementById('kyc-doc-preview');
+      const formData = new FormData();
+      formData.append('image', file);
+      try {
+        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Upload failed');
+        document.getElementById('kyc-docurl').value = data.url;
+        previewEl.innerHTML = `
+          <img src="${data.url}" class="upload-preview-thumb">
+          <div class="upload-preview-caption"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>อัปโหลดเรียบร้อย</div>
+        `;
+      } catch (err) {
+        Toast.error('อัปโหลดรูปไม่สำเร็จ: ' + err.message);
+      }
+    }
+
+    // === C2C Booking Actions (Status updates) ===
+    async function confirmDeliveryCompleted(id) {
+      if (!confirm('ยืนยันว่าคุณได้รับอุปกรณ์/สินค้าชิ้นนั้น เรียบร้อยและอยู่ในสภาพดีแล้วใช่หรือไม่? (การยืนยันนี้ถือเป็นจุดสิ้นสุดการซื้อขาย)')) return;
+      try {
+        await API.put(`/bookings/${id}/status`, { status: 'completed' });
+        Toast.success('ดำเนินการสั่งซื้อเสร็จสมบูรณ์เรียบร้อยแล้ว!');
+        await loadProfileData();
+      } catch (err) {
+        Toast.error('เกิดข้อผิดพลาด: ' + err.message);
+      }
+    }
+
+    async function cancelBooking(id) {
+      if (!confirm('ยืนยันที่จะยกเลิกรายการจองชิ้นงานคอมพิวเตอร์ชิ้นนี้หรือไม่? (สินค้าจะถูกส่งกลับเข้าระบบ Marketplace ทันที)')) return;
+      try {
+        await API.put(`/bookings/${id}/status`, { status: 'cancelled' });
+        Toast.success('ยกเลิกรายการคำสั่งจองเรียบร้อยแล้ว');
+        await loadProfileData();
+      } catch (err) {
+        Toast.error('เกิดข้อผิดพลาด: ' + err.message);
+      }
+    }
+
+    let reviewSelectedRating = 0;
+
+    function renderReviewStars() {
+      const container = document.getElementById('review-star-picker');
+      container.innerHTML = Array.from({ length: 5 }, (_, i) => {
+        const val = i + 1;
+        const filled = val <= reviewSelectedRating;
+        return `<span onclick="setReviewRating(${val})" style="color:${filled ? 'var(--warning)' : 'var(--border)'};">★</span>`;
+      }).join('');
+    }
+
+    function setReviewRating(val) {
+      reviewSelectedRating = val;
+      renderReviewStars();
+    }
+
+    function openReviewModal(orderId) {
+      const order = (currentUserProfile.buyer_orders || []).find(o => o.id === orderId);
+      reviewSelectedRating = order?.review_rating || 0;
+      document.getElementById('review-order-id').value = orderId;
+      document.getElementById('review-comment').value = order?.review_comment || '';
+      renderReviewStars();
+      document.getElementById('review-modal').style.display = 'flex';
+    }
+
+    function closeReviewModal() {
+      document.getElementById('review-modal').style.display = 'none';
+    }
+
+    async function submitReviewModal() {
+      const orderId = document.getElementById('review-order-id').value;
+      const comment = document.getElementById('review-comment').value.trim();
+      if (!reviewSelectedRating) {
+        Toast.error('กรุณาเลือกจำนวนดาว');
+        return;
+      }
+      const order = (currentUserProfile.buyer_orders || []).find(o => String(o.id) === String(orderId));
+      const btn = document.getElementById('review-submit-btn');
+      setBtnLoading(btn, true);
+      try {
+        if (order?.review_id) {
+          await API.put(`/bookings/${orderId}/review`, { rating: reviewSelectedRating, comment });
+        } else {
+          await API.post(`/bookings/${orderId}/review`, { rating: reviewSelectedRating, comment });
+        }
+        Toast.success('บันทึกรีวิวเรียบร้อยแล้ว');
+        closeReviewModal();
+        await loadProfileData();
+      } catch (err) {
+        Toast.error('เกิดข้อผิดพลาด: ' + err.message);
+      } finally {
+        setBtnLoading(btn, false);
+      }
+    }
+
+    async function confirmPaymentReceived(id) {
+      if (!confirm('คุณได้รับยอดโอนเงินจากลูกค้าชิ้นนี้เข้าบัญชีธนาคารเรียบร้อยแล้วใช่หรือไม่?')) return;
+      try {
+        await API.put(`/bookings/${id}/status`, { status: 'paid' });
+        Toast.success('กดยืนยันการได้รับยอดโอนเรียบร้อยแล้ว');
+        await loadProfileData();
+      } catch (err) {
+        Toast.error('เกิดข้อผิดพลาด: ' + err.message);
+      }
+    }
+
+    async function confirmOrderShipped(id) {
+      const transport = prompt('กรุณากรอกหมายเลขพัสดุ หรือข้อมูลจัดส่งสินค้า เพื่อแจ้งลูกค้าในช่องแชท:');
+      if (transport === null) return;
+      if (!transport.trim()) {
+        alert('กรุณากรอกรายละเอียดสำหรับการจัดส่งสินค้า');
+        return;
+      }
+      try {
+        await API.put(`/bookings/${id}/status`, { status: 'shipped' });
+        Toast.success('แจ้งพัสดุและจัดส่งของสำเร็จ!');
+        await loadProfileData();
+      } catch (err) {
+        Toast.error('เกิดข้อผิดพลาด: ' + err.message);
+      }
+    }
+
+    // === Seller: Product Listings Manage ===
+    async function updateProductStatus(id, targetStatus) {
+      try {
+        await API.put(`/products/${id}`, { status: targetStatus });
+        Toast.success(`เปลี่ยนสถานะประกาศขายเป็น "${targetStatus === 'active' ? 'เปิดขาย' : 'หยุดขายชั่วคราว'}" แล้ว`);
+        await loadProfileData();
+      } catch (err) {
+        Toast.error('ล้มเหลว: ' + err.message);
+      }
+    }
+
+    async function deleteProductListing(id) {
+      if (!confirm('คุณยืนยันว่าจะลบประกาศขายสินค้านี้ออกจาก Marketplace อย่างถาวรหรือไม่?')) return;
+      try {
+        await API.delete(`/products/${id}`);
+        Toast.success('ลบสินค้าออกจากหน้าร้านเรียบร้อยแล้ว');
+        await loadProfileData();
+      } catch (err) {
+        Toast.error('ล้มเหลว: ' + err.message);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadProfileData();
+
+      // Initialize Thai Address Autocomplete for Buyer Address Modal
+      $.Thailand({
+          $district: $('#addr-subdistrict'),
+          $amphoe: $('#addr-district'),
+          $province: $('#addr-province'),
+          $zipcode: $('#addr-postal')
+      });
+
+      // Initialize Thai Address Autocomplete for Seller Registration
+      $.Thailand({
+          $district: $('#reg-subdistrict'),
+          $amphoe: $('#reg-district'),
+          $province: $('#reg-province'),
+          $zipcode: $('#reg-zipcode')
+      });
+    });
+  </script>
+
+  <!-- jQuery & jquery.Thailand.js Dependencies -->
+  <script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+  <script type="text/javascript" src="https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/dependencies/JQL.min.js"></script>
+  <script type="text/javascript" src="https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/dependencies/typeahead.bundle.js"></script>
+  <link rel="stylesheet" href="https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/dist/jquery.Thailand.min.css">
+  <script type="text/javascript" src="https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/dist/jquery.Thailand.min.js"></script>
+  <style>
+    .tt-menu { z-index: 4000 !important; }
+  </style>
+
+  <!-- Seller Registration & KYC Modal -->
+  <div id="seller-reg-modal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); align-items: center; justify-content: center; z-index: 3000;">
+    <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 92%; max-width: 550px; padding: 2rem; box-shadow: var(--shadow); position: relative;">
+      <button onclick="closeSellerRegModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+      
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <div style="margin-bottom: 0.5rem; color: var(--highlight);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:2.5rem;height:2.5rem;"><path d="M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5"></path><path d="M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244"></path><path d="M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05"></path></svg></div>
+        <h3 style="font-size: 1.35rem; color: var(--text-primary); margin-bottom: 0.35rem;">ลงทะเบียนเปิดร้านค้า / ผู้ขาย (Seller Onboarding)</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">กรอกข้อมูลร้านค้าและเลขบัญชีเพื่อเริ่มต้นขายสินค้ามือสองบน PC Builder Pro</p>
+      </div>
+
+      <form id="seller-reg-form" onsubmit="handleSellerRegistrationSubmit(event)">
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <div>
+            <label style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem; margin-bottom: 0.35rem; font-weight: 600;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><path d="M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5"></path><path d="M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244"></path><path d="M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05"></path></svg> ชื่อร้านค้า / ชื่อผู้ขาย <span style="color: var(--danger);">*</span></label>
+            <input type="text" id="reg-shopname" class="form-input" placeholder="เช่น ร้านคอมพิวเตอร์เจริญกรุง / สมชาย มือสอง" required style="width: 100%;">
+          </div>
+
+          <div>
+            <label style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem; margin-bottom: 0.35rem; font-weight: 600;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> เบอร์โทรศัพท์ติดต่อร้านค้า <span style="color: var(--danger);">*</span></label>
+            <input type="tel" id="reg-sellerphone" class="form-input" placeholder="เช่น 0812345678" pattern="[0-9]{9,10}" required style="width: 100%;">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem; margin-bottom: 0.35rem; font-weight: 600;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><path d="M10 18v-7"></path><path d="M11.119 2.205a2 2 0 0 1 1.762 0l7.84 3.846A.5.5 0 0 1 20.5 7h-17a.5.5 0 0 1-.22-.949z"></path><path d="M14 18v-7"></path><path d="M18 18v-7"></path><path d="M3 22h18"></path><path d="M6 18v-7"></path></svg> ธนาคาร <span style="color: var(--danger);">*</span></label>
+              <select id="reg-bankname" class="form-input" required style="width: 100%;">
+                <option value="">-- เลือกธนาคาร --</option>
+                <option value="กสิกรไทย">กสิกรไทย (KBANK)</option>
+                <option value="ไทยพาณิชย์">ไทยพาณิชย์ (SCB)</option>
+                <option value="กรุงเทพ">กรุงเทพ (BBL)</option>
+                <option value="กรุงไทย">กรุงไทย (KTB)</option>
+                <option value="กรุงศรีอยุธยา">กรุงศรีอยุธยา (BAY)</option>
+                <option value="ทหารไทยธนชาต">ทหารไทยธนชาต (TTB)</option>
+                <option value="ออมสิน">ออมสิน (GSB)</option>
+                <option value="พร้อมเพย์">พร้อมเพย์ (PromptPay)</option>
+              </select>
+            </div>
+            <div>
+              <label style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem; margin-bottom: 0.35rem; font-weight: 600;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><line x1="4" x2="20" y1="9" y2="9"></line><line x1="4" x2="20" y1="15" y2="15"></line><line x1="10" x2="8" y1="3" y2="21"></line><line x1="16" x2="14" y1="3" y2="21"></line></svg> เลขบัญชี / พร้อมเพย์ <span style="color: var(--danger);">*</span></label>
+              <input type="text" id="reg-bankaccount" class="form-input" placeholder="เช่น 1234567890" required style="width: 100%;">
+            </div>
+          </div>
+          <div>
+            <label style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem; margin-bottom: 0.35rem; font-weight: 600;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="8" r="5"></circle></svg> ชื่อบัญชีธนาคาร <span style="color: var(--danger);">*</span></label>
+            <input type="text" id="reg-bankaccountname" class="form-input" placeholder="เช่น นายสมชาย ใจดี" required style="width: 100%;">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="display: block; font-size: 0.85rem; margin-bottom: 0.35rem; font-weight: 600;">ตำบล/แขวง <span style="color: var(--danger);">*</span></label>
+              <input type="text" id="reg-subdistrict" class="form-input" placeholder="พิมพ์ชื่อตำบล..." required style="width: 100%;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.85rem; margin-bottom: 0.35rem; font-weight: 600;">อำเภอ/เขต <span style="color: var(--danger);">*</span></label>
+              <input type="text" id="reg-district" class="form-input" placeholder="พิมพ์ชื่ออำเภอ..." required style="width: 100%;">
+            </div>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="display: block; font-size: 0.85rem; margin-bottom: 0.35rem; font-weight: 600;">จังหวัด <span style="color: var(--danger);">*</span></label>
+              <input type="text" id="reg-province" class="form-input" placeholder="พิมพ์ชื่อจังหวัด..." required style="width: 100%;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.85rem; margin-bottom: 0.35rem; font-weight: 600;">รหัสไปรษณีย์ <span style="color: var(--danger);">*</span></label>
+              <input type="text" id="reg-zipcode" class="form-input" placeholder="รหัสไปรษณีย์" required style="width: 100%;">
+            </div>
+          </div>
+        </div>
+
+        <div id="seller-reg-error" style="color: var(--danger); font-size: 0.85rem; margin-top: 1rem; text-align: center;"></div>
+
+        <div style="display: flex; gap: 10px; margin-top: 1.5rem;">
+          <button type="button" class="btn btn-secondary" onclick="closeSellerRegModal()" style="flex: 1;">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary" id="seller-reg-submit-btn" style="flex: 2; display: inline-flex; align-items: center; justify-content: center; gap: 6px;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg> ยืนยันการลงทะเบียนผู้ขาย</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</body>
+</html>

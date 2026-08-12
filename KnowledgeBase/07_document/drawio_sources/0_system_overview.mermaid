@@ -1,0 +1,15 @@
+graph TD
+    User([ผู้ใช้บริการ / สมาชิก]) <--> Auth[1. ระบบจัดการผู้ใช้และสิทธิ์ Auth]
+    User <--> Market[2. ระบบตลาดขายสินค้า C2C]
+    User <--> Builder[3. ระบบจัดสเปกคอมและ Auto-Builder]
+    User <--> Booking[4. ระบบจองสินค้าและแชตสด C2C]
+    Admin([ผู้ดูแลระบบ / Admin]) <--> AdminSys[5. ระบบแอดมินและการจัดการสกรีนทุจริต]
+    
+    Auth <--> DB[(MySQL / MariaDB Database)]
+    Market <--> DB
+    Builder <--> DB
+    Booking <--> DB
+    AdminSys <--> DB
+    
+    Booking <--> WS[Real-time Server Socket.io]
+    WS <--> User

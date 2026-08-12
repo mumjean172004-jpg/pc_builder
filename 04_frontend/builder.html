@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ประกอบ PC — เลือกอะไหล่ | PC Builder Pro</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* === Mode selector tabs === */
+    .mode-selector-container {
+      max-width: 1600px;
+      margin: 1.5rem auto 0 auto;
+      padding: 0 2rem;
+    }
+    .tab-buttons {
+      display: flex;
+      gap: 1rem;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    .tab-btn {
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      padding: 0.6rem 1.2rem;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* === Auto Mode panel === */
+    #auto-builder-layout {
+      grid-template-columns: 1fr;
+      min-height: auto;
+    }
+    .auto-builder-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      width: 100%;
+    }
+    .auto-builder-form {
+      max-width: 600px;
+      margin: 0 auto;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .auto-builder-form h2 {
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .auto-builder-intro {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+    }
+    .auto-field label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+    .auto-field select,
+    .auto-field input {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: var(--radius);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      height: unset;
+    }
+    .auto-field small {
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+      display: block;
+    }
+    #auto-submit-btn {
+      width: 100%;
+      padding: 0.85rem;
+      font-size: 1rem;
+      border-radius: var(--radius);
+      margin-top: 1rem;
+    }
+    #auto-results-container {
+      border-top: 1px solid var(--border);
+      padding-top: 2.5rem;
+      margin-top: 1.5rem;
+    }
+    #auto-results-container h3 {
+      text-align: center;
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .auto-options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* === Parts panel search === */
+    .search-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 200px;
+    }
+    .search-input-wrap .icon {
+      position: absolute;
+      left: 0.85rem;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .search-input-wrap .search-input {
+      width: 100%;
+      padding-left: 2.6rem;
+    }
+
+    /* === Empty state icon === */
+    .empty-state-icon .icon {
+      width: 48px;
+      height: 48px;
+      color: var(--text-muted);
+    }
+
+    /* === Builder summary title === */
+    .summary-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* === Intelligence card (bottleneck/perf widget) === */
+    .intelligence-card {
+      background: rgba(18, 24, 38, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius);
+      padding: 0.85rem;
+    }
+    .intelligence-card h4 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .intelligence-card h4 span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #intel-bottleneck-score {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+    }
+    #intel-bottleneck-label {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #f1f5f9;
+      margin-bottom: 0.25rem;
+    }
+    #intel-bottleneck-advice {
+      font-size: 0.78rem;
+      color: #94a3b8;
+      line-height: 1.3;
+      margin-bottom: 0.65rem;
+    }
+    .intel-fps-grid {
+      background: rgba(0, 0, 0, 0.25);
+      padding: 0.6rem;
+      border-radius: 8px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      text-align: center;
+    }
+    .intel-fps-item-label {
+      font-size: 0.7rem;
+      color: #94a3b8;
+    }
+    .intel-fps-item-value {
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    /* === Cross-match / marketplace panel === */
+    #cross-match-btn {
+      width: 100%;
+      margin-bottom: 1rem;
+      background: rgba(59, 130, 246, 0.1);
+      border-color: rgba(59, 130, 246, 0.3);
+      color: #60a5fa;
+      font-weight: 600;
+    }
+    .marketplace-checkout-panel {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .marketplace-checkout-panel h4 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    #marketplace-parts-status {
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    #cart-add-all-btn {
+      width: 100%;
+      font-size: 0.8rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      display: none;
+    }
+
+    /* === Summary actions === */
+    #build-name { margin-bottom: 0.5rem; }
+    #build-desc { resize: vertical; margin-bottom: 0.5rem; }
+    #export-pdf-btn {
+      flex: 1.2;
+      background: #059669;
+      border-color: #059669;
+      color: white;
+    }
+    #share-build-btn, #clear-build-btn { flex: 1; }
+
+    /* === Modals (cross-match & quotation) === */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    #cross-match-modal {
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+    }
+    #quotation-modal {
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      z-index: 99999;
+    }
+    .modal-panel-dark {
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 750px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .modal-panel-dark-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-panel-dark-header h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-close-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 0;
+    }
+    #cross-match-modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-panel-light {
+      background: #ffffff;
+      color: #0f172a;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 800px;
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+    .modal-panel-light-header {
+      padding: 1rem 1.5rem;
+      background: #0f172a;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-panel-light-header h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #print-quotation-action-btn {
+      padding: 4px 14px;
+      font-size: 0.85rem;
+    }
+    #quotation-printable-area {
+      padding: 2rem;
+      overflow-y: auto;
+      flex: 1;
+      background: white;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- เมนูนำทาง -->
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <a href="/index.html" class="navbar-logo">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        ประกอบ PC <span>Pro</span>
+      </a>
+      <button class="mobile-menu-toggle" id="mobile-menu-btn" aria-label="Toggle menu">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="4" y1="6" x2="20" y2="6"></line>
+          <line x1="4" y1="12" x2="20" y2="12"></line>
+          <line x1="4" y1="18" x2="20" y2="18"></line>
+        </svg>
+      </button>
+      <ul class="navbar-links">
+        <li><a href="/index.html">หน้าแรก</a></li>
+        <li><a href="/builder.html" class="active">ประกอบ PC</a></li>
+
+        <li><a href="/products.html">Marketplace</a></li>
+        <li><a href="/sell-product.html">Sell</a></li>
+      </ul>
+      <div class="navbar-auth" id="navbar-auth">
+        <a href="/login.html" class="btn btn-ghost btn-sm">เข้าสู่ระบบ</a>
+        <a href="/login.html?register" class="btn btn-primary btn-sm">สมัครสมาชิก</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ตัวเลือกโหมดจัดสเปค -->
+  <div class="mode-selector-container">
+    <div class="tab-buttons">
+      <button class="btn tab-btn active" id="mode-manual-btn">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+        </svg>
+        จัดสเปคเอง (Manual Mode)
+      </button>
+      <button class="btn tab-btn btn-ghost" id="mode-auto-btn">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+        จัดสเปคอัจฉริยะ (Auto Mode)
+      </button>
+    </div>
+  </div>
+
+  <!-- ส่วนของโหมด Auto -->
+  <div class="builder-layout" id="auto-builder-layout" style="display: none;">
+    <div class="auto-builder-card">
+
+      <div class="auto-builder-form">
+        <h2>ค้นหาสเปคที่ดีที่สุดสำหรับคุณ</h2>
+        <p class="auto-builder-intro">ระบบจะจัดสัดส่วนงบ เลือกของที่คุ้มประสิทธิภาพสูงสุดในระบบ และตรวจสอบคอขวดระหว่าง CPU และการ์ดจอให้อัตโนมัติ</p>
+
+        <div class="auto-field">
+          <label>ลักษณะการใช้งาน / วัตถุประสงค์</label>
+          <select id="auto-usecase" class="filter-select">
+            <option value="gaming">เล่นเกม (Gaming) / กราฟิก</option>
+            <option value="editing">ตัดต่อวิดีโอ / กราฟิก (Video Editing)</option>
+            <option value="general">ทำงานทั่วไป / เรียนออนไลน์ (General Work)</option>
+            <option value="ai">ทำงานด้าน AI / Machine Learning (AI-ML)</option>
+            <option value="streaming">สตรีมมิ่ง / จัดรายการ (Streaming)</option>
+          </select>
+        </div>
+
+        <div class="auto-field">
+          <label>งบประมาณรวม (บาท)</label>
+          <input type="number" id="auto-budget" class="search-input" placeholder="ตัวอย่าง: 30000" min="12000" step="1000">
+          <small>* งบแนะนำเริ่มต้นทั่วไป 12,000 บาท ขึ้นไป และสำหรับเล่นเกมเริ่มที่ 18,000 บาท</small>
+        </div>
+
+        <button class="btn btn-primary" id="auto-submit-btn">เริ่มคำนวณและจัดสเปค</button>
+      </div>
+
+      <!-- ผลลัพธ์ 3 ชุดสเปค -->
+      <div id="auto-results-container" style="display: none;">
+        <h3>เปรียบเทียบ 3 ชุดสเปคที่ดีที่สุดในงบประมาณของคุณ</h3>
+
+        <div class="auto-options-grid" id="auto-options-grid">
+          <!-- ชุดสเปคการ์ดจะถูกใส่ที่นี่ -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- เค้าโครงหน้าประกอบ PC -->
+  <div class="builder-layout" id="manual-builder-layout">
+
+    <!-- แถบด้านซ้าย: หมวดหมู่ -->
+    <aside class="builder-sidebar">
+      <h3>ชิ้นส่วน</h3>
+      <ul class="category-list" id="category-list">
+        <li class="loading-overlay"><div class="spinner"></div></li>
+      </ul>
+    </aside>
+
+    <!-- ตรงกลาง: รายการอะไหล่ -->
+    <main class="builder-parts-panel">
+      <div class="parts-panel-header">
+        <h3 id="parts-panel-title">เลือกหมวดหมู่</h3>
+        <div class="search-input-wrap">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.3-4.3"></path>
+          </svg>
+          <input type="text" class="search-input" id="parts-search" placeholder="ค้นหาอะไหล่...">
+        </div>
+        <select class="filter-select" id="brand-filter">
+          <option value="">ทุกยี่ห้อ</option>
+        </select>
+        <select class="filter-select" id="sort-filter">
+          <option value="name">เรียงตาม: ชื่อ</option>
+          <option value="price-asc">ราคา: ต่ำ → สูง</option>
+          <option value="price-desc">ราคา: สูง → ต่ำ</option>
+        </select>
+      </div>
+      <div class="parts-list" id="parts-list">
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
+          </div>
+          <h3>เลือกหมวดหมู่ชิ้นส่วน</h3>
+          <p>กดที่หมวดหมู่ด้านซ้ายเพื่อดูอะไหล่</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- ด้านขวา: สรุปชุดประกอบ -->
+    <aside class="builder-summary">
+      <h3 class="summary-title">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="8" cy="21" r="1"></circle>
+          <circle cx="19" cy="21" r="1"></circle>
+          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+        </svg>
+        สรุปชุดประกอบ
+      </h3>
+
+      <div id="summary-parts">
+        <p class="text-muted text-center" style="padding: 2rem 0;">ยังไม่ได้เลือกอะไหล่</p>
+      </div>
+
+      <div class="summary-total">
+        <span>รวมทั้งหมด</span>
+        <span class="summary-total-price" id="summary-total-price">฿0</span>
+      </div>
+
+
+
+      <!-- แถบตรวจสอบความเข้ากันได้ -->
+      <div class="compat-panel" id="compat-panel">
+        <h4 class="compat-ok-title">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 6 9 17l-5-5"></path>
+          </svg>
+          เข้ากันได้
+        </h4>
+        <p class="text-muted" style="font-size: 0.85rem;">เพิ่มอะไหล่เพื่อตรวจสอบความเข้ากันได้</p>
+      </div>
+
+      <!-- วิดเจ็ตประเมินคอขวดและประสิทธิภาพเกม (Bottleneck & Gaming Performance) -->
+      <div class="card mb-2 intelligence-card" id="intelligence-card">
+        <h4>
+          <span>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+            </svg>
+            ประสิทธิภาพและคอขวด
+          </span>
+          <span id="intel-bottleneck-score">-</span>
+        </h4>
+        <p id="intel-bottleneck-label">ยังไม่ได้เลือก CPU / การ์ดจอ</p>
+        <p id="intel-bottleneck-advice">เลือกชิ้นส่วน CPU และ GPU เพื่อประเมินความสมดุลของระบบ</p>
+
+        <div class="intel-fps-grid">
+          <div>
+            <div class="intel-fps-item-label">CS2 / Valorant</div>
+            <div id="fps-esports" class="intel-fps-item-value" style="color: #34d399;">- FPS</div>
+          </div>
+          <div>
+            <div class="intel-fps-item-label">Cyberpunk 1080p</div>
+            <div id="fps-aaa1080" class="intel-fps-item-value" style="color: #60a5fa;">- FPS</div>
+          </div>
+          <div>
+            <div class="intel-fps-item-label">Cyberpunk 1440p</div>
+            <div id="fps-aaa1440" class="intel-fps-item-value" style="color: #a78bfa;">- FPS</div>
+          </div>
+        </div>
+      </div>
+
+
+
+      <!-- ปุ่มกดเปรียบเทียบราคามือสองในตลาด -->
+      <button class="btn btn-outline" id="cross-match-btn">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="22 17 13.5 8.5 8.5 13.5 2 7"></polyline>
+          <polyline points="16 17 22 17 22 11"></polyline>
+        </svg>
+        เปรียบเทียบราคามือสองในตลาด
+      </button>
+
+      <!-- ส่วนแสดงข้อมูลการสั่งซื้อชิ้นส่วนมือสอง -->
+      <div class="marketplace-checkout-panel" id="marketplace-checkout-panel">
+        <h4>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="8" cy="21" r="1"></circle>
+            <circle cx="19" cy="21" r="1"></circle>
+            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+          </svg>
+          สินค้ามือสองในระบบ
+        </h4>
+        <div id="marketplace-parts-status">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <button class="btn btn-primary btn-sm" id="cart-add-all-btn">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="8" cy="21" r="1"></circle>
+              <circle cx="19" cy="21" r="1"></circle>
+              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+            </svg>
+            เพิ่มชิ้นส่วนที่มีทั้งหมดลงตะกร้า
+          </button>
+        </div>
+      </div>
+
+      <!-- ปุ่มจัดการชุดประกอบ -->
+      <div class="summary-actions">
+        <input type="text" class="form-input" id="build-name" placeholder="ตั้งชื่อชุดประกอบ...">
+        <textarea class="form-input" id="build-desc" placeholder="คำอธิบาย (ไม่จำเป็น)..." rows="2"></textarea>
+        <button class="btn btn-primary" id="save-build-btn">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path>
+            <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"></path>
+            <path d="M7 3v4a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V3.4"></path>
+          </svg>
+          บันทึกชุดประกอบ
+        </button>
+        <div class="flex gap-1" style="margin-top: 0.5rem;">
+          <button class="btn btn-secondary" id="export-pdf-btn">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
+              <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+              <path d="M10 9H8"></path>
+              <path d="M16 13H8"></path>
+              <path d="M16 17H8"></path>
+            </svg>
+            พิมพ์ใบเสนอราคา (PDF)
+          </button>
+          <button class="btn btn-secondary" id="share-build-btn">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+            แชร์
+          </button>
+          <button class="btn btn-outline" id="clear-build-btn">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+            ล้างทั้งหมด
+          </button>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- Modal เปรียบเทียบราคามือสอง -->
+  <div id="cross-match-modal" class="modal-overlay">
+    <div class="modal-panel-dark">
+      <div class="modal-panel-dark-header">
+        <h3>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="22 17 13.5 8.5 8.5 13.5 2 7"></polyline>
+            <polyline points="16 17 22 17 22 11"></polyline>
+          </svg>
+          เปรียบเทียบราคามือหนึ่ง vs อะไหล่มือสองในตลาด
+        </h3>
+        <button id="close-cross-match-modal" class="modal-close-btn" aria-label="ปิด">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div id="cross-match-modal-body">
+        <div class="loading-overlay"><div class="spinner"></div><p>กำลังค้นหาชิ้นส่วนมือสองในตลาด...</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal ใบเสนอราคาสำหรับพิมพ์ PDF -->
+  <div id="quotation-modal" class="modal-overlay">
+    <div class="modal-panel-light">
+      <div class="modal-panel-light-header">
+        <h3>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
+            <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+            <path d="M10 9H8"></path>
+            <path d="M16 13H8"></path>
+            <path d="M16 17H8"></path>
+          </svg>
+          ตัวอย่างใบเสนอราคา (Official PC Build Quotation)
+        </h3>
+        <div style="display: flex; gap: 8px;">
+          <button id="print-quotation-action-btn" class="btn btn-primary btn-sm">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="6 9 6 2 18 2 18 9"></polyline>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+              <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            พิมพ์เอกสาร / บันทึก PDF
+          </button>
+          <button id="close-quotation-modal" class="modal-close-btn" aria-label="ปิด">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div id="quotation-printable-area">
+        <!-- เนื้อหาใบเสนอราคาจะถูกเจเนอเรตลงตรงนี้ -->
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/builder.js"></script>
+</body>
+</html>

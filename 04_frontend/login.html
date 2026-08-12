@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เข้าสู่ระบบ / สมัครสมาชิก | PC Builder Pro</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    /* Auth card */
+    .auth-card {
+      padding: 2.75rem;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+    }
+    .dark-mode .auth-card {
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+    }
+    .auth-card h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .auth-subtitle {
+      line-height: 1.5;
+    }
+
+    /* Segmented tab control */
+    .auth-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px;
+      margin-bottom: 1.75rem;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 0.55rem;
+      border-radius: calc(var(--radius) - 3px);
+      font-size: 0.9rem;
+    }
+    .auth-tab.active {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      border-bottom-color: transparent;
+    }
+
+    /* OTP modal */
+    .otp-modal-title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 0.5rem;
+      font-size: 1.15rem;
+    }
+    .otp-mock-notice {
+      background: rgba(250, 82, 82, 0.08);
+      border: 1px solid var(--highlight);
+      padding: 8px;
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      color: var(--highlight);
+      margin-top: 1rem;
+      display: none;
+    }
+    .dark-mode .otp-mock-notice {
+      background: rgba(233, 69, 96, 0.1);
+    }
+    .otp-modal-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+    .otp-btn-row {
+      display: flex;
+      gap: 10px;
+    }
+    .otp-btn-row .btn {
+      flex: 1;
+    }
+
+    .form-forgot-link {
+      display: block;
+      text-align: right;
+      margin-top: 6px;
+      font-size: 0.85rem;
+      color: var(--highlight);
+      text-decoration: none;
+    }
+
+    .social-login-container {
+      margin-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+      text-align: center;
+    }
+    .social-title {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      position: relative;
+    }
+    .social-title::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      width: 30%;
+      height: 1px;
+      background: var(--border);
+    }
+    .social-title::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 50%;
+      width: 30%;
+      height: 1px;
+      background: var(--border);
+    }
+    .social-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn-social {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex: 1;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.6rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: var(--transition);
+    }
+    .btn-social:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--highlight);
+    }
+    .btn-google img, .btn-facebook img {
+      width: 16px;
+      height: 16px;
+    }
+    
+    /* OTP Modal */
+    .otp-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+    }
+    .otp-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      width: 90%;
+      max-width: 400px;
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .otp-code-input {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 1.5rem 0;
+    }
+    .otp-digit {
+      width: 45px;
+      height: 50px;
+      font-size: 1.5rem;
+      text-align: center;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      border-radius: var(--radius);
+      font-weight: bold;
+    }
+    .otp-digit:focus {
+      border-color: var(--highlight);
+      outline: none;
+    }
+    .otp-hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+    }
+    .otp-resend {
+      font-size: 0.85rem;
+      color: var(--highlight);
+      cursor: pointer;
+      background: none;
+      border: none;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- เมนูนำทาง -->
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <a href="/index.html" class="navbar-logo">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        ประกอบ PC <span>Pro</span>
+      </a>
+      <button class="mobile-menu-toggle" id="mobile-menu-btn" aria-label="Toggle menu">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="4" y1="6" x2="20" y2="6"></line>
+          <line x1="4" y1="12" x2="20" y2="12"></line>
+          <line x1="4" y1="18" x2="20" y2="18"></line>
+        </svg>
+      </button>
+      <ul class="navbar-links">
+        <li><a href="/index.html">หน้าแรก</a></li>
+        <li><a href="/builder.html">ประกอบ PC</a></li>
+
+        <li><a href="/products.html">Marketplace</a></li>
+        <li><a href="/sell-product.html">Sell</a></li>
+      </ul>
+      <div class="navbar-auth" id="navbar-auth">
+        <a href="/login.html" class="btn btn-ghost btn-sm">เข้าสู่ระบบ</a>
+        <a href="/login.html?register" class="btn btn-primary btn-sm">สมัครสมาชิก</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- กล่องล็อกอิน -->
+  <div class="auth-container">
+    <div class="auth-card">
+      <h2>ยินดีต้อนรับ</h2>
+      <p class="auth-subtitle">เข้าสู่ระบบเพื่อบันทึกชุดประกอบและซื้อขายคอมพิวเตอร์มือสอง</p>
+
+      <!-- แท็บ -->
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tab-login" onclick="switchTab('login')">เข้าสู่ระบบ</div>
+        <div class="auth-tab" id="tab-register" onclick="switchTab('register')">สมัครสมาชิก</div>
+      </div>
+
+      <!-- ฟอร์มเข้าสู่ระบบ -->
+      <form id="login-form" onsubmit="return handleLogin(event)">
+        <div class="form-group">
+          <label>อีเมล หรือ เบอร์โทรศัพท์</label>
+          <div class="form-input-group">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+              <path d="m22 6-10 7L2 6"></path>
+            </svg>
+            <input type="text" class="form-input" id="login-identifier" placeholder="example@email.com หรือ 0812345678" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>รหัสผ่าน</label>
+          <div class="form-input-group">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <input type="password" class="form-input" id="login-password" placeholder="ใส่รหัสผ่านของคุณ" required>
+          </div>
+          <a href="#" onclick="openForgotPasswordModal()" class="form-forgot-link">ลืมรหัสผ่าน?</a>
+        </div>
+        <div id="login-error" class="form-error"></div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;" id="login-submit-btn">เข้าสู่ระบบ</button>
+      </form>
+
+      <!-- ฟอร์มสมัครสมาชิก -->
+      <form id="register-form" class="hidden" onsubmit="return handleRegister(event)">
+        <div class="form-group">
+          <label>ชื่อผู้ใช้</label>
+          <div class="form-input-group">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M20 21a8 8 0 0 0-16 0"></path>
+              <circle cx="12" cy="8" r="5"></circle>
+            </svg>
+            <input type="text" class="form-input" id="register-username" placeholder="เลือกชื่อผู้ใช้" required minlength="3">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>อีเมล (ถ้ามี)</label>
+          <div class="form-input-group">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+              <path d="m22 6-10 7L2 6"></path>
+            </svg>
+            <input type="email" class="form-input" id="register-email" placeholder="example@email.com">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>เบอร์โทรศัพท์ (ถ้ามี)</label>
+          <div class="form-input-group">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            </svg>
+            <input type="tel" class="form-input" id="register-phone" placeholder="0812345678" pattern="[0-9]{9,10}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>รหัสผ่าน</label>
+          <div class="form-input-group">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <input type="password" class="form-input" id="register-password" placeholder="อย่างน้อย 8 ตัวอักษร" required minlength="8">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>ยืนยันรหัสผ่าน</label>
+          <div class="form-input-group">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <input type="password" class="form-input" id="register-password2" placeholder="ใส่รหัสผ่านอีกครั้ง" required>
+          </div>
+        </div>
+        <div id="register-error" class="form-error"></div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;" id="register-submit-btn">สร้างบัญชี</button>
+      </form>
+
+      <!-- โซเชียลล็อกอิน -->
+      <div class="social-login-container">
+        <div class="social-title">หรือใช้บัญชีอื่น ๆ</div>
+        <div class="social-buttons">
+          <div id="google-btn-wrapper" style="display: inline-flex; align-items: center;">
+            <div id="g_id_signin_btn" style="display: none;"></div>
+            <button class="btn-social btn-google" id="btn-google-fallback" onclick="handleSocialLogin('google')">
+              <svg style="width:16px;height:16px;" viewBox="0 0 24 24">
+                <path fill="#ea4335" d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.213-5.074 4.213-3.414 0-6.19-2.775-6.19-6.19 0-3.414 2.776-6.19 6.19-6.19 1.543 0 2.946.568 4.024 1.503l3.056-3.056C19.23 1.957 15.938 1 12.24 1 5.922 1 1 5.922 1 12.24s4.922 11.24 11.24 11.24c6.262 0 11.24-4.978 11.24-11.24 0-.82-.095-1.579-.26-2.285h-10.98z"/>
+              </svg>
+              Google
+            </button>
+          </div>
+          <button class="btn-social btn-facebook" onclick="handleSocialLogin('facebook')">
+            <svg style="width:16px;height:16px;" viewBox="0 0 24 24">
+              <path fill="#1877f2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+            Facebook
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Forgot Password Modal -->
+  <div class="otp-modal" id="forgot-password-modal">
+    <div class="otp-card">
+      
+      <!-- Step 1: Request OTP -->
+      <div id="forgot-step-1">
+        <h3 class="otp-modal-title">ลืมรหัสผ่าน</h3>
+        <p class="otp-modal-desc">กรุณากรอกอีเมลของคุณเพื่อรับรหัสผ่าน OTP 6 หลัก</p>
+
+        <input type="email" class="form-input mb-2" id="forgot-email" placeholder="อีเมลของคุณ" style="width: 100%;">
+
+        <div id="forgot-error-1" class="form-error"></div>
+
+        <div class="otp-btn-row">
+          <button class="btn btn-ghost" onclick="closeForgotPasswordModal()">ยกเลิก</button>
+          <button class="btn btn-primary" onclick="requestPasswordResetOTP()" id="forgot-req-btn">ส่งรหัส OTP</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Reset Password -->
+      <div id="forgot-step-2" style="display: none;">
+        <h3 class="otp-modal-title">ตั้งรหัสผ่านใหม่</h3>
+        <p class="otp-modal-desc">รหัส OTP ถูกส่งไปที่อีเมลของคุณแล้ว (โปรดตรวจสอบใน Log หากทดสอบบน Local)</p>
+
+        <div class="otp-code-input" id="reset-otp-inputs">
+          <input type="text" class="otp-digit" maxlength="1" onkeyup="moveToNextReset(this, 1)">
+          <input type="text" class="otp-digit" maxlength="1" onkeyup="moveToNextReset(this, 2)">
+          <input type="text" class="otp-digit" maxlength="1" onkeyup="moveToNextReset(this, 3)">
+          <input type="text" class="otp-digit" maxlength="1" onkeyup="moveToNextReset(this, 4)">
+          <input type="text" class="otp-digit" maxlength="1" onkeyup="moveToNextReset(this, 5)">
+          <input type="text" class="otp-digit" maxlength="1" onkeyup="moveToNextReset(this, 6)">
+        </div>
+
+        <input type="password" class="form-input mb-1" id="forgot-new-password" placeholder="รหัสผ่านใหม่" style="width: 100%;">
+        <input type="password" class="form-input mb-2" id="forgot-confirm-password" placeholder="ยืนยันรหัสผ่านใหม่" style="width: 100%;">
+
+        <div id="forgot-error-2" class="form-error"></div>
+
+        <div class="otp-btn-row">
+          <button class="btn btn-ghost" onclick="closeForgotPasswordModal()">ยกเลิก</button>
+          <button class="btn btn-primary" onclick="submitPasswordReset()" id="forgot-submit-btn">เปลี่ยนรหัสผ่าน</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- OTP Verification Modal -->
+  <div class="otp-modal" id="otp-modal">
+    <div class="otp-card">
+      <h3 class="otp-modal-title">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        ป้อนรหัสยืนยันตัวตน (OTP)
+      </h3>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">รหัส OTP 6 หลักได้ถูกส่งไปยังเบอร์/อีเมลของคุณแล้ว</p>
+
+      <div id="otp-code-notice" class="otp-mock-notice">
+        [Mock] รหัส OTP ทดสอบของคุณคือ: <strong id="otp-mock-value">------</strong>
+      </div>
+
+      <div class="otp-code-input" id="verify-otp-inputs">
+        <input type="text" class="otp-digit" maxlength="1" onkeyup="moveOtpFocus(this, 'next', 'first')">
+        <input type="text" class="otp-digit" maxlength="1" onkeyup="moveOtpFocus(this, 'next', 'prev')">
+        <input type="text" class="otp-digit" maxlength="1" onkeyup="moveOtpFocus(this, 'next', 'prev')">
+        <input type="text" class="otp-digit" maxlength="1" onkeyup="moveOtpFocus(this, 'next', 'prev')">
+        <input type="text" class="otp-digit" maxlength="1" onkeyup="moveOtpFocus(this, 'next', 'prev')">
+        <input type="text" class="otp-digit" maxlength="1" onkeyup="moveOtpFocus(this, 'last', 'prev')">
+      </div>
+
+      <div id="otp-error" style="color: var(--danger); font-size: 0.85rem; margin-bottom: 1rem;"></div>
+
+      <div class="otp-btn-row">
+        <button class="btn btn-outline" onclick="closeOtpModal()">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="submitOtpVerify()" id="otp-verify-btn">ยืนยัน</button>
+      </div>
+
+      <div style="margin-top:1.5rem;">
+        <span class="otp-hint">ไม่ได้รับรหัส?</span>
+        <button class="otp-resend" onclick="resendOtp()">ส่งรหัสอีกครั้ง</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    // Redirect if already logged in to prevent viewing login form
+    if (Auth.isLoggedIn()) {
+      window.location.href = '/profile.html';
+    }
+
+    // ตรวจสอบว่าต้องแสดงแท็บสมัครสมาชิกไหม
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('register') !== null) {
+      switchTab('register');
+    }
+
+    let pendingRegisterData = null; // เก็บข้อมูลสมัครสมาชิกไว้ชั่วคราวเพื่อรอ OTP
+
+    // === UI Helpers: button loading state + field validation state ===
+    function setBtnLoading(btn, loading) {
+      if (!btn) return;
+      if (loading) {
+        btn.dataset.originalText = btn.dataset.originalText || btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>';
+      } else {
+        btn.disabled = false;
+        if (btn.dataset.originalText) btn.innerHTML = btn.dataset.originalText;
+      }
+    }
+
+    function setFieldError(id, hasError) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('has-error', hasError);
+    }
+
+    function clearFieldErrors(ids) {
+      ids.forEach(id => setFieldError(id, false));
+    }
+
+    function switchTab(tab) {
+      const loginForm = document.getElementById('login-form');
+      const registerForm = document.getElementById('register-form');
+      const loginTab = document.getElementById('tab-login');
+      const registerTab = document.getElementById('tab-register');
+
+      if (tab === 'login') {
+        loginForm.classList.remove('hidden');
+        registerForm.classList.add('hidden');
+        loginTab.classList.add('active');
+        registerTab.classList.remove('active');
+      } else {
+        loginForm.classList.add('hidden');
+        registerForm.classList.remove('hidden');
+        loginTab.classList.remove('active');
+        registerTab.classList.add('active');
+      }
+
+      // ล้างข้อความผิดพลาด
+      document.getElementById('login-error').textContent = '';
+      document.getElementById('register-error').textContent = '';
+      clearFieldErrors(['login-identifier', 'login-password', 'register-username', 'register-email', 'register-phone', 'register-password', 'register-password2']);
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const errorDiv = document.getElementById('login-error');
+      errorDiv.textContent = '';
+      clearFieldErrors(['login-identifier', 'login-password']);
+
+      const identifier = document.getElementById('login-identifier').value.trim();
+      const password = document.getElementById('login-password').value;
+      const submitBtn = document.getElementById('login-submit-btn');
+
+      setBtnLoading(submitBtn, true);
+      try {
+        const result = await API.post('/auth/login', { login_identifier: identifier, password });
+        Auth.setToken(result.token);
+        Auth.setUser(result.user);
+        Toast.success('ยินดีต้อนรับกลับมา, ' + result.user.username + '!');
+
+        const redirect = new URLSearchParams(window.location.search).get('redirect');
+        window.location.href = redirect || '/index.html';
+      } catch (error) {
+        errorDiv.textContent = error.message;
+        setFieldError('login-identifier', true);
+        setFieldError('login-password', true);
+        setBtnLoading(submitBtn, false);
+      }
+
+      return false;
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const errorDiv = document.getElementById('register-error');
+      errorDiv.textContent = '';
+      clearFieldErrors(['register-username', 'register-email', 'register-phone', 'register-password', 'register-password2']);
+
+      const username = document.getElementById('register-username').value.trim();
+      const email = document.getElementById('register-email').value.trim();
+      const phone = document.getElementById('register-phone').value.trim();
+      const password = document.getElementById('register-password').value;
+      const password2 = document.getElementById('register-password2').value;
+      const submitBtn = document.getElementById('register-submit-btn');
+
+      if (!email && !phone) {
+        errorDiv.textContent = 'กรุณากรอกอีเมล หรือ เบอร์โทรศัพท์ อย่างใดอย่างหนึ่ง';
+        setFieldError('register-email', true);
+        setFieldError('register-phone', true);
+        return false;
+      }
+
+      if (password !== password2) {
+        errorDiv.textContent = 'รหัสผ่านไม่ตรงกัน';
+        setFieldError('register-password', true);
+        setFieldError('register-password2', true);
+        return false;
+      }
+
+      setBtnLoading(submitBtn, true);
+      try {
+        const result = await API.post('/auth/register', { username, email, phone, password });
+        Auth.setToken(result.token);
+        Auth.setUser(result.user);
+        Toast.success('สมัครสมาชิกสำเร็จ!');
+        window.location.href = '/index.html';
+      } catch (error) {
+        errorDiv.textContent = error.message;
+        setBtnLoading(submitBtn, false);
+      }
+
+      return false;
+    }
+
+    let configuredGoogleClientId = '';
+
+    async function initGoogleLogin() {
+      try {
+        const config = await API.get('/auth/config');
+        if (config && config.google_client_id && config.google_client_id.trim() !== '') {
+          configuredGoogleClientId = config.google_client_id.trim();
+          
+          // Wait for Google Identity script to load
+          const checkGsi = setInterval(() => {
+            if (window.google && window.google.accounts && window.google.accounts.id) {
+              clearInterval(checkGsi);
+              window.google.accounts.id.initialize({
+                client_id: configuredGoogleClientId,
+                callback: handleGoogleCredentialResponse,
+                auto_select: false
+              });
+
+              const btnContainer = document.getElementById('g_id_signin_btn');
+              const fallbackBtn = document.getElementById('btn-google-fallback');
+              if (btnContainer) {
+                btnContainer.style.display = 'inline-block';
+                if (fallbackBtn) fallbackBtn.style.display = 'none';
+                const isDark = document.body.classList.contains('dark-mode');
+                window.google.accounts.id.renderButton(btnContainer, {
+                  theme: isDark ? 'filled_black' : 'outline',
+                  size: 'large',
+                  shape: 'pill',
+                  text: 'signin_with',
+                  locale: 'th'
+                });
+              }
+            }
+          }, 200);
+
+          setTimeout(() => clearInterval(checkGsi), 5000);
+        }
+      } catch (e) {
+        // Google Sign-In is optional — no client_id configured is an expected, silent no-op.
+      }
+    }
+
+    async function handleGoogleCredentialResponse(response) {
+      if (!response || !response.credential) return;
+      try {
+        const result = await API.post('/auth/social-login', {
+          credential: response.credential
+        });
+        Auth.setToken(result.token);
+        Auth.setUser(result.user);
+        Toast.success(`เข้าสู่ระบบด้วย Google สำเร็จ! ยินดีต้อนรับ ${result.user.username}`);
+        const redirect = new URLSearchParams(window.location.search).get('redirect');
+        window.location.href = redirect || '/index.html';
+      } catch (err) {
+        Toast.error('เข้าสู่ระบบด้วย Google ไม่สำเร็จ: ' + err.message);
+      }
+    }
+
+    // ฟังก์ชันจัดการ Social Login (Google/Facebook)
+    async function handleSocialLogin(provider) {
+      if (provider === 'google' && configuredGoogleClientId && window.google && window.google.accounts && window.google.accounts.id) {
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            runSocialLoginSimulator(provider);
+          }
+        });
+        return;
+      }
+
+      runSocialLoginSimulator(provider);
+    }
+
+    async function runSocialLoginSimulator(provider) {
+      const mockId = Math.floor(Math.random() * 1000000000).toString();
+      const mockUsername = `${provider}_user_${mockId.substring(0, 5)}`;
+      const mockEmail = `${mockUsername}@${provider}.com`;
+      const mockAvatar = provider === 'google' 
+        ? 'https://lh3.googleusercontent.com/a/default-user' 
+        : 'https://graph.facebook.com/v2.5/default-avatar';
+
+      try {
+        const result = await API.post('/auth/social-login', {
+          social_type: provider,
+          social_id: mockId,
+          email: mockEmail,
+          username: mockUsername,
+          avatar_url: mockAvatar
+        });
+
+        Auth.setToken(result.token);
+        Auth.setUser(result.user);
+        Toast.success(`เข้าสู่ระบบด้วย ${provider} สำเร็จ! ยินดีต้อนรับ, ${result.user.username}`);
+        
+        const redirect = new URLSearchParams(window.location.search).get('redirect');
+        window.location.href = redirect || '/index.html';
+      } catch (error) {
+        Toast.error(`เกิดข้อผิดพลาดในการล็อกอินด้วย ${provider}: ` + error.message);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initGoogleLogin();
+    });
+
+    // === Forgot Password Functions ===
+    function openForgotPasswordModal() {
+      document.getElementById('forgot-password-modal').style.display = 'flex';
+      document.getElementById('forgot-step-1').style.display = 'block';
+      document.getElementById('forgot-step-2').style.display = 'none';
+      document.getElementById('forgot-email').value = '';
+      document.getElementById('forgot-error-1').textContent = '';
+      document.getElementById('forgot-email').focus();
+    }
+
+    function closeForgotPasswordModal() {
+      document.getElementById('forgot-password-modal').style.display = 'none';
+    }
+
+    async function requestPasswordResetOTP() {
+      const email = document.getElementById('forgot-email').value.trim();
+      const errorDiv = document.getElementById('forgot-error-1');
+      const btn = document.getElementById('forgot-req-btn');
+      setFieldError('forgot-email', false);
+      if (!email) {
+        errorDiv.textContent = 'กรุณากรอกอีเมล';
+        setFieldError('forgot-email', true);
+        return;
+      }
+
+      setBtnLoading(btn, true);
+      try {
+        const otpResult = await API.post('/auth/send-otp', { email_or_phone: email });
+
+        // Go to step 2
+        document.getElementById('forgot-step-1').style.display = 'none';
+        document.getElementById('forgot-step-2').style.display = 'block';
+        document.getElementById('forgot-error-2').textContent = '';
+
+        const resetInputs = document.querySelectorAll('#reset-otp-inputs .otp-digit');
+        resetInputs.forEach(input => input.value = '');
+        document.getElementById('forgot-new-password').value = '';
+        document.getElementById('forgot-confirm-password').value = '';
+
+        resetInputs[0].focus();
+        Toast.success('ส่งรหัส OTP สำหรับรีเซ็ตรหัสผ่านแล้ว! (ดูใน Log เซิร์ฟเวอร์)');
+      } catch (error) {
+        errorDiv.textContent = 'ไม่สามารถส่ง OTP ได้: ' + error.message;
+        setFieldError('forgot-email', true);
+      } finally {
+        setBtnLoading(btn, false);
+      }
+    }
+
+    function moveToNextReset(input, index) {
+      if (input.value.length >= 1) {
+        const next = input.nextElementSibling;
+        if (next && next.classList.contains('otp-digit')) {
+          next.focus();
+        }
+      } else if (input.value.length === 0) {
+        const prev = input.previousElementSibling;
+        if (prev && prev.classList.contains('otp-digit')) {
+          prev.focus();
+        }
+      }
+    }
+
+    async function submitPasswordReset() {
+      const email = document.getElementById('forgot-email').value.trim();
+      const errorDiv = document.getElementById('forgot-error-2');
+      const btn = document.getElementById('forgot-submit-btn');
+      clearFieldErrors(['forgot-new-password', 'forgot-confirm-password']);
+
+      const resetInputs = document.querySelectorAll('#reset-otp-inputs .otp-digit');
+      let code = '';
+      resetInputs.forEach(d => code += d.value);
+
+      if (code.length < 6) {
+        errorDiv.textContent = 'กรุณากรอกรหัส OTP ให้ครบ 6 หลัก';
+        return;
+      }
+
+      const newPassword = document.getElementById('forgot-new-password').value;
+      const confirmPassword = document.getElementById('forgot-confirm-password').value;
+
+      if (!newPassword || newPassword.length < 8) {
+        errorDiv.textContent = 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 8 ตัวอักษร';
+        setFieldError('forgot-new-password', true);
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        errorDiv.textContent = 'รหัสผ่านใหม่และการยืนยันรหัสผ่านไม่ตรงกัน';
+        setFieldError('forgot-new-password', true);
+        setFieldError('forgot-confirm-password', true);
+        return;
+      }
+
+      setBtnLoading(btn, true);
+      try {
+        await API.post('/auth/reset-password', {
+          email_or_phone: email,
+          code: code,
+          new_password: newPassword
+        });
+
+        closeForgotPasswordModal();
+        Toast.success('เปลี่ยนรหัสผ่านเรียบร้อยแล้ว! กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่');
+
+        // Auto-fill the login identifier if it's an email
+        if (email.includes('@')) {
+           document.getElementById('login-identifier').value = email;
+           document.getElementById('login-password').focus();
+        }
+      } catch (error) {
+        errorDiv.textContent = 'ล้มเหลว: ' + error.message;
+      } finally {
+        setBtnLoading(btn, false);
+      }
+    }
+
+    // === OTP Modal Functions ===
+    let activeOtpTarget = '';
+    let expectedOtpCode = '';
+
+    function openOtpModal(target, mockCode) {
+      activeOtpTarget = target;
+      expectedOtpCode = mockCode;
+      
+      document.getElementById('otp-error').textContent = '';
+      
+      // แสดงโค้ดทดสอบในจอเพื่อความสะดวก
+      if (mockCode) {
+        document.getElementById('otp-mock-value').textContent = mockCode;
+        document.getElementById('otp-code-notice').style.display = 'block';
+      }
+
+      const digits = document.querySelectorAll('#verify-otp-inputs .otp-digit');
+      digits.forEach(input => input.value = '');
+
+      document.getElementById('otp-modal').style.display = 'flex';
+      digits[0].focus();
+    }
+
+    function closeOtpModal() {
+      document.getElementById('otp-modal').style.display = 'none';
+    }
+
+    function moveOtpFocus(input, direction, sibling) {
+      if (input.value.length >= 1 && direction === 'next') {
+        const next = input.nextElementSibling;
+        if (next && next.classList.contains('otp-digit')) {
+          next.focus();
+        }
+      } else if (input.value.length === 0 && sibling === 'prev') {
+        const prev = input.previousElementSibling;
+        if (prev && prev.classList.contains('otp-digit')) {
+          prev.focus();
+        }
+      }
+    }
+
+    async function resendOtp() {
+      try {
+        const otpResult = await API.post('/auth/send-otp', { email_or_phone: activeOtpTarget });
+        expectedOtpCode = otpResult.code;
+        document.getElementById('otp-mock-value').textContent = otpResult.code;
+        Toast.success('ส่งรหัส OTP ใหม่แล้ว!');
+        document.querySelectorAll('#verify-otp-inputs .otp-digit')[0].focus();
+      } catch (error) {
+        document.getElementById('otp-error').textContent = 'ล้มเหลว: ' + error.message;
+      }
+    }
+
+    async function submitOtpVerify() {
+      const digits = document.querySelectorAll('#verify-otp-inputs .otp-digit');
+      let code = '';
+      digits.forEach(d => code += d.value);
+
+      if (code.length < 6) {
+        document.getElementById('otp-error').textContent = 'กรุณากรอกรหัสผ่านให้ครบ 6 หลัก';
+        return;
+      }
+
+      const btn = document.getElementById('otp-verify-btn');
+      setBtnLoading(btn, true);
+      try {
+        // ยืนยันรหัส OTP ในระบบ
+        await API.post('/auth/verify-otp', { email_or_phone: activeOtpTarget, code });
+        closeOtpModal();
+
+        // เมื่อ OTP ผ่านแล้ว ให้สมัครสมาชิกแบบลงทะเบียนจริง
+        if (pendingRegisterData) {
+          const result = await API.post('/auth/register', pendingRegisterData);
+          Auth.setToken(result.token);
+          Auth.setUser(result.user);
+
+          // ทำเครื่องหมายการยืนยันสถานะใน User Object ปลายทางด้วย
+          const updatedUser = result.user;
+          if (activeOtpTarget === pendingRegisterData.phone) {
+            updatedUser.is_phone_verified = 1;
+          } else {
+            updatedUser.is_email_verified = 1;
+          }
+          Auth.setUser(updatedUser);
+
+          Toast.success('สมัครสมาชิกและยืนยันตัวตนสำเร็จ!');
+          window.location.href = '/index.html';
+        }
+      } catch (error) {
+        document.getElementById('otp-error').textContent = error.message;
+      } finally {
+        setBtnLoading(btn, false);
+      }
+    }
+  </script>
+</body>
+</html>

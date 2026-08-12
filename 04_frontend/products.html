@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marketplace | PC Builder Pro</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* === Marketplace filter toolbar === */
+    .marketplace-toolbar {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      align-items: end;
+    }
+
+    @media (max-width: 768px) {
+      .filter-grid {
+        grid-template-columns: 1fr;
+      }
+      .filter-price-group {
+        grid-column: span 1;
+      }
+    }
+
+    /* Give the price-range filter double width so its two number inputs
+       have room to show their full placeholder text — at a single grid
+       column it was cramped enough to look like it collided with the
+       neighboring "เรียงลำดับ" (sort) filter. */
+    .filter-price-group {
+      grid-column: span 2;
+    }
+
+    .filter-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      display: block;
+      margin-bottom: 0.35rem;
+    }
+
+    .filter-select-block {
+      width: 100%;
+    }
+
+    /* Guard the leading search icon's padding against the global mobile
+       "#product-search { padding: 10px }" reset (same specificity, but this
+       rule loads after style.css so it wins the tie on source order). */
+    #product-search.form-input {
+      padding-left: 2.6rem;
+    }
+
+    .filter-price-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .filter-price-row .search-input {
+      width: 50%;
+      min-width: 0;
+      padding: 0.4rem 0.6rem;
+      font-size: 0.85rem;
+    }
+
+    .filter-price-sep {
+      color: var(--text-muted);
+    }
+
+    .filter-footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .warranty-check-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+
+    .warranty-check-label input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+    }
+
+    .filter-reset-btn {
+      font-size: 0.8rem;
+      padding: 0.35rem 0.85rem;
+    }
+
+    /* === Product cards === */
+    .product-img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+    }
+
+    .product-img-placeholder .icon {
+      width: 40px;
+      height: 40px;
+    }
+
+    .product-category-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .product-title-link {
+      display: block;
+      font-weight: 700;
+      font-size: 0.95rem;
+      line-height: 1.3;
+      color: var(--text-primary);
+      text-decoration: none;
+      margin: 2px 0;
+    }
+
+    .product-title-link:hover {
+      color: var(--highlight);
+    }
+
+    .product-desc-muted {
+      font-size: 0.85rem;
+      min-height: 2.6em;
+    }
+
+    .seller-name-inline {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .seller-name-inline .icon {
+      width: 14px;
+      height: 14px;
+    }
+
+    .trust-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--success);
+      background: rgba(18, 184, 134, 0.12);
+    }
+
+    .dark-mode .trust-chip {
+      background: rgba(46, 204, 113, 0.12);
+    }
+
+    .trust-chip .icon {
+      width: 12px;
+      height: 12px;
+    }
+
+    .product-actions-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .product-actions-row .btn {
+      flex: 1;
+      font-size: 0.82rem;
+      padding: 0.5rem;
+    }
+
+    .product-actions-row .btn .icon {
+      width: 15px;
+      height: 15px;
+    }
+
+    .empty-state-icon .icon {
+      width: 48px;
+      height: 48px;
+    }
+
+    .grid-span-full {
+      grid-column: 1 / -1;
+    }
+
+    .stock-ready-label {
+      font-size: 0.78rem;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <a href="/index.html" class="navbar-logo">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        PC Builder <span>Pro</span>
+      </a>
+      <button class="mobile-menu-toggle" id="mobile-menu-btn" aria-label="Toggle menu">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="4" y1="6" x2="20" y2="6"></line>
+          <line x1="4" y1="12" x2="20" y2="12"></line>
+          <line x1="4" y1="18" x2="20" y2="18"></line>
+        </svg>
+      </button>
+      <ul class="navbar-links">
+        <li><a href="/index.html">Home</a></li>
+        <li><a href="/builder.html">Builder</a></li>
+        <li><a href="/builds.html">Builds</a></li>
+        <li><a href="/products.html" class="active">Marketplace</a></li>
+        <li><a href="/sell-product.html">Sell</a></li>
+      </ul>
+      <div class="navbar-auth" id="navbar-auth"></div>
+    </div>
+  </nav>
+
+  <section class="section container">
+    <div class="section-header">
+      <div>
+        <h1 class="section-title">Marketplace</h1>
+        <p class="text-muted">Browse approved active listings from verified catalog models.</p>
+      </div>
+      <a href="/sell-product.html" class="btn btn-primary">Create listing</a>
+    </div>
+
+    <div class="marketplace-toolbar mb-2">
+      <div class="filter-grid">
+        <div>
+          <label class="filter-label" for="product-search">ค้นหาสินค้า</label>
+          <div class="form-input-group">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.3-4.3"></path>
+            </svg>
+            <input type="text" class="form-input" id="product-search" placeholder="พิมพ์ชื่อแบรนด์, รุ่น, หรือรายละเอียด">
+          </div>
+        </div>
+        <div>
+          <label class="filter-label" for="product-category">หมวดหมู่</label>
+          <select class="filter-select filter-select-block" id="product-category">
+            <option value="">ทุกหมวดหมู่ (All)</option>
+          </select>
+        </div>
+        <div>
+          <label class="filter-label" for="product-brand">แบรนด์</label>
+          <select class="filter-select filter-select-block" id="product-brand">
+            <option value="">ทุกแบรนด์ (All Brands)</option>
+          </select>
+        </div>
+        <div>
+          <label class="filter-label" for="product-condition">สภาพสินค้า</label>
+          <select class="filter-select filter-select-block" id="product-condition">
+            <option value="">ทุกสภาพสินค้า</option>
+            <option value="new">มือหนึ่ง (New)</option>
+            <option value="used_90">มือสอง 90% (สภาพสวย)</option>
+            <option value="used_80">มือสอง 80% (สภาพดี)</option>
+            <option value="used_70">มือสอง 70% (ตามสภาพ)</option>
+          </select>
+        </div>
+        <div class="filter-price-group">
+          <label class="filter-label">ช่วงราคา (บาท)</label>
+          <div class="filter-price-row">
+            <input type="number" class="search-input" id="product-min-price" placeholder="ขั้นต่ำ">
+            <span class="filter-price-sep">-</span>
+            <input type="number" class="search-input" id="product-max-price" placeholder="สูงสุด">
+          </div>
+        </div>
+        <div>
+          <label class="filter-label" for="product-sort">เรียงลำดับ</label>
+          <select class="filter-select filter-select-block" id="product-sort">
+            <option value="created_desc">ประกาศล่าสุด</option>
+            <option value="price_asc">ราคา: น้อย ไปมาก</option>
+            <option value="price_desc">ราคา: มาก ไปน้อย</option>
+            <option value="warranty_desc">ประกันเหลือมากที่สุด</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filter-footer-row">
+        <label class="warranty-check-label">
+          <input type="checkbox" id="product-has-warranty">
+          แสดงเฉพาะสินค้าที่มีประกันคงเหลือ (&gt; 0 เดือน)
+        </label>
+        <button class="btn btn-outline btn-sm filter-reset-btn" id="btn-reset-filters">
+          ล้างตัวกรองทั้งหมด
+        </button>
+      </div>
+    </div>
+
+    <div class="card-grid" id="products-grid">
+      <div class="loading-overlay grid-span-full">
+        <div class="spinner"></div>
+        <p>Loading listings...</p>
+      </div>
+    </div>
+  </section>
+
+  <script src="/js/app.js"></script>
+  <script>
+    let productCategories = [];
+    let productBrands = [];
+    let productParts = [];
+
+    function conditionLabel(value) {
+      return {
+        new: 'New',
+        used_90: 'Used 90%',
+        used_80: 'Used 80%',
+        used_70: 'Used 70%'
+      }[value] || value;
+    }
+
+    async function loadProductMetadata() {
+      const metadata = await API.get('/products/metadata');
+      productCategories = metadata.categories || [];
+      productBrands = metadata.brands || [];
+      productParts = metadata.parts || [];
+
+      document.getElementById('product-category').innerHTML = '<option value="">ทุกหมวดหมู่ (All)</option>' +
+        productCategories.map(cat => `<option value="${cat.slug}">${escapeHtml(cat.name)}</option>`).join('');
+
+      document.getElementById('product-brand').innerHTML = '<option value="">ทุกแบรนด์ (All Brands)</option>' +
+        productBrands.map(brand => `<option value="${escapeHtml(brand)}">${escapeHtml(brand)}</option>`).join('');
+    }
+
+    async function loadProducts() {
+      const grid = document.getElementById('products-grid');
+      const category = document.getElementById('product-category').value;
+      const brand = document.getElementById('product-brand').value;
+      const condition = document.getElementById('product-condition').value;
+      const minPrice = document.getElementById('product-min-price').value.trim();
+      const maxPrice = document.getElementById('product-max-price').value.trim();
+      const sort = document.getElementById('product-sort').value;
+      const hasWarranty = document.getElementById('product-has-warranty').checked;
+      const search = document.getElementById('product-search').value.trim();
+
+      let url = '/products';
+      const params = new URLSearchParams();
+      if (category) params.set('category', category);
+      if (brand) params.set('brand', brand);
+      if (condition) params.set('condition', condition);
+      if (minPrice) params.set('min_price', minPrice);
+      if (maxPrice) params.set('max_price', maxPrice);
+      if (sort) params.set('sort', sort);
+      if (hasWarranty) params.set('has_warranty', 'true');
+      if (search) params.set('search', search);
+
+      if (params.toString()) url += '?' + params.toString();
+
+      grid.innerHTML = '<div class="loading-overlay grid-span-full"><div class="spinner"></div><p>กำลังโหลดรายการสินค้า...</p></div>';
+
+      try {
+        const products = await API.get(url);
+        if (!products.length) {
+          grid.innerHTML = `
+            <div class="empty-state grid-span-full">
+              <div class="empty-state-icon">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="8" cy="21" r="1"></circle>
+                  <circle cx="19" cy="21" r="1"></circle>
+                  <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+                </svg>
+              </div>
+              <h3>ไม่พบรายการสินค้าตรงตามเงื่อนไข</h3>
+              <p>ลองปรับเปลี่ยนเงื่อนไขค้นหา หรือล้างตัวกรองเพื่อดูสินค้าทั้งหมด</p>
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = products.map(product => {
+          const image = product.photos?.[0];
+          const title = `${escapeHtml(product.brand || '')} ${escapeHtml(product.model || product.part_name || '')}`;
+          return `
+            <article class="product-card-enhanced">
+              <a href="/product-detail.html?id=${product.id}" class="product-img-wrapper">
+                ${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(product.part_name)}">` : `
+                  <div class="product-img-placeholder">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+                      <circle cx="9" cy="9" r="2"></circle>
+                      <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+                    </svg>
+                  </div>
+                `}
+              </a>
+              <div class="product-details">
+                <div class="product-category-label">${escapeHtml(product.category_name)}</div>
+                <a href="/product-detail.html?id=${product.id}" class="product-title-link">${title}</a>
+                <div class="specs-tag-list">
+                  <span class="spec-chip">${conditionLabel(product.condition)}</span>
+                  <span class="spec-chip ${product.remaining_warranty_months > 0 ? 'text-success' : 'text-muted'}">${product.remaining_warranty_months || 0}ด. ประกัน</span>
+                  <span class="spec-chip">คงเหลือ ${product.stock_quantity}</span>
+                </div>
+                <p class="text-muted product-desc-muted">${escapeHtml(product.description || '')}</p>
+                <div class="product-price-row">
+                  <div class="current-price">${formatPrice(product.price)}</div>
+                  <span class="text-success stock-ready-label">พร้อมขาย</span>
+                </div>
+                <div class="seller-info-row">
+                  <span class="seller-name-inline">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M20 21a8 8 0 0 0-16 0"></path>
+                      <circle cx="12" cy="8" r="5"></circle>
+                    </svg>
+                    ${escapeHtml(product.seller_name)}
+                  </span>
+                  <span class="trust-chip" title="ผู้ขายยืนยันตัวตนเรียบร้อย">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    ยืนยันแล้ว
+                  </span>
+                </div>
+                <div class="product-actions-row">
+                  <a href="/product-detail.html?id=${product.id}" class="btn btn-outline btn-sm">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    รายละเอียด
+                  </a>
+                  <button class="btn btn-primary btn-sm add-to-cart-btn"
+                          data-id="${product.id}"
+                          data-part-id="${product.part_id}"
+                          data-name="${escapeHtml(product.brand || '')} ${escapeHtml(product.model || product.part_name || '')}"
+                          data-price="${product.price}"
+                          data-brand="${escapeHtml(product.brand || '')}"
+                          data-model="${escapeHtml(product.model || '')}"
+                          data-condition="${product.condition}"
+                          data-seller="${escapeHtml(product.seller_name)}">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="8" cy="21" r="1"></circle>
+                      <circle cx="19" cy="21" r="1"></circle>
+                      <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+                    </svg>
+                    ใส่ตะกร้า
+                  </button>
+                </div>
+              </div>
+            </article>
+          `;
+        }).join('');
+
+        grid.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const product = {
+              product_id: parseInt(btn.dataset.id),
+              part_id: parseInt(btn.dataset.partId),
+              name: btn.dataset.name,
+              price: parseFloat(btn.dataset.price),
+              brand: btn.dataset.brand,
+              model: btn.dataset.model,
+              condition: btn.dataset.condition,
+              seller_name: btn.dataset.seller
+            };
+            Cart.addItem(product);
+            Auth.updateUI();
+          });
+        });
+      } catch (error) {
+        grid.innerHTML = `<div class="empty-state grid-span-full"><h3>Could not load listings</h3><p>${escapeHtml(error.message)}</p></div>`;
+      }
+    }
+
+    function resetFilters() {
+      document.getElementById('product-search').value = '';
+      document.getElementById('product-category').value = '';
+
+      const brandSelect = document.getElementById('product-brand');
+      brandSelect.innerHTML = '<option value="">ทุกแบรนด์ (All Brands)</option>' +
+        productBrands.map(brand => `<option value="${escapeHtml(brand)}">${escapeHtml(brand)}</option>`).join('');
+      brandSelect.value = '';
+
+      document.getElementById('product-condition').value = '';
+      document.getElementById('product-min-price').value = '';
+      document.getElementById('product-max-price').value = '';
+      document.getElementById('product-sort').value = 'created_desc';
+      document.getElementById('product-has-warranty').checked = false;
+      loadProducts();
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadProductMetadata();
+      await loadProducts();
+
+      const categorySelect = document.getElementById('product-category');
+      const brandSelect = document.getElementById('product-brand');
+
+      categorySelect.addEventListener('change', () => {
+        const selectedSlug = categorySelect.value;
+        let availableBrands = productBrands;
+
+        if (selectedSlug) {
+          const selectedCat = productCategories.find(c => c.slug === selectedSlug);
+          if (selectedCat) {
+            const categoryParts = productParts.filter(p => p.category_id === selectedCat.id);
+            const brandsInCat = new Set(categoryParts.map(p => p.brand).filter(b => b));
+            availableBrands = Array.from(brandsInCat).sort();
+          }
+        }
+
+        const currentBrand = brandSelect.value;
+        brandSelect.innerHTML = '<option value="">ทุกแบรนด์ (All Brands)</option>' +
+          availableBrands.map(brand => `<option value="${escapeHtml(brand)}">${escapeHtml(brand)}</option>`).join('');
+
+        if (availableBrands.includes(currentBrand)) {
+          brandSelect.value = currentBrand;
+        } else {
+          brandSelect.value = '';
+        }
+
+        loadProducts();
+      });
+
+      ['product-brand', 'product-condition', 'product-sort', 'product-has-warranty'].forEach(id => {
+        document.getElementById(id).addEventListener('change', loadProducts);
+      });
+
+      let timer;
+      ['product-search', 'product-min-price', 'product-max-price'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+          clearTimeout(timer);
+          timer = setTimeout(loadProducts, 300);
+        });
+      });
+
+      document.getElementById('btn-reset-filters').addEventListener('click', resetFilters);
+    });
+  </script>
+</body>
+</html>

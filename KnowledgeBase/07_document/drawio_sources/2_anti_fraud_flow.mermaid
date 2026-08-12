@@ -1,0 +1,30 @@
+flowchart TD
+    Start([ผู้ขายเข้าสู่ระบบและเริ่มลงประกาศขาย]) --> InputForm[กรอกข้อมูลสินค้า: หมวดหมู่, สภาพ, ซีเรียลนัมเบอร์, ราคา, รายละเอียด, แนบภาพ]
+    InputForm --> CheckCondition{สภาพสินค้าเป็นสินค้ามือสอง?}
+    
+    %% Photo check
+    CheckCondition -- ใช่ --> CheckPhotoCount{แนบรูปสินค้าอย่างน้อย 3 รูป?}
+    CheckPhotoCount -- ไม่ครบ --> AlertPhotos[ปฏิเสธและเตือน: สินค้ามือสองต้องมีรูปอย่างน้อย 3 รูป] --> InputForm
+    CheckPhotoCount -- ครบถ้วน --> GetMSRP[ดึงราคา MSRP และรายละเอียดสินค้าแนะนำจากตาราง parts]
+    CheckCondition -- เป็นสินค้าใหม่ --> GetMSRP
+    
+    %% Anti-Fraud Price Check
+    GetMSRP --> CheckPriceFloor{ราคาสินค้า < เกณฑ์จำกัดตามสภาพ? <br/>- สินค้าใหม่: < 65% MSRP<br/>- มือสอง 90%: < 50% MSRP<br/>- มือสอง 80%: < 40% MSRP<br/>- มือสอง 70%: < 30% MSRP}
+    CheckPriceFloor -- ต่ำเกินไปจริง --> PenaltyPrice[บวกคะแนนความสงสัย suspicious_score +70 <br/>และเพิ่มเหตุผลราคาต่ำผิดปกติลง Array]
+    CheckPriceFloor -- ราคาเหมาะสม --> CheckSerial
+    
+    %% Anti-Fraud Serial Check
+    PenaltyPrice --> CheckSerial{มีเลข Serial Number ตรงกับสินค้าชิ้นอื่นที่ยังขายไม่หมด?}
+    CheckSerial -- ซ้ำกัน --> PenaltySerial[บวกคะแนนความสงสัย suspicious_score +90 <br/>และเพิ่มเหตุผลซีเรียลซ้ำลง Array]
+    CheckSerial -- ไม่ซ้ำ --> ComputeScore
+    
+    %% Scoring and review
+    PenaltySerial --> ComputeScore[ประมวลผลผลลัพธ์คะแนนความน่าสงสัยรวม]
+    CheckSerial -- ไม่ซ้ำ --> ComputeScore
+    
+    ComputeScore --> CheckSuspicion{คะแนนความน่าสงสัยรวม >= 70?}
+    CheckSuspicion -- ใช่ --> PendingReview[บันทึกสินค้าเป็นสถานะ 'pending_review' <br/>และปักธงลงตาราง product_review_flags เพื่อรอแอดมินอนุมัติ]
+    CheckSuspicion -- ไม่ใช่ --> PublishActive[บันทึกสินค้าเป็นสถานะ 'approved' และเปิดขายสู่หน้าตลาดทันที]
+    
+    PendingReview --> Complete([เสร็จสิ้นกระบวนการลงสินค้า])
+    PublishActive --> Complete

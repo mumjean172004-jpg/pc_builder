@@ -1,0 +1,19 @@
+const express = require('express');
+const router = express.Router();
+const productController = require('../controllers/productController');
+const { authMiddleware } = require('../middleware/auth');
+const { productValidator } = require('../middleware/validators');
+
+// Public routes
+router.get('/metadata', productController.getListingMetadata);
+router.post('/availability', productController.getProductAvailability);
+router.get('/seller/:sellerId/reviews', productController.getSellerReviews);
+router.get('/', productController.getAllProducts);
+router.get('/:id', productController.getProductById);
+
+// Protected routes
+router.post('/', authMiddleware, productValidator, productController.createProduct);
+router.put('/:id', authMiddleware, productController.updateProduct);
+router.delete('/:id', authMiddleware, productController.deleteProduct);
+
+module.exports = router;

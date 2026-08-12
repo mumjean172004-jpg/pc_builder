@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบควบคุมแอดมิน | PC Builder Pro</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --admin-bg-sidebar: #0f172a;
+      --admin-bg-body: #020617;
+      --admin-card-bg: #1e293b;
+      --admin-border: #334155;
+      --text-light: #e2e8f0;
+    }
+
+    body {
+      background-color: var(--admin-bg-body);
+      color: var(--text-light);
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar Layout */
+    .admin-sidebar {
+      width: 260px;
+      background: var(--admin-bg-sidebar);
+      border-right: 1px solid var(--admin-border);
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem;
+      position: fixed;
+      height: 100vh;
+      box-sizing: border-box;
+      z-index: 100;
+    }
+
+    .admin-logo {
+      font-size: 1.3rem;
+      font-weight: bold;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--accent) 0%, #a855f7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .sidebar-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.95rem;
+    }
+
+    .menu-item:hover, .menu-item.active {
+      color: var(--text-light);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .menu-item.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Content Area */
+    .admin-content {
+      margin-left: 260px;
+      padding: 2.5rem;
+      flex: 1;
+      min-width: 0; /* Prevents flex items from overflowing */
+    }
+
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2.5rem;
+    }
+
+    /* Dashboard Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-bottom: 2.5rem;
+    }
+
+    .stats-card {
+      background: var(--admin-card-bg);
+      border: 1px solid var(--admin-border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stats-value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+
+    /* Tables */
+    .table-container {
+      background: var(--admin-card-bg);
+      border: 1px solid var(--admin-border);
+      border-radius: var(--radius-lg);
+      overflow-x: auto;
+      margin-top: 1.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 14px 20px;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--admin-border);
+    }
+
+    td {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--admin-border);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Badges & Tags */
+    .badge {
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      display: inline-block;
+    }
+
+    .badge-admin { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+    .badge-member { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+    .badge-active { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+    .badge-suspended { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+    .badge-flagged { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-card {
+      background: var(--admin-card-bg);
+      border: 1px solid var(--admin-border);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 650px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 2rem;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .dispute-chat-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--admin-border);
+      border-radius: var(--radius-md);
+      height: 250px;
+      overflow-y: auto;
+      padding: 15px;
+      margin: 15px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .dispute-msg {
+      padding: 8px 12px;
+      border-radius: 6px;
+      max-width: 80%;
+      font-size: 0.85rem;
+    }
+
+    .dispute-msg.system {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      align-self: center;
+      text-align: center;
+    }
+
+    .dispute-msg.buyer {
+      background: var(--accent);
+      color: white;
+      align-self: flex-start;
+    }
+
+    .dispute-msg.seller {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-light);
+      align-self: flex-end;
+    }
+
+    /* Icons (this page uses its own local dark palette above, not the shared light/dark tokens) */
+    .admin-logo .icon {
+      width: 22px;
+      height: 22px;
+      color: var(--accent);
+    }
+
+    .menu-item-logout {
+      margin-top: auto;
+      color: var(--danger);
+    }
+
+    #view-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #view-title .icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Stat card icon chip */
+    .stats-card {
+      gap: 12px;
+    }
+    .stat-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .stat-icon .icon { width: 22px; height: 22px; }
+    .stat-icon.revenue { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .stat-icon.listings { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .stat-icon.new-users { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+
+    /* Dashboard layout */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 20px;
+      margin-top: 2rem;
+    }
+    .dashboard-panel {
+      background: var(--admin-card-bg);
+      border: 1px solid var(--admin-border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+    }
+    .dashboard-panel.tips-panel {
+      display: flex;
+      flex-direction: column;
+    }
+    .tips-list {
+      padding-left: 20px;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 0;
+    }
+
+    /* Table loading / empty / error message rows */
+    .table-msg { text-align: center; }
+    .table-msg.error { color: var(--danger); }
+
+    /* Small icon action buttons used in dynamically-rendered table rows.
+       Base .btn-outline (css/style.css) sets color: var(--text-primary), which
+       is dark since this page never applies .dark-mode — invisible on this
+       page's permanently-dark rows unless an action-* variant overrides it. */
+    .btn-icon-sm {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      padding: 4px 9px;
+      cursor: pointer;
+      color: var(--text-light);
+    }
+    .btn-icon-sm .icon { width: 14px; height: 14px; }
+    .btn-icon-sm.action-success { border-color: #10b981; color: #10b981; }
+    .btn-icon-sm.action-danger { border-color: var(--danger); color: var(--danger); }
+    .btn-icon-sm.action-fill-success { background: #10b981; border-color: #10b981; color: #fff; }
+    .btn-icon-sm.action-info { border-color: #3b82f6; color: #3b82f6; }
+
+    .row-actions { display: flex; gap: 5px; }
+
+    /* Dispute modal */
+    .dispute-summary-box {
+      font-size: 0.88rem;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 15px;
+      border-radius: 6px;
+      border: 1px solid var(--admin-border);
+      margin-top: 15px;
+    }
+    .slip-preview-box {
+      text-align: center;
+      background: #000;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--admin-border);
+      margin-bottom: 20px;
+    }
+    .slip-preview-box img {
+      max-height: 250px;
+      max-width: 100%;
+      object-fit: contain;
+    }
+    .dispute-resolve-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-resolve {
+      flex: 1;
+      justify-content: center;
+    }
+    .btn-resolve.success {
+      background: #10b981;
+      border-color: #10b981;
+    }
+    .btn-resolve.danger {
+      color: var(--danger);
+      border-color: var(--danger);
+    }
+
+    /* Form inputs (Add Part modal): this page never toggles the shared .dark-mode
+       class on <body>, so the shared .form-input light-mode tokens (white bg) would
+       clash with this page's dark-only card palette. Override locally to match. */
+    .modal-card .form-group label {
+      color: var(--text-muted);
+    }
+    .modal-card .form-input {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--admin-border);
+      color: #f8fafc;
+    }
+    .modal-card .form-input::placeholder {
+      color: var(--text-muted);
+    }
+    .modal-card .form-input:focus {
+      border-color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Left Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="admin-logo">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20 13c0 5-3.5 7.5-7.5 8.9a1 1 0 0 1-.9 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.79 17 5 19 5a1 1 0 0 1 1 1z"></path>
+      </svg>
+      PC Builder Pro Admin
+    </div>
+    <ul class="sidebar-menu">
+      <li class="menu-item active" id="tab-dashboard" onclick="switchTab('dashboard')">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="12" y1="20" x2="12" y2="10"></line>
+          <line x1="18" y1="20" x2="18" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="16"></line>
+        </svg>
+        แดชบอร์ดวิเคราะห์
+      </li>
+      <li class="menu-item" id="tab-users" onclick="switchTab('users')">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        จัดการสมาชิก
+      </li>
+      <li class="menu-item" id="tab-products" onclick="switchTab('products')">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+          <line x1="4" y1="22" x2="4" y2="15"></line>
+        </svg>
+        สินค้าต้องสงสัย
+      </li>
+      <li class="menu-item" id="tab-disputes" onclick="switchTab('disputes')">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+          <path d="M12 9v4"></path>
+          <path d="M12 17h.01"></path>
+        </svg>
+        จัดการข้อพิพาท
+      </li>
+      <li class="menu-item" id="tab-parts" onclick="switchTab('parts')">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path>
+          <path d="M12 22V12"></path>
+          <polyline points="3.29 7 12 12 20.71 7"></polyline>
+          <path d="m7.5 4.27 9 5.15"></path>
+        </svg>
+        คลังอะไหล่มาตรฐาน
+      </li>
+      <li class="menu-item menu-item-logout" onclick="handleLogout()">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m16 17 5-5-5-5"></path>
+          <path d="M21 12H9"></path>
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+        </svg>
+        ออกจากระบบ
+      </li>
+    </ul>
+  </aside>
+
+  <!-- Main Content Panel -->
+  <main class="admin-content">
+    
+    <header class="admin-header">
+      <div>
+        <h1 id="view-title" style="margin: 0; font-size: 1.8rem;">
+          <svg class="icon" id="view-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="12" y1="20" x2="12" y2="10"></line>
+            <line x1="18" y1="20" x2="18" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="16"></line>
+          </svg>
+          <span id="view-title-text">แดชบอร์ดหลังบ้าน</span>
+        </h1>
+        <p class="text-muted" style="margin: 5px 0 0 0;" id="view-desc">สถิติ ยอดขายรวม และภาพรวมระบบซื้อขายในบอร์ด</p>
+      </div>
+      <div id="admin-user-tag" style="font-size: 0.9rem; font-weight: bold; opacity: 0.8;">
+        กำลังโหลดบัญชี...
+      </div>
+    </header>
+
+    <!-- SECTION 1: DASHBOARD TAB -->
+    <section id="section-dashboard">
+      <div class="stats-grid">
+        <div class="stats-card">
+          <div>
+            <div class="text-muted" style="font-size: 0.85rem;">ยอดโอนชำระสำเร็จรวม</div>
+            <div class="stats-value" id="stat-revenue">฿0</div>
+          </div>
+          <span class="stat-icon revenue">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="12" y1="2" x2="12" y2="22"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+          </span>
+        </div>
+        <div class="stats-card">
+          <div>
+            <div class="text-muted" style="font-size: 0.85rem;">สินค้ามือสองพร้อมขาย</div>
+            <div class="stats-value" id="stat-listings">0 ชิ้น</div>
+          </div>
+          <span class="stat-icon listings">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path>
+              <path d="M12 22V12"></path>
+              <polyline points="3.29 7 12 12 20.71 7"></polyline>
+              <path d="m7.5 4.27 9 5.15"></path>
+            </svg>
+          </span>
+        </div>
+        <div class="stats-card">
+          <div>
+            <div class="text-muted" style="font-size: 0.85rem;">ผู้สมัครใหม่ (7 วันล่าสุด)</div>
+            <div class="stats-value" id="stat-users">0 คน</div>
+          </div>
+          <span class="stat-icon new-users">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <line x1="19" y1="8" x2="19" y2="14"></line>
+              <line x1="22" y1="11" x2="16" y2="11"></line>
+            </svg>
+          </span>
+        </div>
+      </div>
+
+      <!-- Charts & Tables Layout -->
+      <div class="dashboard-grid">
+        <div class="dashboard-panel">
+          <h3 class="section-heading" style="margin-top: 0; margin-bottom: 1.5rem;">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="12" y1="20" x2="12" y2="10"></line>
+              <line x1="18" y1="20" x2="18" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="16"></line>
+            </svg>
+            สัดส่วนยอดขายและการโอนเงินแยกตามหมวดหมู่
+          </h3>
+          <div style="height: 300px; position: relative;">
+            <canvas id="chart-categories"></canvas>
+          </div>
+        </div>
+
+        <div class="dashboard-panel tips-panel">
+          <h3 class="section-heading" style="margin-top: 0; margin-bottom: 1rem;">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            เคล็ดลับผู้ดูแลระบบ
+          </h3>
+          <ul class="tips-list">
+            <li>ตรวจทานรายการ "สินค้าต้องสงสัย" บ่อย ๆ เพื่อล้างสแปมและบัญชีปลอม</li>
+            <li>ดูประวัติข้อความของข้อพิพาทก่อนตัดสินผลชี้ขาดปลายทางทุกครั้ง</li>
+            <li>บัญชีที่ถูก <strong>ระงับ</strong> จะไม่สามารถส่งแชต ประกาศสินค้า หรือจองสั่งซื้อเพิ่มเติมได้</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: USERS TAB -->
+    <section id="section-users" style="display: none;">
+      <h3 class="section-heading" style="margin-top: 0;">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        รายชื่อสมาชิกทั้งหมดในระบบ
+      </h3>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>ชื่อผู้ใช้งาน</th>
+              <th>อีเมล</th>
+              <th>สิทธิ์บัญชี</th>
+              <th>สถานะบัญชี</th>
+              <th>การกระทำ</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body">
+            <tr><td colspan="6" class="table-msg">กำลังโหลดประวัติสมาชิก...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 3: PRODUCTS TAB -->
+    <section id="section-products" style="display: none;">
+      <h3 class="section-heading" style="margin-top: 0;">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+          <line x1="4" y1="22" x2="4" y2="15"></line>
+        </svg>
+        ตรวจสอบประกาศสินค้ามือสอง C2C (ปักธงน่าสงสัย)
+      </h3>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>ชื่ออุปกรณ์</th>
+              <th>ผู้ประกาศขาย</th>
+              <th>ราคาลงขาย</th>
+              <th>Fraud Score</th>
+              <th>เหตุผลปักธง</th>
+              <th>การจัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="flagged-table-body">
+            <tr><td colspan="7" class="table-msg">กำลังโหลดสินค้าเฝ้าระวัง...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 4: DISPUTES TAB -->
+    <section id="section-disputes" style="display: none;">
+      <h3 class="section-heading" style="margin-top: 0;">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+          <path d="M12 9v4"></path>
+          <path d="M12 17h.01"></path>
+        </svg>
+        รายการดีลซื้อขายที่มีข้อพิพาท (Disputed Orders)
+      </h3>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID ออเดอร์</th>
+              <th>ผู้ซื้อ</th>
+              <th>ผู้ขาย</th>
+              <th>ยอดเงินดีล</th>
+              <th>สถานะคำสั่งซื้อ</th>
+              <th>จัดการเคส</th>
+            </tr>
+          </thead>
+          <tbody id="disputes-table-body">
+            <tr><td colspan="6" class="table-msg">ไม่มีรายการข้อพิพาทในระบบ</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 5: PARTS CATALOG TAB -->
+    <section id="section-parts" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <h3 class="section-heading" style="margin-top: 0; margin-bottom: 0;">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path>
+            <path d="M12 22V12"></path>
+            <polyline points="3.29 7 12 12 20.71 7"></polyline>
+            <path d="m7.5 4.27 9 5.15"></path>
+          </svg>
+          ฐานข้อมูลอะไหล่มาตรฐานกลาง (Reference Catalog)
+        </h3>
+        <button class="btn btn-primary btn-sm" onclick="openAddPartModal()">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 12h14"></path>
+            <path d="M12 5v14"></path>
+          </svg>
+          เพิ่มชิ้นส่วนใหม่
+        </button>
+      </div>
+      <p class="text-muted" style="font-size: 0.85rem;">รายการอะไหล่มาตรฐาน (CPU, GPU ฯลฯ) ใช้เป็นราคาอ้างอิง (MSRP) สำหรับระบบตรวจจับสินค้ามือสองราคาต่ำผิดปกติ — แยกจากประกาศขายของสมาชิกในตลาดมือสอง</p>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>ยี่ห้อ</th>
+              <th>รุ่น / ชื่ออุปกรณ์</th>
+              <th>หมวดหมู่</th>
+              <th>ราคา MSRP</th>
+              <th>สถานะ</th>
+              <th>การจัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="parts-table-body">
+            <tr><td colspan="7" class="table-msg">กำลังโหลดฐานข้อมูลอะไหล่...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: DISPUTE DETAIL VIEW -->
+  <div class="modal-overlay" id="dispute-modal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeDisputeModal()">&times;</button>
+      <h3 class="section-heading" style="margin-top: 0;">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+          <path d="M12 9v4"></path>
+          <path d="M12 17h.01"></path>
+        </svg>
+        พิจารณาและวินิจฉัยข้อพิพาท
+      </h3>
+      <div class="dispute-summary-box">
+        <div><strong>รหัสคำสั่งซื้อ:</strong> <span id="disp-order-id">#0</span></div>
+        <div><strong>ผู้ซื้อ:</strong> <span id="disp-buyer">กำลังโหลด...</span> | <strong>ผู้ขาย:</strong> <span id="disp-seller">กำลังโหลด...</span></div>
+        <div><strong>มูลค่าสินค้า:</strong> <span id="disp-price">฿0</span></div>
+      </div>
+
+      <!-- Live Messages -->
+      <h4 class="section-heading" style="margin: 15px 0 5px 0;">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"></path>
+        </svg>
+        ประวัติข้อความดีล:
+      </h4>
+      <div class="dispute-chat-box" id="disp-chat-box">
+        <!-- Messages loaded dynamic -->
+      </div>
+
+      <!-- Slip Image View -->
+      <h4 class="section-heading" style="margin: 15px 0 5px 0;">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <circle cx="9" cy="9" r="2"></circle>
+          <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+        </svg>
+        ภาพสลิปหลักฐานเงินโอน:
+      </h4>
+      <div id="disp-slip-preview" class="slip-preview-box">
+        <img id="disp-slip-img" src="">
+      </div>
+
+      <div class="dispute-resolve-actions">
+        <button class="btn btn-primary btn-resolve success" onclick="resolveDispute('paid')">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 6 9 17l-5-5"></path>
+          </svg>
+          อนุมัติการโอน (สลิปถูกต้อง)
+        </button>
+        <button class="btn btn-outline btn-resolve danger" onclick="resolveDispute('cancelled')">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6 6 18"></path>
+            <path d="m6 6 12 12"></path>
+          </svg>
+          ยกเลิกคำสั่งจอง (สลิปปลอม/โกง)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD NEW CATALOG PART -->
+  <div class="modal-overlay" id="add-part-modal">
+    <div class="modal-card" style="max-width: 520px;">
+      <button class="modal-close" onclick="closeAddPartModal()">&times;</button>
+      <h3 class="section-heading" style="margin-top: 0;" id="part-modal-title">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path>
+          <path d="M12 22V12"></path>
+          <polyline points="3.29 7 12 12 20.71 7"></polyline>
+          <path d="m7.5 4.27 9 5.15"></path>
+        </svg>
+        <span id="part-modal-title-text">เพิ่มชิ้นส่วนมาตรฐานใหม่เข้าแคตตาล็อก</span>
+      </h3>
+      <p class="text-muted" style="font-size: 0.85rem; margin-top: -8px;">ข้อมูลนี้จะถูกใช้เป็นราคาอ้างอิง (MSRP) สำหรับตรวจจับสินค้ามือสองที่ตั้งราคาต่ำผิดปกติ</p>
+
+      <input type="hidden" id="part-edit-id" value="">
+      <div class="form-group">
+        <label for="part-name">ชื่ออุปกรณ์ *</label>
+        <input type="text" class="form-input" id="part-name" placeholder="เช่น Intel Core i5-13400F">
+      </div>
+      <div class="form-group">
+        <label for="part-category">หมวดหมู่ *</label>
+        <select class="form-input" id="part-category">
+          <option value="">-- เลือกหมวดหมู่ --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="part-brand">ยี่ห้อ *</label>
+        <input type="text" class="form-input" id="part-brand" placeholder="เช่น Intel, AMD, NVIDIA">
+      </div>
+      <div class="form-group">
+        <label for="part-model">รุ่น (ถ้ามี)</label>
+        <input type="text" class="form-input" id="part-model" placeholder="เช่น i5-13400F">
+      </div>
+      <div class="form-group">
+        <label for="part-price">ราคา MSRP (บาท) *</label>
+        <input type="number" class="form-input" id="part-price" min="1" step="1" placeholder="ระบุราคาอ้างอิงเป็นตัวเลข">
+      </div>
+      <div class="form-group" id="part-active-group" style="display: none;">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="part-is-active" style="width: 16px; height: 16px;">
+          เปิดใช้งานชิ้นส่วนนี้ (แสดงในระบบ)
+        </label>
+      </div>
+      <div id="add-part-error" class="form-error"></div>
+      <button class="btn btn-primary" id="add-part-submit-btn" style="width: 100%; justify-content: center; margin-top: 10px;" onclick="submitPartForm()">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 6 9 17l-5-5"></path>
+        </svg>
+        <span id="part-modal-submit-text">บันทึกเข้าแคตตาล็อก</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- SCRIPT APP LOGIC -->
+  <script src="/js/app.js"></script>
+  <script>
+    let activeTab = 'dashboard';
+    let chartInstance = null;
+    let selectedDisputeId = null;
+
+    // Check Role Validation on Boot
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!Auth.isLoggedIn()) {
+        window.location.href = '/login.html';
+        return;
+      }
+      
+      document.getElementById('admin-user-tag').textContent = `แอดมิน: ${Auth.getUser()?.username}`;
+
+      // Check access permission via stats query
+      try {
+        await fetchStats();
+      } catch (err) {
+        alert('เข้าไม่ถึงระบบ: บัญชีของคุณไม่มีสิทธิ์แอดมิน');
+        window.location.href = '/index.html';
+      }
+    });
+
+    // Icon markup shown in the header title, kept in sync with the active sidebar tab
+    const TAB_ICONS = {
+      dashboard: '<line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line>',
+      users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>',
+      products: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line>',
+      disputes: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path>',
+      parts: '<path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><path d="m7.5 4.27 9 5.15"></path>'
+    };
+
+    // UI Helpers: button loading state + field validation state (shared pattern used
+    // across the site's other forms, e.g. sell-product.html)
+    function setBtnLoading(btn, loading) {
+      if (!btn) return;
+      if (loading) {
+        btn.dataset.originalText = btn.dataset.originalText || btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>';
+      } else {
+        btn.disabled = false;
+        if (btn.dataset.originalText) btn.innerHTML = btn.dataset.originalText;
+      }
+    }
+    function setFieldError(id, hasError) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('has-error', hasError);
+    }
+    function clearFieldErrors(ids) {
+      ids.forEach(id => setFieldError(id, false));
+    }
+
+    // Tab Switching
+    function switchTab(tabName) {
+      activeTab = tabName;
+      document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+
+      // Titles & Descs
+      const titleTextEl = document.getElementById('view-title-text');
+      const titleIconEl = document.getElementById('view-title-icon');
+      const descEl = document.getElementById('view-desc');
+      titleIconEl.innerHTML = TAB_ICONS[tabName];
+
+      document.getElementById('section-dashboard').style.display = 'none';
+      document.getElementById('section-users').style.display = 'none';
+      document.getElementById('section-products').style.display = 'none';
+      document.getElementById('section-disputes').style.display = 'none';
+      document.getElementById('section-parts').style.display = 'none';
+
+      document.getElementById(`section-${tabName}`).style.display = 'block';
+
+      if (tabName === 'dashboard') {
+        titleTextEl.textContent = 'แดชบอร์ดหลังบ้าน';
+        descEl.textContent = 'สถิติ ยอดขายรวม และภาพรวมระบบซื้อขายในบอร์ด';
+        fetchStats();
+      } else if (tabName === 'users') {
+        titleTextEl.textContent = 'จัดการบัญชีสมาชิก';
+        descEl.textContent = 'ระงับการใช้งาน ตรวจเอกสารผู้ขาย หรือเปลี่ยนสิทธิ์สมาชิก';
+        fetchUsers();
+      } else if (tabName === 'products') {
+        titleTextEl.textContent = 'ตรวจสอบประกาศตลาดมือสอง';
+        descEl.textContent = 'ตรวจคัดกรองสินค้าที่ได้รับการปักธง น่าสงสัย หรือราคาต่ำกว่าเกณฑ์';
+        fetchFlaggedProducts();
+      } else if (tabName === 'disputes') {
+        titleTextEl.textContent = 'จัดการข้อพิพาททางการเงิน';
+        descEl.textContent = 'แอดมินประเมิน สลิปไม่ถูกต้อง หรือสั่งระงับยกเลิกออเดอร์ที่มีปัญหา';
+        fetchDisputes();
+      } else if (tabName === 'parts') {
+        titleTextEl.textContent = 'คลังอะไหล่มาตรฐาน (Parts Catalog)';
+        descEl.textContent = 'จัดการฐานข้อมูลอะไหล่มาตรฐานกลาง ใช้เป็นราคาอ้างอิง MSRP และป้องกันสินค้ามือสองตั้งราคาต่ำผิดปกติ';
+        fetchParts();
+      }
+    }
+
+    // 1. Fetch Stats & Build chart
+    async function fetchStats() {
+      const response = await fetch('/api/admin/stats', {
+        headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+
+      document.getElementById('stat-revenue').textContent = '฿' + data.totalRevenue.toLocaleString();
+      document.getElementById('stat-listings').textContent = data.activeListings + ' ชิ้น';
+      document.getElementById('stat-users').textContent = data.newUsers + ' คน';
+
+      // Build charts
+      const ctx = document.getElementById('chart-categories').getContext('2d');
+      const labels = data.categorySales.map(item => item.category_name);
+      const sales = data.categorySales.map(item => item.sales_count);
+      const revenue = data.categorySales.map(item => item.revenue);
+
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'จำนวนออเดอร์ยอดโอน',
+              data: sales,
+              backgroundColor: '#3b82f6',
+              yAxisID: 'y'
+            },
+            {
+              label: 'รายได้จากการโอนโบนัส (บาท)',
+              data: revenue,
+              backgroundColor: '#a855f7',
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { position: 'left', ticks: { color: '#94a3b8' } },
+            y1: { position: 'right', ticks: { color: '#94a3b8' }, grid: { drawOnChartArea: false } }
+          },
+          plugins: {
+            legend: { labels: { color: '#f8fafc' } }
+          }
+        }
+      });
+    }
+
+    // 2. Fetch Users
+    async function fetchUsers() {
+      const body = document.getElementById('users-table-body');
+      body.innerHTML = `<tr><td colspan="6" class="table-msg">กำลังโหลดประวัติสมาชิก...</td></tr>`;
+
+      try {
+        const response = await fetch('/api/admin/users', {
+          headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
+        });
+        const users = await response.json();
+
+        body.innerHTML = users.map(user => {
+          const roleBadge = user.role === 'admin' ? 'badge-admin' : 'badge-member';
+          const statusBadge = user.status === 'active' ? 'badge-active' : 'badge-suspended';
+          const statusText = user.status === 'active' ? 'ปกติ' : 'โดนระงับ';
+
+          const actionBtn = user.status === 'active'
+            ? `<button class="btn btn-sm btn-outline btn-icon-sm action-danger" onclick="toggleUserStatus(${user.id}, 'suspended')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M4.929 4.929 19.07 19.071"></path></svg> ระงับบัญชี</button>`
+            : `<button class="btn btn-sm btn-primary btn-icon-sm action-fill-success" onclick="toggleUserStatus(${user.id}, 'active')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.801 10A10 10 0 1 1 17 3.335"></path><path d="m9 11 3 3L22 4"></path></svg> ปลดระงับ</button>`;
+
+          return `
+            <tr>
+              <td>${user.id}</td>
+              <td><strong>${escapeHtml(user.username)}</strong></td>
+              <td>${escapeHtml(user.email)}</td>
+              <td><span class="badge ${roleBadge}">${user.role}</span></td>
+              <td><span class="badge ${statusBadge}">${statusText}</span></td>
+              <td>${user.id === Auth.getUser()?.id ? '<small class="text-muted">ตัวเอง</small>' : actionBtn}</td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="6" class="table-msg error">โหลดล้มเหลว: ${escapeHtml(err.message)}</td></tr>`;
+      }
+    }
+
+    async function toggleUserStatus(id, targetStatus) {
+      const phrase = targetStatus === 'suspended' ? 'ระงับบัญชี' : 'ปลดระงับบัญชี';
+      if (!confirm(`คุณแน่ใจว่าต้องการจะ ${phrase} สมาชิกรายนี้ใช่หรือไม่?`)) return;
+
+      try {
+        const response = await fetch(`/api/admin/users/${id}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Auth.getToken()}`
+          },
+          body: JSON.stringify({ status: targetStatus })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+
+        Toast.success('ปรับปรุงสถานะผู้ใช้งานสำเร็จ!');
+        fetchUsers();
+      } catch (err) {
+        Toast.error(err.message);
+      }
+    }
+
+    // 3. Fetch Flagged Products
+    async function fetchFlaggedProducts() {
+      const body = document.getElementById('flagged-table-body');
+      body.innerHTML = `<tr><td colspan="7" class="table-msg">กำลังโหลดสินค้าเฝ้าระวัง...</td></tr>`;
+
+      try {
+        const response = await fetch('/api/admin/products/flagged', {
+          headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
+        });
+        const products = await response.json();
+
+        if (products.length === 0) {
+          body.innerHTML = `<tr><td colspan="7" class="table-msg" style="color: var(--text-muted);">ไม่มีรายการสินค้าลงขายต้องสงสัยในขณะนี้</td></tr>`;
+          return;
+        }
+
+        body.innerHTML = products.map(p => {
+          const reasons = p.suspicious_reasons.join(', ') || 'ตรวจสอบใบสั่งจองผิดเกณฑ์';
+          const scoreBadge = p.suspicious_score >= 80 ? 'badge-suspended' : 'badge-flagged';
+
+          return `
+            <tr>
+              <td>${p.id}</td>
+              <td><strong>${escapeHtml(p.part_name || 'อะไหล่กำหนดเอง')}</strong></td>
+              <td>${escapeHtml(p.seller_name)}</td>
+              <td>฿${Number(p.price).toLocaleString()}</td>
+              <td><span class="badge ${scoreBadge}">${p.suspicious_score} / 100</span></td>
+              <td style="color: var(--text-muted); font-size: 0.8rem; max-width: 250px;">${escapeHtml(reasons)}</td>
+              <td>
+                <div class="row-actions">
+                  <button class="btn btn-sm btn-outline btn-icon-sm action-success" onclick="reviewListing(${p.id}, 'approved')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg> อนุมัติ</button>
+                  <button class="btn btn-sm btn-outline btn-icon-sm action-danger" onclick="reviewListing(${p.id}, 'rejected')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg> ลบ/ปฏิเสธ</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="7" class="table-msg error">โหลดล้มเหลว: ${escapeHtml(err.message)}</td></tr>`;
+      }
+    }
+
+    async function reviewListing(id, status) {
+      const text = status === 'approved' ? 'อนุมัติผ่านเป็นปกติ' : 'ระงับและลบการลงโฆษณา';
+      if (!confirm(`ยืนยันการ ${text} สินค้านี้ใช่หรือไม่?`)) return;
+
+      try {
+        const response = await fetch(`/api/admin/products/${id}/review`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Auth.getToken()}`
+          },
+          body: JSON.stringify({ review_status: status })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+
+        Toast.success('คัดกรองสินค้าสำเร็จ!');
+        fetchFlaggedProducts();
+      } catch (err) {
+        Toast.error(err.message);
+      }
+    }
+
+    // 4. Fetch Disputes
+    async function fetchDisputes() {
+      const body = document.getElementById('disputes-table-body');
+      body.innerHTML = `<tr><td colspan="6" class="table-msg">ไม่มีรายการข้อพิพาทในขณะนี้</td></tr>`;
+
+      try {
+        const response = await fetch('/api/admin/disputes', {
+          headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
+        });
+        const disputes = await response.json();
+
+        if (disputes.length === 0) return;
+
+        body.innerHTML = disputes.map(d => {
+          return `
+            <tr>
+              <td><strong>#${d.id}</strong></td>
+              <td>${escapeHtml(d.buyer_name)}</td>
+              <td>${escapeHtml(d.seller_name)}</td>
+              <td>฿${d.total_price.toLocaleString()}</td>
+              <td><span class="badge badge-flagged">ข้อพิพาท (Disputed)</span></td>
+              <td>
+                <button class="btn btn-sm btn-primary btn-icon-sm" onclick="openDisputeModal(${d.id}, '${escapeHtml(d.buyer_name)}', '${escapeHtml(d.seller_name)}', ${d.total_price}, ${d.room_id}, '${d.payment_slip_url || ''}')">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg>
+                  ตรวจสอบเคส
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="6" class="table-msg error">โหลดล้มเหลว: ${escapeHtml(err.message)}</td></tr>`;
+      }
+    }
+
+    // Dispute Modal Control
+    async function openDisputeModal(orderId, buyer, seller, price, roomId, slipUrl) {
+      selectedDisputeId = orderId;
+      document.getElementById('disp-order-id').textContent = '#' + orderId;
+      document.getElementById('disp-buyer').textContent = buyer;
+      document.getElementById('disp-seller').textContent = seller;
+      document.getElementById('disp-price').textContent = '฿' + price.toLocaleString();
+
+      const img = document.getElementById('disp-slip-img');
+      if (slipUrl) {
+        img.src = slipUrl;
+        document.getElementById('disp-slip-preview').style.display = 'block';
+      } else {
+        document.getElementById('disp-slip-preview').style.display = 'none';
+      }
+
+      // Load Room Messages
+      const chatBox = document.getElementById('disp-chat-box');
+      chatBox.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding-top: 2rem;">กำลังโหลดข้อความ...</div>';
+
+      try {
+        const response = await fetch(`/api/bookings/chats/rooms/${roomId}`, {
+          headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
+        });
+        const chatData = await response.json();
+        
+        chatBox.innerHTML = chatData.messages.map(m => {
+          if (m.message_type === 'system') {
+            return `<div class="dispute-msg system">${escapeHtml(m.message)}</div>`;
+          }
+          const senderClass = m.sender_id === chatData.buyer_id ? 'buyer' : 'seller';
+          const senderTag = m.sender_id === chatData.buyer_id ? '[ผู้ซื้อ]' : '[ผู้ขาย]';
+
+          return `
+            <div class="dispute-msg ${senderClass}">
+              <div style="font-size: 0.68rem; font-weight: bold; margin-bottom: 2px;">${senderTag} ${escapeHtml(m.sender_name)}</div>
+              <div>${escapeHtml(m.message)}</div>
+            </div>
+          `;
+        }).join('');
+
+        // scroll to bottom
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+      } catch (err) {
+        chatBox.innerHTML = `<div style="text-align: center; color: var(--danger); font-size: 0.85rem;">โหลดประวัติแชตล้มเหลว: ${escapeHtml(err.message)}</div>`;
+      }
+
+      document.getElementById('dispute-modal').style.display = 'flex';
+    }
+
+    function closeDisputeModal() {
+      document.getElementById('dispute-modal').style.display = 'none';
+    }
+
+    async function resolveDispute(targetStatus) {
+      const phrase = targetStatus === 'paid' ? 'อนุมัติว่าได้รับยอดโอนสลิปเงินถูกต้อง' : 'กดยกเลิกและยุติออเดอร์ข้อพิพาทนี้';
+      if (!confirm(`ยืนยันที่จะตัดสินชี้ขาดให้ดีลข้อพิพาทนี้: ${phrase}?`)) return;
+
+      try {
+        const response = await fetch(`/api/admin/orders/${selectedDisputeId}/override`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Auth.getToken()}`
+          },
+          body: JSON.stringify({ status: targetStatus })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+
+        Toast.success('แอดมินสั่งชี้ขาดสัญญานี้เรียบร้อยแล้ว!');
+        closeDisputeModal();
+        fetchDisputes();
+      } catch (err) {
+        Toast.error(err.message);
+      }
+    }
+
+    // 5. Fetch Parts Catalog (shared reference catalog, public endpoint)
+    let allParts = []; // cached from the last fetchParts() call, used to pre-fill the edit modal without a second request
+
+    async function fetchParts() {
+      const body = document.getElementById('parts-table-body');
+      body.innerHTML = `<tr><td colspan="7" class="table-msg">กำลังโหลดฐานข้อมูลอะไหล่...</td></tr>`;
+
+      try {
+        const response = await fetch('/api/parts');
+        const parts = await response.json();
+        if (!response.ok) throw new Error(parts.error || 'โหลดข้อมูลล้มเหลว');
+        allParts = parts;
+
+        if (parts.length === 0) {
+          body.innerHTML = `<tr><td colspan="7" class="table-msg" style="color: var(--text-muted);">ยังไม่มีอะไหล่ในฐานข้อมูลแคตตาล็อก</td></tr>`;
+          return;
+        }
+
+        body.innerHTML = parts.map(p => {
+          const statusBadge = p.is_active ? 'badge-active' : 'badge-suspended';
+          const statusText = p.is_active ? 'ใช้งาน' : 'ปิดใช้งาน';
+
+          return `
+            <tr>
+              <td>${p.id}</td>
+              <td><strong>${escapeHtml(p.brand)}</strong></td>
+              <td>${escapeHtml(p.model || p.name)}</td>
+              <td>${escapeHtml(p.category_name)}</td>
+              <td>฿${Number(p.price).toLocaleString()}</td>
+              <td><span class="badge ${statusBadge}">${statusText}</span></td>
+              <td>
+                <div class="row-actions">
+                  <button class="btn btn-sm btn-outline btn-icon-sm action-info" onclick="openEditPartModal(${p.id})"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg> แก้ไข</button>
+                  <button class="btn btn-sm btn-outline btn-icon-sm action-danger" onclick="deletePart(${p.id})"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> ลบ</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="7" class="table-msg error">โหลดล้มเหลว: ${escapeHtml(err.message)}</td></tr>`;
+      }
+    }
+
+    // Add/Edit Part Modal Control — the same modal + form is reused for both;
+    // #part-edit-id (hidden) is empty for "add" mode, or holds the part id for "edit" mode.
+    async function loadPartCategoryOptions(selectedId) {
+      const categorySelect = document.getElementById('part-category');
+      categorySelect.innerHTML = `<option value="">กำลังโหลดหมวดหมู่...</option>`;
+      try {
+        const response = await fetch('/api/parts/categories');
+        const categories = await response.json();
+        if (!response.ok) throw new Error(categories.error || 'โหลดหมวดหมู่ล้มเหลว');
+
+        categorySelect.innerHTML = `<option value="">-- เลือกหมวดหมู่ --</option>` +
+          categories.map(c => `<option value="${c.id}" ${selectedId && Number(selectedId) === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
+      } catch (err) {
+        categorySelect.innerHTML = `<option value="">โหลดหมวดหมู่ล้มเหลว</option>`;
+      }
+    }
+
+    async function openAddPartModal() {
+      document.getElementById('add-part-error').textContent = '';
+      clearFieldErrors(['part-name', 'part-category', 'part-brand', 'part-price']);
+      document.getElementById('part-edit-id').value = '';
+      document.getElementById('part-name').value = '';
+      document.getElementById('part-brand').value = '';
+      document.getElementById('part-model').value = '';
+      document.getElementById('part-price').value = '';
+      document.getElementById('part-active-group').style.display = 'none';
+      document.getElementById('part-modal-title-text').textContent = 'เพิ่มชิ้นส่วนมาตรฐานใหม่เข้าแคตตาล็อก';
+      document.getElementById('part-modal-submit-text').textContent = 'บันทึกเข้าแคตตาล็อก';
+
+      await loadPartCategoryOptions(null);
+      document.getElementById('add-part-modal').style.display = 'flex';
+    }
+
+    async function openEditPartModal(id) {
+      const part = allParts.find(p => p.id === id);
+      if (!part) { Toast.error('ไม่พบข้อมูลชิ้นส่วนนี้ กรุณารีเฟรชตาราง'); return; }
+
+      document.getElementById('add-part-error').textContent = '';
+      clearFieldErrors(['part-name', 'part-category', 'part-brand', 'part-price']);
+      document.getElementById('part-edit-id').value = part.id;
+      document.getElementById('part-name').value = part.name || '';
+      document.getElementById('part-brand').value = part.brand || '';
+      document.getElementById('part-model').value = part.model || '';
+      document.getElementById('part-price').value = part.price;
+      document.getElementById('part-is-active').checked = !!part.is_active;
+      document.getElementById('part-active-group').style.display = 'block';
+      document.getElementById('part-modal-title-text').textContent = `แก้ไขชิ้นส่วน: ${part.brand} ${part.model || part.name}`;
+      document.getElementById('part-modal-submit-text').textContent = 'บันทึกการแก้ไข';
+
+      await loadPartCategoryOptions(part.category_id);
+      document.getElementById('add-part-modal').style.display = 'flex';
+    }
+
+    function closeAddPartModal() {
+      document.getElementById('add-part-modal').style.display = 'none';
+    }
+
+    async function submitPartForm() {
+      const errorEl = document.getElementById('add-part-error');
+      errorEl.textContent = '';
+      clearFieldErrors(['part-name', 'part-category', 'part-brand', 'part-price']);
+
+      const editId = document.getElementById('part-edit-id').value;
+      const isEdit = !!editId;
+      const name = document.getElementById('part-name').value.trim();
+      const categoryId = document.getElementById('part-category').value;
+      const brand = document.getElementById('part-brand').value.trim();
+      const model = document.getElementById('part-model').value.trim();
+      const price = Number(document.getElementById('part-price').value);
+
+      let hasError = false;
+      if (!name) { setFieldError('part-name', true); hasError = true; }
+      if (!categoryId) { setFieldError('part-category', true); hasError = true; }
+      if (!brand) { setFieldError('part-brand', true); hasError = true; }
+      if (!price || price <= 0) { setFieldError('part-price', true); hasError = true; }
+
+      if (hasError) {
+        errorEl.textContent = 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน (ชื่อ, หมวดหมู่, ยี่ห้อ, ราคา)';
+        return;
+      }
+
+      const body = {
+        name,
+        category_id: Number(categoryId),
+        brand,
+        model: model || undefined,
+        price
+      };
+      if (isEdit) {
+        body.is_active = document.getElementById('part-is-active').checked;
+      }
+
+      const submitBtn = document.getElementById('add-part-submit-btn');
+      setBtnLoading(submitBtn, true);
+      try {
+        const response = await fetch(`/api/admin/parts${isEdit ? '/' + editId : ''}`, {
+          method: isEdit ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Auth.getToken()}`
+          },
+          body: JSON.stringify(body)
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+
+        Toast.success(data.message || (isEdit ? 'แก้ไขข้อมูลชิ้นส่วนสำเร็จ!' : 'เพิ่มชิ้นส่วนมาตรฐานเข้าสู่ระบบแคตตาล็อกสำเร็จ!'));
+        closeAddPartModal();
+        fetchParts();
+      } catch (err) {
+        errorEl.textContent = err.message;
+      } finally {
+        setBtnLoading(submitBtn, false);
+      }
+    }
+
+    async function deletePart(id) {
+      const part = allParts.find(p => p.id === id);
+      const label = part ? `${part.brand} ${part.model || part.name}` : `#${id}`;
+      if (!confirm(`ยืนยันลบ "${label}" ออกจากระบบแคตตาล็อกถาวร?\n\n(หากมีประกาศขายหรือชุดจัดสเปคที่อ้างอิงชิ้นส่วนนี้อยู่ ระบบจะไม่อนุญาตให้ลบ)`)) return;
+
+      try {
+        const response = await fetch(`/api/admin/parts/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+
+        Toast.success(data.message || 'ลบชิ้นส่วนสำเร็จ');
+        fetchParts();
+      } catch (err) {
+        Toast.error(err.message);
+      }
+    }
+
+    async function handleLogout() {
+      try {
+        await API.post('/auth/logout');
+        Auth.clear();
+        window.location.href = '/login.html';
+      } catch (err) {
+        Toast.error('ไม่สามารถออกจากระบบได้');
+      }
+    }
+  </script>
+</body>
+</html>

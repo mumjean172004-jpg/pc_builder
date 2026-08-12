@@ -1,0 +1,34 @@
+flowchart TD
+    Start([ผู้ใช้งานเข้าสู่ระบบ/สมัครสมาชิก]) --> ChooseType{สมัครสมาชิกใหม่ หรือ ล็อกอิน?}
+    
+    %% Register Flow
+    ChooseType -- สมัครสมาชิก --> InputReg[กรอกข้อมูล Username, Password, Email/Phone]
+    InputReg --> CheckExist{Username/Email/Phone ซ้ำในระบบหรือไม่?}
+    CheckExist -- ใช่ --> AlertReg[แจ้งเตือนข้อมูลซ้ำ/กรอกใหม่] --> InputReg
+    CheckExist -- ไม่ซ้ำ --> HashPass[เข้ารหัสรหัสผ่านด้วย bcrypt hash]
+    HashPass --> CreateUser[บันทึกข้อมูลผู้ใช้ลงตาราง users]
+    CreateUser --> GenJWT[สร้าง JWT Token]
+    GenJWT --> SaveCookie[บันทึก token ลง HttpOnly Cookie]
+    SaveCookie --> UserHome[เข้าสู่หน้าหลักในสถานะผู้ซื้อ]
+    
+    %% Login Flow
+    ChooseType -- เข้าสู่ระบบปกติ --> InputLogin[กรอก Email/Phone และ Password]
+    InputLogin --> GetUserDB[ค้นหาผู้ใช้ในฐานข้อมูล]
+    GetUserDB --> CheckStatus{สถานะบัญชี = suspended?}
+    CheckStatus -- ใช่ --> AlertSuspended[แจ้งเตือนบัญชีถูกระงับ] --> Start
+    CheckStatus -- ไม่ใช่ --> CheckPass{รหัสผ่านถูกต้อง?}
+    CheckPass -- ไม่ถูกต้อง --> AlertWrongPass[แจ้งเตือนรหัสผ่านผิด] --> InputLogin
+    CheckPass -- ถูกต้อง --> GenJWT
+    
+    %% Social Login
+    ChooseType -- เข้าสู่ระบบโซเชียล --> SocialAuth[ล็อกอินผ่าน Google / Facebook]
+    SocialAuth --> CheckSocialId{มีประวัติ ID นี้ในระบบ?}
+    CheckSocialId -- มีประวัติ --> CheckStatus
+    CheckSocialId -- ไม่มีประวัติ --> AutoCreate[ลงทะเบียนบัญชีใหม่โดยใช้ข้อมูลจากโซเชียลอัตโนมัติ] --> GenJWT
+    
+    %% Seller Switch Role
+    UserHome --> UserAction{ผู้ใช้สลับสิทธิ์เป็นผู้ขาย?}
+    UserAction -- ใช่ --> CheckSellerReg{ลงทะเบียนเป็นผู้ขายแล้ว?}
+    CheckSellerReg -- ยังไม่ได้ลง --> GoRegister[กรอกข้อมูลร้านค้า, บัญชีธนาคาร, แนบภาพบัตรประชาชน]
+    GoRegister --> SaveSeller[บันทึกข้อมูลและรอการอนุมัติ]
+    CheckSellerReg -- ลงทะเบียนแล้ว --> UpdateRole[ปรับฟิลด์ active_role = 'seller' บนฐานข้อมูล] --> ShowSellerUI[เปลี่ยนโหมดแสดงผลเป็นร้านค้าผู้ขาย]

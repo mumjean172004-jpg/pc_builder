@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PC Builder Pro — ตลาดกลางอุปกรณ์คอมและคอมประกอบ ปลอดภัย 100%</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* Hero section — .marketplace-hero has a permanently dark navy background
+       (hardcoded gradient in style.css, not theme-aware), so text sitting
+       directly on it needs a fixed light color rather than var(--text-*)
+       tokens — those flip dark in light mode and become unreadable here. */
+    .hero-title {
+      font-size: 2.3rem;
+      margin-bottom: 0.5rem;
+      font-weight: 800;
+      color: #eaeaea;
+    }
+    .hero-subtitle {
+      color: #a0a0b0;
+      max-width: 650px;
+      margin: 0 auto;
+      font-size: 1rem;
+    }
+    .hero-search-input-group {
+      position: relative;
+    }
+    .hero-search-input-group .icon-search {
+      position: absolute;
+      left: 0.9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .hero-search-input {
+      padding-left: 2.6rem;
+    }
+    .btn-search-submit {
+      padding: 0 1.8rem;
+      font-size: 1rem;
+    }
+    .search-tags-label {
+      font-size: 0.8rem;
+      color: #6c6c80;
+      padding: 4px 0;
+    }
+    /* .search-tag-chip (style.css) also uses var(--text-secondary)/var(--border) on the
+       same permanently-dark search box — same fix as above, only ever used on this page. */
+    .search-tag-chip {
+      color: #a0a0b0;
+      border-color: #2a2a40;
+    }
+    .search-tag-chip:hover {
+      color: #fff;
+    }
+
+    /* Section title with a leading icon */
+    .section-title-flex {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .section-title-flex .icon {
+      width: 20px;
+      height: 20px;
+      color: var(--highlight);
+    }
+
+    /* Small inline icon sizing helper (star, shield, check, camera, info glyphs) */
+    .icon-sm {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Verified seller spotlight cards */
+    .verified-sellers-grid-cols {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+    .seller-spotlight-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.25rem;
+    }
+    .seller-avatar-img {
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--highlight);
+    }
+    .seller-info-col {
+      flex: 1;
+    }
+    .seller-name-row {
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .seller-rating-row {
+      font-size: 0.8rem;
+      color: var(--warning);
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .seller-kyc-row {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Product cards: icon+text chips */
+    .product-card-enhanced {
+      cursor: pointer;
+    }
+    .prebuilt-badge-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .seller-info-row span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .spec-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .product-title-line {
+      font-weight: 700;
+      font-size: 0.95rem;
+      line-height: 1.3;
+      margin: 2px 0;
+    }
+
+    /* Empty-state placeholders */
+    .empty-state-box {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 2rem;
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+    }
+    .empty-state-box-plain {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 1.5rem;
+      color: var(--text-muted);
+    }
+    .search-no-results-item {
+      padding: 12px 16px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* Mobile bottom nav icons */
+    .bottom-nav-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .bottom-nav-icon .icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Footer */
+    .page-footer {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-top: 3rem;
+    }
+    .page-footer p + p {
+      margin-top: 4px;
+      font-size: 0.78rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- เมนูนำทาง -->
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <a href="/index.html" class="navbar-logo">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        ประกอบ PC <span>Pro</span>
+      </a>
+      <button class="mobile-menu-toggle" id="mobile-menu-btn" aria-label="Toggle menu">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="4" y1="6" x2="20" y2="6"></line>
+          <line x1="4" y1="12" x2="20" y2="12"></line>
+          <line x1="4" y1="18" x2="20" y2="18"></line>
+        </svg>
+      </button>
+      <ul class="navbar-links">
+        <li><a href="/index.html" class="active">หน้าแรก</a></li>
+        <li><a href="/products.html">Marketplace</a></li>
+        <li><a href="/builder.html">ประกอบ PC</a></li>
+
+        <li><a href="/sell-product.html">ลงขายสินค้า</a></li>
+        <li><a href="/inbox.html">ข้อความเจรจา</a></li>
+      </ul>
+      <div class="navbar-auth" id="navbar-auth">
+        <a href="/login.html" class="btn btn-ghost btn-sm">เข้าสู่ระบบ</a>
+        <a href="/login.html?register" class="btn btn-primary btn-sm">สมัครสมาชิก</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Shopee-Style Hero Search Section -->
+  <section class="marketplace-hero">
+    <div class="container text-center">
+      <h1 class="hero-title">ตลาดกลางคอมพิวเตอร์ & อะไหล่มือสอง</h1>
+      <p class="hero-subtitle">
+        ซื้อขายคอมยกเคส อะไหล่การ์ดจอ ซีพียู
+      </p>
+
+      <div class="search-container-box">
+        <form id="hero-search-form" class="hero-search-input-group" onsubmit="handleHeroSearch(event)">
+          <svg class="icon icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="hero-search-query" class="hero-search-input" placeholder="ค้นหาคอมเซ็ต, การ์ดจอ RTX, CPU, SSD หรือชื่อร้านค้า..." autocomplete="off">
+          <button type="submit" class="btn btn-primary btn-search-submit">ค้นหา</button>
+
+          <!-- Search Suggestions Dropdown -->
+          <div id="search-suggestions-dropdown" class="search-suggestions-dropdown" style="display: none;">
+            <ul id="search-suggestions-list"></ul>
+          </div>
+        </form>
+        <div class="search-tags">
+          <span class="search-tags-label">ค้นหายอดฮิต:</span>
+          <span class="search-tag-chip" onclick="quickSearch('RTX 4060')">RTX 4060</span>
+          <span class="search-tag-chip" onclick="quickSearch('Core i5')">Intel Core i5</span>
+          <span class="search-tag-chip" onclick="quickSearch('Ryzen 5')">Ryzen 5</span>
+          <span class="search-tag-chip" onclick="quickSearch('คอมเซ็ต')">คอมเซ็ตพร้อมใช้</span>
+          <span class="search-tag-chip" onclick="quickSearch('SSD 1TB')">SSD 1TB</span>
+          <span class="search-tag-chip" onclick="quickSearch('RAM 32GB')">RAM 32GB</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- หมวดหมู่สินค้า Shopee Style Grid -->
+  <section class="section container">
+    <div class="section-header">
+      <h2 class="section-title">หมวดหมู่สินค้า</h2>
+      <a href="/products.html" class="btn btn-ghost btn-sm">ดูสินค้าทั้งหมด →</a>
+    </div>
+    <div class="category-grid-shopee" id="category-grid-shopee">
+      <a href="/products.html?category=full-pc" class="category-shopee-card">
+        <div class="category-shopee-name">คอมเซ็ตสำเร็จรูป</div>
+        <div class="category-count-badge" id="count-full-pc">พร้อมส่ง</div>
+      </a>
+      <a href="/products.html?category=gpu" class="category-shopee-card">
+        <div class="category-shopee-name">การ์ดจอ (GPU)</div>
+        <div class="category-count-badge" id="count-gpu">ยอดนิยม</div>
+      </a>
+      <a href="/products.html?category=cpu" class="category-shopee-card">
+        <div class="category-shopee-name">ซีพียู (CPU)</div>
+        <div class="category-count-badge" id="count-cpu">มาแรง</div>
+      </a>
+      <a href="/products.html?category=ram" class="category-shopee-card">
+        <div class="category-shopee-name">แรม (RAM)</div>
+        <div class="category-count-badge" id="count-ram">DDR4 / DDR5</div>
+      </a>
+      <a href="/products.html?category=motherboard" class="category-shopee-card">
+        <div class="category-shopee-name">เมนบอร์ด (MB)</div>
+        <div class="category-count-badge" id="count-motherboard">ครบชิปเซ็ต</div>
+      </a>
+      <a href="/products.html?category=storage" class="category-shopee-card">
+        <div class="category-shopee-name">ความจุ (SSD/HDD)</div>
+        <div class="category-count-badge" id="count-storage">NVMe M.2</div>
+      </a>
+      <a href="/products.html?category=psu" class="category-shopee-card">
+        <div class="category-shopee-name">พาวเวอร์ซัพพลาย</div>
+        <div class="category-count-badge" id="count-psu">80+ Gold</div>
+      </a>
+      <a href="/products.html?category=case" class="category-shopee-card">
+        <div class="category-shopee-name">เคส & พัดลม</div>
+        <div class="category-count-badge" id="count-case">RGB / Mesh</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- คอมเซ็ตสำเร็จรูปจากร้านค้า (Prebuilt PCs) -->
+  <section class="section container">
+    <div class="section-header">
+      <h2 class="section-title">คอมเซ็ตประกอบสำเร็จรูป (Ready-to-Ship PCs)</h2>
+      <a href="/products.html?category=full-pc" class="btn btn-outline btn-sm">ดูคอมเซ็ตทั้งหมด →</a>
+    </div>
+    <div class="card-grid" id="prebuilt-grid">
+      <div class="loading-overlay">
+        <div class="spinner"></div>
+        <p>กำลังโหลดคอมเซ็ตสำเร็จรูป...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- สินค้ามาแรง & อะไหล่มือสอง (Hot Listings) -->
+  <section class="section container">
+    <div class="section-header">
+      <h2 class="section-title section-title-flex">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
+        </svg>
+        อะไหล่คอมมาแรง & ตรวจสอบแล้ว
+      </h2>
+      <a href="/products.html" class="btn btn-outline btn-sm">ดู Marketplace →</a>
+    </div>
+    <div class="card-grid" id="hot-products-grid">
+      <div class="loading-overlay">
+        <div class="spinner"></div>
+        <p>กำลังโหลดรายการสินค้า...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ร้านค้ายอดนิยม (Verified Sellers Spotlight) -->
+  <section class="section container">
+    <div class="section-header">
+      <h2 class="section-title">ร้านค้ายอดนิยมที่ผ่านการยืนยันตัวตน (Verified Shops)</h2>
+    </div>
+    <div class="card-grid verified-sellers-grid-cols" id="verified-sellers-grid">
+      <div class="loading-overlay">
+        <div class="spinner"></div>
+        <p>กำลังโหลดร้านค้า...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="mobile-bottom-nav">
+    <a href="/index.html" class="bottom-nav-item active">
+      <div class="bottom-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+      </div>
+      <span>หน้าแรก</span>
+    </a>
+    <a href="/products.html" class="bottom-nav-item">
+      <div class="bottom-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="8" cy="21" r="1"></circle>
+          <circle cx="19" cy="21" r="1"></circle>
+          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+        </svg>
+      </div>
+      <span>ตลาด</span>
+    </a>
+    <a href="/builder.html" class="bottom-nav-item">
+      <div class="bottom-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+        </svg>
+      </div>
+      <span>จัดสเปก</span>
+    </a>
+    <a href="/inbox.html" class="bottom-nav-item">
+      <div class="bottom-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path>
+        </svg>
+      </div>
+      <span>ข้อความ</span>
+    </a>
+    <a href="/profile.html" class="bottom-nav-item">
+      <div class="bottom-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 21a8 8 0 0 0-16 0"></path>
+          <circle cx="12" cy="8" r="5"></circle>
+        </svg>
+      </div>
+      <span>โปรไฟล์</span>
+    </a>
+  </nav>
+
+  <!-- ส่วนท้าย -->
+  <footer class="page-footer">
+    <p>PC Builder Pro — ตลาดกลางคอมพิวเตอร์และระบบประกอบคอมพิวเตอร์อัจฉริยะ</p>
+    <p>ระบบป้องกันการฉ้อโกง ตรวจสอบสลิปอัตโนมัติ และยืนยันตัวตนผู้ขายตามมาตรฐานความปลอดภัยระดับสากล</p>
+  </footer>
+
+  <script src="/js/app.js"></script>
+  <script>
+    function quickSearch(keyword) {
+      window.location.href = `/products.html?search=${encodeURIComponent(keyword)}`;
+    }
+
+    function handleHeroSearch(e) {
+      e.preventDefault();
+      const query = document.getElementById('hero-search-query').value.trim();
+      if (query) {
+        quickSearch(query);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        // Load Products
+        const prodRes = await API.get('/products?limit=20');
+        const products = prodRes.products || [];
+
+        // 1. Filter Prebuilt PC Sets
+        const prebuilts = products.filter(p => p.is_prebuilt_set === 1 || p.category_slug === 'full-pc');
+        const prebuiltContainer = document.getElementById('prebuilt-grid');
+
+        if (prebuilts.length > 0) {
+          prebuiltContainer.innerHTML = prebuilts.slice(0, 4).map(renderProductCard).join('');
+        } else {
+          prebuiltContainer.innerHTML = `
+            <div class="empty-state-box">
+              ยังไม่มีคอมเซ็ตวางขายในขณะนี้ <a href="/sell-product.html">ลงขายคอมเซ็ตของคุณเป็นคนแรก</a>
+            </div>
+          `;
+        }
+
+        // 2. Filter Single Parts / Hot Listings
+        const hotParts = products.filter(p => !p.is_prebuilt_set && p.category_slug !== 'full-pc');
+        const hotContainer = document.getElementById('hot-products-grid');
+
+        if (hotParts.length > 0) {
+          hotContainer.innerHTML = hotParts.slice(0, 8).map(renderProductCard).join('');
+        } else {
+          hotContainer.innerHTML = `
+            <div class="empty-state-box">
+              ยังไม่มีรายการอะไหล่วางขายในขณะนี้
+            </div>
+          `;
+        }
+
+        // 3. Render Verified Sellers
+        const sellersMap = {};
+        products.forEach(p => {
+          if (!sellersMap[p.seller_id]) {
+            sellersMap[p.seller_id] = {
+              name: p.shop_name || p.seller_name,
+              rating: Number(p.seller_rating) || 0,
+              sales: p.sales_count || 0,
+              verified: p.is_seller_verified,
+              badge: p.has_seller_badge,
+              avatar: p.seller_avatar_url || '/images/default-avatar.png'
+            };
+          }
+        });
+
+        const sellersList = Object.values(sellersMap);
+        const sellersContainer = document.getElementById('verified-sellers-grid');
+        if (sellersList.length > 0) {
+          sellersContainer.innerHTML = sellersList.map(s => `
+            <div class="build-card seller-spotlight-card">
+              <img src="${s.avatar}" class="seller-avatar-img">
+              <div class="seller-info-col">
+                <div class="seller-name-row">
+                  ${s.name}
+                  ${s.verified ? `<svg class="icon icon-sm text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" title="ยืนยันตัวตนแล้ว"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>` : ''}
+                </div>
+                <div class="seller-rating-row">
+                  <svg class="icon icon-sm text-warning" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>
+                  ${s.rating > 0 ? `${Number(s.rating).toFixed(1)} / 5.0` : 'ยังไม่มีรีวิว'} • ขายแล้ว ${s.sales} ชิ้น
+                </div>
+                <div class="seller-kyc-row">
+                  <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg>
+                  ร้านค้าได้รับการยืนยันตัวตน KYC
+                </div>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          sellersContainer.innerHTML = `
+            <div class="empty-state-box-plain">
+              ไม่มีข้อมูลร้านค้า
+            </div>
+          `;
+        }
+
+      } catch (err) {
+        console.error('Error loading marketplace data:', err);
+      }
+    });
+
+    function renderProductCard(p) {
+      const photo = (p.photos && p.photos.length > 0) ? p.photos[0] : (p.image_url || '/images/no-image.png');
+      const conditionMap = {
+        'new': 'มือหนึ่ง (New)',
+        'used_90': 'มือสอง สภาพ 90%+',
+        'used_80': 'มือสอง สภาพ 80%+',
+        'used_70': 'มือสอง สภาพใช้งาน'
+      };
+
+      const title = p.is_prebuilt_set 
+        ? (p.description || 'คอมเซ็ตประกอบสำเร็จรูปพร้อมใช้งาน') 
+        : `${p.brand || ''} ${p.model || p.part_name || p.category_name}`;
+
+      return `
+        <div class="product-card-enhanced" onclick="window.location.href='/product-detail.html?id=${p.id}'">
+          <div class="product-img-wrapper">
+            <img src="${photo}" alt="${title}" onerror="this.src='/images/no-image.png'">
+            ${p.is_seller_verified ? `<div class="verified-badge-chip"><svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg> ผู้ขายยืนยันตัวตน</div>` : ''}
+            ${p.is_prebuilt_set ? `<div class="prebuilt-badge-chip"><svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg> คอมเซ็ต</div>` : ''}
+          </div>
+          <div class="product-details">
+            <div class="seller-info-row">
+              <span><svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg> ${p.shop_name || p.seller_name}</span>
+              <span>${Number(p.seller_rating) > 0 ? `<svg class="icon icon-sm text-warning" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg> ${Number(p.seller_rating).toFixed(1)}` : `<span class="text-muted" style="font-size:0.8em;">ยังไม่มีรีวิว</span>`}</span>
+            </div>
+            <div class="product-title-line">
+              ${title}
+            </div>
+            <div class="specs-tag-list">
+              <span class="spec-chip">${conditionMap[p.condition] || p.condition}</span>
+              ${p.remaining_warranty_months > 0 ? `<span class="spec-chip text-success">ประกัน ${p.remaining_warranty_months} ด.</span>` : '<span class="spec-chip text-muted">หมดประกัน</span>'}
+              ${p.proof_image_url ? `<span class="spec-chip text-success"><svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg> มีรูปคู่ป้ายชื่อ</span>` : ''}
+            </div>
+            <div class="product-price-row">
+              <div class="current-price">฿${Number(p.price).toLocaleString()}</div>
+              <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); window.location.href='/product-detail.html?id=${p.id}'">
+                <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> ดูรายละเอียด
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // --- Live Search Autocomplete ---
+    let searchTimeout;
+    const searchInput = document.getElementById('hero-search-query');
+    const searchDropdown = document.getElementById('search-suggestions-dropdown');
+    const searchList = document.getElementById('search-suggestions-list');
+
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      const query = e.target.value.trim();
+      
+      if (query.length < 2) {
+        searchDropdown.style.display = 'none';
+        return;
+      }
+
+      searchTimeout = setTimeout(async () => {
+        try {
+          const res = await API.get('/products?search=' + encodeURIComponent(query));
+          if (res.length > 0) {
+            searchList.innerHTML = res.slice(0, 6).map(p => {
+              const photo = (p.photos && p.photos.length > 0) ? p.photos[0] : (p.image_url || p.proof_image_url || '/images/no-image.png');
+              const title = p.is_prebuilt_set 
+                ? (p.description || 'คอมเซ็ตประกอบสำเร็จรูป') 
+                : `${p.brand || ''} ${p.model || p.part_name || p.category_name || 'สินค้า'}`;
+              return `
+                <li>
+                  <a href="/product-detail.html?id=${p.id}" class="search-suggestion-item">
+                    <img src="${photo}" class="search-suggestion-img" onerror="this.src='/images/no-image.png'">
+                    <div class="search-suggestion-info">
+                      <div class="search-suggestion-title">${title}</div>
+                      <div class="search-suggestion-price">฿${Number(p.price).toLocaleString()}</div>
+                    </div>
+                  </a>
+                </li>
+              `;
+            }).join('');
+            searchDropdown.style.display = 'block';
+          } else {
+            searchList.innerHTML = '<li class="search-no-results-item">ไม่พบสินค้าที่ตรงกัน</li>';
+            searchDropdown.style.display = 'block';
+          }
+        } catch (err) {
+          console.error('Search error:', err);
+        }
+      }, 300); // 300ms debounce
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.hero-search-input-group')) {
+        if(searchDropdown) searchDropdown.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

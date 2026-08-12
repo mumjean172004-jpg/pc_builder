@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Environment / secrets
+.env
+.env.local
+*.env.local
+
+# Uploaded user content
+03_backend/uploads/
+
+# Legacy SQLite artifacts (project migrated to MySQL — kept locally only)
+03_backend/data/*.db
+03_backend/data/*.db-shm
+03_backend/data/*.db-wal
+
+# Logs
+*.log
+npm-debug.log*
+cloudflared.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Misc local tooling
+cloudflared.exe

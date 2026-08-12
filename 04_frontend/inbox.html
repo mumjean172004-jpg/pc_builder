@@ -1,0 +1,1743 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>กล่องข้อความเจรจาซื้อขาย & ติดตามคำสั่งซื้อ | PC Builder Pro</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .inbox-container {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 0;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      height: 82vh;
+      overflow: hidden;
+      margin-top: 1.5rem;
+    }
+    @media (max-width: 860px) {
+      .inbox-container {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+      .chat-rooms-list {
+        height: 280px;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      .active-chat-window {
+        height: 600px;
+      }
+    }
+    .chat-rooms-list {
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.15);
+      overflow-y: auto;
+    }
+    .chat-room-card {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .chat-room-card:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .chat-room-card.active {
+      background: rgba(233, 69, 96, 0.08);
+      border-left: 4px solid var(--highlight);
+    }
+    .role-badge {
+      font-size: 0.7rem;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .role-buyer {
+      background: rgba(52, 152, 219, 0.2);
+      color: #3498db;
+      border: 1px solid rgba(52, 152, 219, 0.3);
+    }
+    .role-seller {
+      background: rgba(243, 156, 18, 0.2);
+      color: #f39c12;
+      border: 1px solid rgba(243, 156, 18, 0.3);
+    }
+    .status-badge {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+    .status-pending { background: rgba(255, 179, 0, 0.15); color: #ffb300; }
+    .status-waiting_verification { background: rgba(124, 77, 255, 0.2); color: #b388ff; }
+    .status-paid { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+    .status-shipped { background: rgba(52, 152, 219, 0.2); color: #3498db; }
+    .status-completed { background: rgba(46, 204, 113, 0.3); color: #2ecc71; }
+    .status-cancelled { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+    .status-disputed { background: rgba(243, 156, 18, 0.2); color: #f39c12; }
+
+    .active-chat-window {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background: var(--bg-card);
+    }
+    .chat-header {
+      padding: 1rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-secondary);
+    }
+    .order-status-actions {
+      padding: 0.8rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.1);
+    }
+    .msg {
+      max-width: 72%;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-lg);
+      font-size: 0.9rem;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .msg-system {
+      align-self: center;
+      max-width: 90%;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      padding: 0.6rem 1.2rem;
+      border-radius: var(--radius);
+      text-align: center;
+      white-space: pre-line;
+      line-height: 1.6;
+    }
+    .msg-sent {
+      align-self: flex-end;
+      background: var(--highlight);
+      color: white;
+      border-top-right-radius: 0;
+    }
+    .msg-received {
+      align-self: flex-start;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      border-top-left-radius: 0;
+    }
+    .tracking-timeline {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+      margin: 12px 0 6px;
+    }
+    .tracking-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      position: relative;
+      z-index: 1;
+      width: 25%;
+      text-align: center;
+    }
+    .tracking-step.done {
+      color: var(--success);
+      font-weight: 600;
+    }
+    .tracking-step-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--border);
+      margin-bottom: 4px;
+    }
+    .tracking-step.done .tracking-step-dot {
+      background: var(--success);
+      box-shadow: 0 0 8px rgba(46, 204, 113, 0.5);
+    }
+
+    /* === Local layout helpers (visual-only redesign pass) === */
+    .page-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title .icon {
+      color: var(--highlight);
+      width: 22px;
+      height: 22px;
+    }
+    .chat-empty-state {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      color: var(--text-muted);
+      padding: 2rem;
+      text-align: center;
+    }
+    .chat-empty-state .icon {
+      width: 48px;
+      height: 48px;
+      opacity: 0.5;
+      margin-bottom: 1rem;
+      color: var(--text-muted);
+    }
+    .chat-empty-state p {
+      max-width: 400px;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+    .chat-rooms-loading,
+    .chat-rooms-empty,
+    .chat-rooms-error {
+      padding: 2rem 1rem;
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .chat-rooms-loading p {
+      margin-top: 0.5rem;
+    }
+    .chat-rooms-empty p {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+    }
+    .chat-rooms-error {
+      color: var(--danger);
+    }
+    .chat-window-loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    }
+    .chat-window-error {
+      padding: 3rem;
+      color: var(--danger);
+      text-align: center;
+    }
+    .chat-footer {
+      padding: 0.8rem 1.2rem;
+      border-top: 1px solid var(--border);
+      background: var(--bg-secondary);
+    }
+    .chat-footer form {
+      display: flex;
+      gap: 8px;
+    }
+    .chat-input-wrap {
+      flex: 1;
+    }
+    .chat-input {
+      width: 100%;
+      padding: 0.6rem 1rem 0.6rem 2.6rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+    }
+    .chat-input:focus {
+      outline: none;
+      border-color: var(--highlight);
+    }
+    .chat-send-btn {
+      padding: 0.6rem 1.4rem;
+    }
+    .chat-room-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .chat-room-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .chat-room-name .icon {
+      width: 15px;
+      height: 15px;
+      color: var(--text-muted);
+    }
+    .chat-room-meta-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      margin: 2px 0;
+    }
+    .chat-room-last-msg {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      margin: 0;
+    }
+    .chat-header-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chat-header-name {
+      margin: 0;
+      font-size: 1.05rem;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .chat-header-name .icon {
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+    }
+    .seller-verified-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(46, 204, 113, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(46, 204, 113, 0.3);
+      font-size: 0.72rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .seller-verified-badge .icon {
+      width: 12px;
+      height: 12px;
+    }
+    .chat-header-status {
+      text-align: right;
+    }
+    .logistics-panel {
+      background: rgba(52, 152, 219, 0.08);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 1.2rem;
+    }
+    .logistics-panel-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .logistics-panel-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+    }
+    .logistics-panel-info strong {
+      color: #3498db;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .logistics-panel-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .msg-sender-name {
+      font-weight: bold;
+      font-size: 0.72rem;
+      margin-bottom: 2px;
+      opacity: 0.85;
+    }
+    .timeline-event-row {
+      display: flex;
+      gap: 12px;
+      position: relative;
+      padding-bottom: 15px;
+    }
+    .timeline-event-dot-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .timeline-event-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--border);
+    }
+    .timeline-event-dot.is-latest {
+      background: var(--success);
+    }
+    .timeline-event-line {
+      width: 2px;
+      flex: 1;
+      background: var(--border);
+      margin-top: 4px;
+    }
+    .timeline-event-time {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .timeline-event-desc {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+    }
+    .timeline-event-desc.is-latest {
+      color: var(--success);
+    }
+    .timeline-event-location {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .timeline-event-location .icon {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* === Modal shell (shared across payment / shipped / slip / tracking modals) === */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      padding: 1.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+    }
+    .modal-card-sm { max-width: 460px; }
+    .modal-card-md { max-width: 480px; }
+    .modal-card-lg { max-width: 500px; }
+    .modal-close-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .modal-title {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-subtitle {
+      font-size: 0.85rem;
+      margin: 0;
+    }
+    .modal-field-label {
+      font-weight: 600;
+      font-size: 0.85rem;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .payment-info-box {
+      background: var(--bg-secondary);
+      padding: 12px;
+      border-radius: var(--radius);
+      font-size: 0.88rem;
+      border: 1px solid var(--border);
+    }
+    .promptpay-box {
+      background: #fff;
+      border: 2px solid #002D62;
+      border-radius: 10px;
+      width: 220px;
+      padding: 10px;
+      margin: 0 auto;
+      text-align: center;
+      color: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .promptpay-header {
+      background: #002D62;
+      color: #fff;
+      padding: 4px 10px;
+      font-weight: bold;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      margin-bottom: 6px;
+      width: 100%;
+    }
+    .promptpay-amount {
+      font-size: 0.82rem;
+      margin-top: 6px;
+      color: #333;
+    }
+    .slip-preview-box {
+      text-align: center;
+      background: #000;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .bottom-nav-icon .icon {
+      width: 20px;
+      height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <!-- แถบนำทาง -->
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <a href="/index.html" class="navbar-logo">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        ประกอบ PC <span>Pro</span>
+      </a>
+      <button class="mobile-menu-toggle" id="mobile-menu-btn" aria-label="Toggle menu">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="4" y1="6" x2="20" y2="6"></line>
+          <line x1="4" y1="12" x2="20" y2="12"></line>
+          <line x1="4" y1="18" x2="20" y2="18"></line>
+        </svg>
+      </button>
+      <ul class="navbar-links">
+        <li><a href="/index.html">หน้าแรก</a></li>
+        <li><a href="/products.html">Marketplace</a></li>
+        <li><a href="/builder.html">ประกอบ PC</a></li>
+
+        <li><a href="/sell-product.html">ลงขายสินค้า</a></li>
+        <li><a href="/inbox.html" class="active">ข้อความเจรจา</a></li>
+      </ul>
+      <div class="navbar-auth" id="navbar-auth"></div>
+    </div>
+  </nav>
+
+  <main class="container section" style="padding-top: 1rem;">
+    <div class="page-header-row">
+      <div>
+        <h1 class="section-title">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"></path>
+          </svg>
+          ข้อความเจรจาซื้อขาย & ระบบติดตามคำสั่งซื้อ
+        </h1>
+        <p class="text-muted">ตรวจสอบสถานะการโอนเงิน ตรวจสอบสลิป ตรวจสอบประวัติพัสดุ และส่งออกหลักฐานทางกฎหมาย</p>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="loadChatRooms()">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+          <path d="M21 3v5h-5"></path>
+          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+          <path d="M8 16H3v5"></path>
+        </svg>
+        รีเฟรชข้อมูล
+      </button>
+    </div>
+
+    <!-- โครงสร้างกล่องสนทนาแบบ 2 คอลัมน์ -->
+    <div class="inbox-container">
+      
+      <!-- คอลัมน์ซ้าย: รายการห้องแชท -->
+      <aside class="chat-rooms-list" id="chat-rooms-list">
+        <div class="chat-rooms-loading">
+          <div class="spinner"></div>
+          <p>กำลังโหลดรายการแชท...</p>
+        </div>
+      </aside>
+
+      <!-- คอลัมน์ขวา: หน้าต่างแชทและเมนูสั่งการ -->
+      <section class="active-chat-window" id="active-chat-window">
+        <div class="chat-empty-state">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"></path>
+          </svg>
+          <h3>เลือกห้องสนทนาเพื่อเริ่มเจรจา</h3>
+          <p>
+            เลือกรายการสั่งจองทางซ้ายเพื่อตรวจสอบข้อมูลผู้ขาย แนบสลิป แจ้งหมายเลขพัสดุ หรือติดตามการขนส่ง
+          </p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="mobile-bottom-nav">
+    <a href="/index.html" class="bottom-nav-item">
+      <div class="bottom-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path>
+          <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        </svg>
+      </div>
+      <span>หน้าแรก</span>
+    </a>
+    <a href="/products.html" class="bottom-nav-item">
+      <div class="bottom-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="8" cy="21" r="1"></circle>
+          <circle cx="19" cy="21" r="1"></circle>
+          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+        </svg>
+      </div>
+      <span>ตลาด</span>
+    </a>
+    <a href="/builder.html" class="bottom-nav-item">
+      <div class="bottom-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"></path>
+        </svg>
+      </div>
+      <span>จัดสเปก</span>
+    </a>
+    <a href="/inbox.html" class="bottom-nav-item active">
+      <div class="bottom-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"></path>
+        </svg>
+      </div>
+      <span>ข้อความ</span>
+    </a>
+    <a href="/profile.html" class="bottom-nav-item">
+      <div class="bottom-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 21a8 8 0 0 0-16 0"></path>
+          <circle cx="12" cy="8" r="5"></circle>
+        </svg>
+      </div>
+      <span>โปรไฟล์</span>
+    </a>
+  </nav>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/app.js"></script>
+  <script>
+    // lucide-style inline icons for dynamically-rendered template strings below.
+    // Path data fetched verbatim from lucide-static — do not hand-edit coordinates.
+    function svgIcon(paths, sm) {
+      return `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"${sm ? ' style="width:14px;height:14px;"' : ''}>${paths}</svg>`;
+    }
+    const ICONS = {
+      zap: svgIcon('<path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z"></path>', true),
+      mapPin: svgIcon('<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle>', true),
+      clipboardList: svgIcon('<rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path>', true),
+      globe: svgIcon('<circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path>', true),
+      printer: svgIcon('<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"></path><rect x="6" y="14" width="12" height="8" rx="1"></rect>', true),
+      scale: svgIcon('<path d="M12 3v18"></path><path d="m19 8 3 8a5 5 0 0 1-6 0zV7"></path><path d="M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1"></path><path d="m5 8 3 8a5 5 0 0 1-6 0zV7"></path><path d="M7 21h10"></path>', true),
+      camera: svgIcon('<path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"></path><circle cx="12" cy="13" r="3"></circle>', true),
+      hash: svgIcon('<line x1="4" x2="20" y1="9" y2="9"></line><line x1="4" x2="20" y1="15" y2="15"></line><line x1="10" x2="8" y1="3" y2="21"></line><line x1="16" x2="14" y1="3" y2="21"></line>', true),
+      fileText: svgIcon('<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path>', true),
+      package: svgIcon('<path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><path d="m7.5 4.27 9 5.15"></path>', true),
+      truck: svgIcon('<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path><path d="M15 18H9"></path><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="18" r="2"></circle>', true),
+      upload: svgIcon('<path d="M12 3v12"></path><path d="m17 8-5-5-5 5"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>', true),
+      check: svgIcon('<path d="M20 6 9 17l-5-5"></path>', true),
+      x: svgIcon('<path d="M18 6 6 18"></path><path d="m6 6 12 12"></path>', true),
+      creditCard: svgIcon('<rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line>', true),
+      alertTriangle: svgIcon('<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path>', true),
+    };
+
+    let activeRoomId = null;
+    let socket = null;
+    let currentUserId = null;
+    let activeRoomDetails = null;
+
+    async function loadChatRooms() {
+      const listEl = document.getElementById('chat-rooms-list');
+      try {
+        const rooms = await API.get('/bookings/chats/rooms');
+        
+        if (!rooms || rooms.length === 0) {
+          listEl.innerHTML = `
+            <div class="chat-rooms-empty">
+              <p>ไม่มีประวัติการพูดคุย</p>
+              <small>เลือกชิ้นส่วนหรือคอมเซ็ตจาก Marketplace แล้วกดจองซื้อเพื่อเปิดห้องเจรจา</small>
+            </div>
+          `;
+          return;
+        }
+
+        listEl.innerHTML = rooms.map(room => {
+          const isBuyer = Number(room.buyer_id) === Number(currentUserId);
+          const counterpartName = isBuyer ? room.seller_name : room.buyer_name;
+          const roleLabel = isBuyer ? 'ผู้ซื้อ (Buyer)' : 'ผู้ขาย (Seller)';
+          const roleClass = isBuyer ? 'role-buyer' : 'role-seller';
+          const lastMsg = room.last_message || 'เปิดห้องเจรจาคำสั่งจองสินค้าแล้ว';
+          
+          let statusText = '';
+          switch (room.order_status) {
+            case 'pending': statusText = 'รอโอนเงิน'; break;
+            case 'waiting_verification': statusText = 'รอตรวจสลิป'; break;
+            case 'paid': statusText = 'ชำระเงินแล้ว'; break;
+            case 'shipped': statusText = 'จัดส่งแล้ว'; break;
+            case 'completed': statusText = 'สำเร็จสมบูรณ์'; break;
+            case 'cancelled': statusText = 'ยกเลิกแล้ว'; break;
+            case 'disputed': statusText = 'มีข้อพิพาท'; break;
+            default: statusText = room.order_status;
+          }
+
+          const activeClass = room.id === activeRoomId ? 'active' : '';
+
+          return `
+            <div class="chat-room-card ${activeClass}" onclick="selectChatRoom(${room.id})">
+              <div class="chat-room-top-row">
+                <span class="chat-room-name">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M20 21a8 8 0 0 0-16 0"></path>
+                    <circle cx="12" cy="8" r="5"></circle>
+                  </svg>
+                  ${escapeHtml(counterpartName)}
+                </span>
+                <span class="role-badge ${roleClass}">${roleLabel}</span>
+              </div>
+              <div class="chat-room-meta-row">
+                <span class="text-success" style="font-weight: bold;">฿${Number(room.order_price).toLocaleString()}</span>
+                <span class="status-badge status-${room.order_status}">${statusText}</span>
+              </div>
+              <p class="chat-room-last-msg">
+                ${escapeHtml(lastMsg)}
+              </p>
+            </div>
+          `;
+        }).join('');
+
+      } catch (error) {
+        console.error('Error loading rooms:', error);
+        listEl.innerHTML = `<div class="chat-rooms-error">โหลดข้อมูลล้มเหลว: ${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    async function selectChatRoom(roomId) {
+      activeRoomId = roomId;
+
+      document.querySelectorAll('.chat-room-card').forEach(card => card.classList.remove('active'));
+      loadChatRooms();
+
+      const windowEl = document.getElementById('active-chat-window');
+      windowEl.innerHTML = `
+        <div class="chat-window-loading">
+          <div class="spinner"></div>
+        </div>
+      `;
+
+      try {
+        const chatData = await API.get(`/bookings/chats/rooms/${roomId}`);
+        const isBuyer = Number(chatData.buyer_id) === Number(currentUserId);
+
+        const rooms = await API.get('/bookings/chats/rooms');
+        const currentRoom = rooms.find(r => r.id === roomId);
+        activeRoomDetails = {
+          ...currentRoom,
+          order_id: chatData.order_id || (currentRoom && currentRoom.order_id),
+          order_status: chatData.order_status,
+          payment_slip_url: chatData.payment_slip_url,
+          order_price: chatData.order_price || (currentRoom && currentRoom.order_price),
+          seller_shop_name: chatData.seller_shop_name || (currentRoom && currentRoom.seller_name),
+          seller_bank_name: chatData.seller_bank_name,
+          seller_bank_account: chatData.seller_bank_account,
+          seller_phone: chatData.seller_phone,
+          is_seller_verified: chatData.is_seller_verified || 0,
+          tracking_number: chatData.tracking_number,
+          courier_name: chatData.courier_name,
+          packing_proof_url: chatData.packing_proof_url,
+          slip_verification_status: chatData.slip_verification_status
+        };
+        
+        const counterpartName = isBuyer ? currentRoom.seller_name : currentRoom.buyer_name;
+
+        renderChatWindowLayout(counterpartName, isBuyer, chatData.order_id);
+        renderMessages(chatData.messages);
+
+        if (socket && socket.connected) {
+          socket.emit('join_room', { roomId });
+        }
+
+      } catch (error) {
+        console.error('Error opening room:', error);
+        windowEl.innerHTML = `<div class="chat-window-error">เปิดห้องแชทไม่สำเร็จ: ${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    function renderChatWindowLayout(counterpartName, isBuyer, orderId) {
+      const windowEl = document.getElementById('active-chat-window');
+      
+      let statusText = '';
+      switch (activeRoomDetails.order_status) {
+        case 'pending': statusText = 'รอเจรจาโอนเงินตรงเข้าบัญชีผู้ขาย'; break;
+        case 'waiting_verification': statusText = 'แนบสลิปแล้ว • ตรวจสอบความถูกต้อง'; break;
+        case 'paid': statusText = 'ผู้ขายยืนยันยอดเงินแล้ว • เตรียมจัดส่ง'; break;
+        case 'shipped': statusText = 'พัสดุอยู่ระหว่างจัดส่ง'; break;
+        case 'completed': statusText = 'การซื้อขายสำเร็จสมบูรณ์'; break;
+        case 'cancelled': statusText = 'คำสั่งจองถูกยกเลิก'; break;
+        case 'disputed': statusText = 'อยู่ระหว่างเจรจาข้อพิพาท (รอทีมงานตรวจสอบ)'; break;
+      }
+
+      let actionButtonsHtml = '';
+      const status = activeRoomDetails.order_status;
+
+      if (status !== 'completed' && status !== 'cancelled' && status !== 'disputed') {
+        if (!isBuyer) {
+          // สิทธิ์ผู้ขาย
+          if (status === 'waiting_verification') {
+            actionButtonsHtml += `
+              <button class="btn btn-primary btn-sm" onclick="showSlipModal()" style="background: var(--highlight); border-color: var(--highlight);">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg>
+                ตรวจสอบสลิปเงินโอน
+              </button>
+            `;
+          } else if (status === 'paid') {
+            actionButtonsHtml += `
+              <button class="btn btn-primary btn-sm" onclick="showShippedModal()">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><path d="m7.5 4.27 9 5.15"></path></svg>
+                แนบรูปแพ็กของ & แจ้งเลขพัสดุ
+              </button>
+            `;
+          }
+        } else {
+          // สิทธิ์ผู้ซื้อ
+          if (status === 'pending') {
+            actionButtonsHtml += `
+              <button class="btn btn-primary btn-sm" onclick="showPaymentModal()" style="background: var(--success); border-color: var(--success);">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg>
+                ชำระเงินตรง & แนบสลิปตรวจสอบ
+              </button>
+            `;
+          } else if (status === 'waiting_verification') {
+            actionButtonsHtml += `
+              <button class="btn btn-outline btn-sm" onclick="showSlipModal()">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>
+                ดูสลิปที่แนบไปแล้ว
+              </button>
+            `;
+          } else if (status === 'shipped') {
+            actionButtonsHtml += `
+              <button class="btn btn-primary btn-sm" onclick="changeOrderStatus(${orderId}, 'completed')">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+                ได้รับพัสดุและตรวจสอบของเรียบร้อย
+              </button>
+            `;
+          }
+        }
+
+        if (status === 'pending' || status === 'waiting_verification' || status === 'paid') {
+          actionButtonsHtml += `
+            <button class="btn btn-ghost btn-sm" onclick="changeOrderStatus(${orderId}, 'cancelled')" style="color: var(--danger); border: 1px solid var(--danger);">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+              ยกเลิกรายการจอง
+            </button>
+          `;
+        }
+
+        // แจ้งปัญหา / เปิดข้อพิพาท (ทั้งผู้ซื้อและผู้ขายแจ้งได้ในทุกสถานะที่ยังไม่จบ)
+        actionButtonsHtml += `
+          <button class="btn btn-ghost btn-sm" onclick="showDisputeModal()" style="color: #f39c12; border: 1px solid #f39c12;">
+            ${ICONS.alertTriangle} แจ้งปัญหา / เปิดข้อพิพาท
+          </button>
+        `;
+      }
+
+      // Legal Dossier Export Button (Always Available)
+      actionButtonsHtml += `
+        <button class="btn btn-outline btn-sm" onclick="exportEvidenceDossier(${orderId})" style="margin-left: auto; background: rgba(52, 152, 219, 0.1); border-color: rgba(52, 152, 219, 0.4); color: #3498db;">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"></path><path d="m19 8 3 8a5 5 0 0 1-6 0zV7"></path><path d="M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1"></path><path d="m5 8 3 8a5 5 0 0 1-6 0zV7"></path><path d="M7 21h10"></path></svg>
+          พิมพ์แฟ้มเอกสารหลักฐาน (Legal Evidence)
+        </button>
+      `;
+
+      windowEl.innerHTML = `
+        <!-- ส่วนหัวห้องแชท -->
+        <div class="chat-header">
+          <div>
+            <div class="chat-header-title-row">
+              <h4 class="chat-header-name">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="8" r="5"></circle></svg>
+                เจรจากับ: ${escapeHtml(counterpartName)}
+              </h4>
+              ${isBuyer ? `
+                <span class="badge seller-verified-badge">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg>
+                  บัญชีรับเงิน: ${escapeHtml(activeRoomDetails.seller_bank_name || 'ธนาคาร')} • ${escapeHtml(activeRoomDetails.seller_bank_account || 'ยืนยันแล้ว')}
+                </span>
+              ` : ''}
+            </div>
+            <small style="color: var(--text-muted);">ใบสั่งจอง: #BO-${orderId} • ยอดรวม: ฿${Number(activeRoomDetails.order_price || 0).toLocaleString()}</small>
+          </div>
+          <div class="chat-header-status">
+            <span class="status-badge status-${activeRoomDetails.order_status}">${statusText}</span>
+          </div>
+        </div>
+
+        <!-- แถบปุ่มจัดการและสถานะ -->
+        <div class="order-status-actions">${actionButtonsHtml}</div>
+
+        <!-- แถบติดตามสถานะพัสดุ Logistics Timeline -->
+        ${(() => {
+          if (activeRoomDetails.tracking_number || activeRoomDetails.courier_name) {
+            let isShipped = status === 'shipped' || status === 'completed';
+            let isDelivered = status === 'completed';
+            return `
+              <div class="logistics-panel">
+                <div class="logistics-panel-row">
+                  <div class="logistics-panel-info">
+                    <strong><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path><path d="M15 18H9"></path><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="18" r="2"></circle></svg>ข้อมูลจัดส่ง:</strong> ${escapeHtml(activeRoomDetails.courier_name || 'ขนส่งเอกชน')}
+                    (เลขพัสดุ: <strong style="font-family: monospace; color: var(--text-primary);">${escapeHtml(activeRoomDetails.tracking_number || '-')}</strong>)
+                  </div>
+                  <div class="logistics-panel-actions">
+                    <button class="btn btn-primary btn-sm" onclick="showTrackingTimelineModal(${orderId})" style="font-size: 0.75rem; padding: 3px 10px; background: #2563eb; border-color: #2563eb;">
+                      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                      ติดตามพัสดุสด
+                    </button>
+                    ${activeRoomDetails.tracking_number ? `
+                      <a href="${getCourierWebLink(activeRoomDetails.tracking_number, activeRoomDetails.courier_name)}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 3px 10px; color: #38bdf8; border-color: #0284c7; text-decoration: none;">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+                        เว็บทางการ
+                      </a>
+                    ` : ''}
+                    ${activeRoomDetails.packing_proof_url ? `
+                      <a href="${activeRoomDetails.packing_proof_url}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 3px 10px; text-decoration: none;">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+                        ดูภาพแพ็กของ
+                      </a>
+                    ` : ''}
+                  </div>
+                </div>
+                <div class="tracking-timeline">
+                  <div class="tracking-step done">
+                    <div class="tracking-step-dot"></div>
+                    <div>1. ชำระเงินแล้ว</div>
+                  </div>
+                  <div class="tracking-step ${isShipped ? 'done' : ''}">
+                    <div class="tracking-step-dot"></div>
+                    <div>2. ผู้ขายแพ็กของ</div>
+                  </div>
+                  <div class="tracking-step ${isShipped ? 'done' : ''}">
+                    <div class="tracking-step-dot"></div>
+                    <div>3. อยู่ระหว่างขนส่ง</div>
+                  </div>
+                  <div class="tracking-step ${isDelivered ? 'done' : ''}">
+                    <div class="tracking-step-dot"></div>
+                    <div>4. ได้รับของเรียบร้อย</div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+          return '';
+        })()}
+
+        <!-- ข้อความแชท -->
+        <div class="chat-messages" id="messages-container"></div>
+
+        <!-- ช่องส่งข้อความ -->
+        <div class="chat-footer">
+          <form id="active-chat-form" onsubmit="sendMessage(event)">
+            <div class="form-input-group chat-input-wrap">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"></path></svg>
+              <input type="text" id="active-chat-input" class="chat-input" placeholder="พิมพ์ข้อความคุยรายละเอียด..." autocomplete="off">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm chat-send-btn">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+              ส่ง
+            </button>
+          </form>
+        </div>
+      `;
+    }
+
+    function renderMessages(messages) {
+      const container = document.getElementById('messages-container');
+      if (!container) return;
+
+      container.innerHTML = messages.map(msg => {
+        if (msg.message_type === 'system') {
+          return `<div class="msg msg-system" id="msg-${msg.id}">${escapeHtml(msg.message)}</div>`;
+        }
+        
+        const isSentByMe = Number(msg.sender_id) === Number(currentUserId);
+        const msgClass = isSentByMe ? 'msg-sent' : 'msg-received';
+        
+        return `
+          <div class="msg ${msgClass}" id="msg-${msg.id}">
+            <div class="msg-sender-name">
+              ${escapeHtml(msg.sender_name || 'คู่สนทนา')}
+            </div>
+            <div>${escapeHtml(msg.message)}</div>
+          </div>
+        `;
+      }).join('');
+
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function appendSingleMessage(msg) {
+      const container = document.getElementById('messages-container');
+      if (!container) return;
+
+      const div = document.createElement('div');
+      div.id = `msg-${msg.id}`;
+
+      if (msg.message_type === 'system') {
+        div.className = 'msg msg-system';
+        div.textContent = msg.message;
+      } else {
+        const isSentByMe = Number(msg.sender_id) === Number(currentUserId);
+        const msgClass = isSentByMe ? 'msg-sent' : 'msg-received';
+        div.className = `msg ${msgClass}`;
+        
+        const nameDiv = document.createElement('div');
+        nameDiv.style = "font-weight: bold; font-size: 0.72rem; margin-bottom: 2px; opacity: 0.85;";
+        nameDiv.textContent = msg.sender_name || 'คู่สนทนา';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.textContent = msg.message;
+        
+        div.appendChild(nameDiv);
+        div.appendChild(contentDiv);
+      }
+
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    async function sendMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('active-chat-input');
+      const text = input.value.trim();
+      if (!text || !activeRoomId) return;
+
+      input.value = '';
+
+      try {
+        await API.post(`/bookings/chats/rooms/${activeRoomId}/messages`, { message: text });
+      } catch (error) {
+        Toast.error(error.message || 'ส่งข้อความล้มเหลว');
+      }
+    }
+
+    async function changeOrderStatus(orderId, nextStatus) {
+      let confirmMsg = 'ยืนยันการเปลี่ยนสถานะของคำสั่งซื้อนี้หรือไม่?';
+      if (nextStatus === 'cancelled') confirmMsg = 'คุณต้องการยกเลิกคำสั่งซื้อนี้ใช่หรือไม่? สินค้าจะถูกนำกลับเข้าสู่หน้าร้านพร้อมขายใหม่';
+      if (nextStatus === 'completed') confirmMsg = 'กดยืนยันหลังจากที่คุณได้รับสินค้าและตรวจสอบสภาพแล้วเท่านั้น ขั้นตอนการซื้อขายจะเสร็จสมบูรณ์';
+
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        await API.put(`/bookings/${orderId}/status`, { status: nextStatus });
+        Toast.success('ปรับปรุงสถานะเรียบร้อยแล้ว');
+        if (activeRoomId) selectChatRoom(activeRoomId);
+      } catch (error) {
+        Toast.error(error.message || 'ไม่สามารถเปลี่ยนสถานะออเดอร์ได้');
+      }
+    }
+
+    // Modal Payment
+    function showPaymentModal() {
+      const modal = document.getElementById('payment-modal');
+      const sellerShop = activeRoomDetails.seller_shop_name || activeRoomDetails.seller_name || 'ผู้ขาย';
+      const bankName = activeRoomDetails.seller_bank_name || 'ธนาคารไทย';
+      const bankAccount = activeRoomDetails.seller_bank_account || 'ไม่ได้ระบุ';
+      const orderPrice = activeRoomDetails.order_price || 0;
+
+      document.getElementById('seller-bank-name').textContent = sellerShop;
+      document.getElementById('seller-bank-account-info').textContent = `${bankName} • ${bankAccount}`;
+      document.getElementById('payment-total-price').textContent = '฿' + Number(orderPrice).toLocaleString();
+      
+      let promptpayId = '';
+      if (bankAccount) {
+        const digits = bankAccount.replace(/[^0-9]/g, '');
+        if (digits.length === 10 || digits.length === 13) promptpayId = digits;
+      }
+      if (!promptpayId && activeRoomDetails.seller_phone) {
+        promptpayId = activeRoomDetails.seller_phone.replace(/[^0-9]/g, '');
+      }
+
+      if (promptpayId) {
+        document.getElementById('payment-promptpay-qr').src = `https://promptpay.io/${promptpayId}/${orderPrice}.png`;
+      } else {
+        document.getElementById('payment-promptpay-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent('00020101021129370016A000000677010111')}`;
+      }
+      
+      document.getElementById('slip-file-input').value = '';
+      document.getElementById('slip-upload-preview').style.display = 'none';
+      document.getElementById('submit-slip-btn').disabled = true;
+
+      modal.style.display = 'flex';
+    }
+
+    function closePaymentModal() {
+      document.getElementById('payment-modal').style.display = 'none';
+    }
+
+    async function submitSlip() {
+      const fileInput = document.getElementById('slip-file-input');
+      if (!fileInput.files.length || !activeRoomDetails) return;
+
+      const btn = document.getElementById('submit-slip-btn');
+      btn.disabled = true;
+      btn.innerHTML = ICONS.zap + ' กำลังส่งสลิปและตรวจสอบกับธนาคาร...';
+
+      const formData = new FormData();
+      formData.append('slip', fileInput.files[0]);
+
+      try {
+        const response = await fetch(`/api/bookings/${activeRoomDetails.order_id}/slip`, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Authorization': `Bearer ${Auth.getToken()}`
+          }
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'ส่งสลิปไม่สำเร็จ');
+
+        Toast.success(data.message || 'ส่งสลิปชำระเงินเรียบร้อยแล้ว!');
+        closePaymentModal();
+        selectChatRoom(activeRoomId);
+      } catch (err) {
+        Toast.error(err.message);
+        btn.disabled = false;
+        btn.textContent = 'ส่งสลิปชำระเงิน';
+      }
+    }
+
+    // Modal View Slip
+    async function showSlipModal() {
+      const modal = document.getElementById('slip-modal');
+      const img = document.getElementById('slip-view-img');
+      const actions = document.getElementById('slip-seller-actions');
+      
+      try {
+        const chatData = await API.get(`/bookings/chats/rooms/${activeRoomId}`);
+        img.src = chatData.payment_slip_url || '';
+        
+        const isBuyer = Number(chatData.buyer_id) === Number(currentUserId);
+        const isWaiting = chatData.order_status === 'waiting_verification';
+        
+        if (!isBuyer && isWaiting) {
+          actions.style.display = 'flex';
+        } else {
+          actions.style.display = 'none';
+        }
+        
+        modal.style.display = 'flex';
+      } catch (err) {
+        Toast.error('ไม่สามารถโหลดข้อมูลสลิปได้');
+      }
+    }
+
+    function closeSlipModal() {
+      document.getElementById('slip-modal').style.display = 'none';
+    }
+
+    async function approveSlip() {
+      if (!confirm('ยืนยันว่าได้รับยอดโอนเงินเข้าบัญชีจริงเรียบร้อยแล้วใช่หรือไม่?')) return;
+      closeSlipModal();
+      await changeOrderStatus(activeRoomDetails.order_id, 'paid');
+    }
+
+    async function rejectSlip() {
+      if (!confirm('ยืนยันปฏิเสธสลิปนี้ใช่หรือไม่? ออเดอร์จะกลับสู่สถานะ "รอชำระเงิน"')) return;
+      closeSlipModal();
+      await changeOrderStatus(activeRoomDetails.order_id, 'pending');
+    }
+
+    // Modal Shipped & Packing Proof
+    function showShippedModal() {
+      document.getElementById('shipped-modal').style.display = 'flex';
+    }
+
+    function closeShippedModal() {
+      document.getElementById('shipped-modal').style.display = 'none';
+    }
+
+    async function submitShippedModal() {
+      const courier = document.getElementById('shipped-courier-select').value;
+      const tracking = document.getElementById('shipped-tracking-input').value.trim();
+      const packingProofUrl = document.getElementById('shipped-packing-url').value.trim();
+
+      if (!tracking) {
+        Toast.warning('กรุณากรอกหมายเลขพัสดุ');
+        return;
+      }
+
+      closeShippedModal();
+      try {
+        await API.put(`/bookings/${activeRoomDetails.order_id}/status`, {
+          status: 'shipped',
+          courier_name: courier,
+          tracking_number: tracking,
+          packing_proof_url: packingProofUrl || null
+        });
+        Toast.success('ระบุการจัดส่งสินค้าและเลขพัสดุเรียบร้อยแล้ว!');
+        if (activeRoomId) selectChatRoom(activeRoomId);
+      } catch (error) {
+        Toast.error(error.message || 'ไม่สามารถบันทึกข้อมูลจัดส่งได้');
+      }
+    }
+
+    // Modal แจ้งปัญหา / เปิดข้อพิพาท (Dispute)
+    function showDisputeModal() {
+      const textarea = document.getElementById('dispute-reason-input');
+      textarea.value = '';
+      textarea.classList.remove('has-error');
+      document.getElementById('dispute-modal').style.display = 'flex';
+    }
+
+    function closeDisputeModal() {
+      document.getElementById('dispute-modal').style.display = 'none';
+    }
+
+    async function submitDisputeModal() {
+      const textarea = document.getElementById('dispute-reason-input');
+      const reason = textarea.value.trim();
+
+      if (!reason) {
+        textarea.classList.add('has-error');
+        Toast.warning('กรุณาอธิบายรายละเอียดปัญหาที่พบก่อนเปิดข้อพิพาท');
+        return;
+      }
+      textarea.classList.remove('has-error');
+
+      if (!activeRoomDetails) return;
+
+      const btn = document.getElementById('submit-dispute-btn');
+      btn.disabled = true;
+      btn.innerHTML = ICONS.zap + ' กำลังส่งเรื่องข้อพิพาท...';
+
+      try {
+        const data = await API.post(`/bookings/${activeRoomDetails.order_id}/dispute`, { reason });
+        Toast.success(data.message || 'แจ้งข้อพิพาทเรียบร้อยแล้ว ทีมงานจะดำเนินการตรวจสอบโดยเร็วที่สุด');
+        closeDisputeModal();
+        if (activeRoomId) selectChatRoom(activeRoomId);
+      } catch (error) {
+        Toast.error(error.message || 'ไม่สามารถแจ้งข้อพิพาทได้');
+        btn.disabled = false;
+        btn.innerHTML = ICONS.alertTriangle + ' ยืนยันเปิดข้อพิพาท';
+      }
+    }
+
+    // Helper: Direct Official Courier URL
+    function getCourierWebLink(tracking, courier) {
+      const code = (tracking || '').trim();
+      const c = (courier || '').toLowerCase();
+      if (c.includes('flash') || code.startsWith('TH') || code.startsWith('FLA')) {
+        return `https://www.flashexpress.co.th/tracking/?se=${encodeURIComponent(code)}`;
+      }
+      if (c.includes('kerry') || c.includes('kex') || code.startsWith('KERRY') || code.startsWith('SHP')) {
+        return `https://th.kerryexpress.com/th/track/?track=${encodeURIComponent(code)}`;
+      }
+      if (c.includes('post') || c.includes('ems') || c.includes('ไปรษณีย์') || code.startsWith('E') || code.startsWith('R')) {
+        return `https://track.thailandpost.co.th/?trackNumber=${encodeURIComponent(code)}`;
+      }
+      if (c.includes('j&t') || c.includes('jnt') || code.startsWith('JNT') || code.startsWith('83')) {
+        return `https://www.jtexpress.co.th/service/track?bills=${encodeURIComponent(code)}`;
+      }
+      return `https://www.google.com/search?q=${encodeURIComponent('เช็คพัสดุ ' + code)}`;
+    }
+
+    // Modal Live Tracking Timeline
+    async function showTrackingTimelineModal(orderId) {
+      const modal = document.getElementById('tracking-detail-modal');
+      const body = document.getElementById('tracking-detail-modal-body');
+      if (!modal || !body) return;
+
+      modal.style.display = 'flex';
+      body.innerHTML = '<div style="text-align: center; padding: 2rem 0;"><div class="spinner"></div><p style="margin-top: 10px; color: var(--text-muted);">กำลังดึงข้อมูลสถานะพัสดุ...</p></div>';
+
+      try {
+        const tracking = await API.get(`/bookings/${orderId}/tracking`);
+        const officialUrl = tracking.directTrackingUrl || getCourierWebLink(tracking.trackingNumber, tracking.courier);
+        
+        let eventsHtml = '';
+        if (tracking.events && tracking.events.length > 0) {
+          eventsHtml = tracking.events.map((ev, idx) => `
+            <div style="display: flex; gap: 12px; position: relative; padding-bottom: 15px;">
+              <div style="display: flex; flex-direction: column; align-items: center;">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: ${idx === 0 ? 'var(--success)' : 'var(--border)'};"></div>
+                ${idx < tracking.events.length - 1 ? '<div style="width: 2px; flex: 1; background: var(--border); margin-top: 4px;"></div>' : ''}
+              </div>
+              <div style="flex: 1;">
+                <div style="font-size: 0.8rem; color: var(--text-muted);">${ev.time}</div>
+                <div style="font-weight: 600; font-size: 0.9rem; color: ${idx === 0 ? 'var(--success)' : 'var(--text-primary)'};">${escapeHtml(ev.description)}</div>
+                ${ev.location ? `<div style="font-size: 0.78rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">${ICONS.mapPin} ${escapeHtml(ev.location)}</div>` : ''}
+              </div>
+            </div>
+          `).join('');
+        } else {
+          eventsHtml = '<p class="text-muted" style="text-align: center; padding: 1rem 0;">กำลังเตรียมจัดส่งหรือรอขนส่งบันทึกสถานะ</p>';
+        }
+
+        body.innerHTML = `
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="color: var(--text-muted); font-size: 0.85rem;">บริษัทขนส่ง:</span>
+              <strong style="color: var(--highlight); font-size: 0.95rem;">${escapeHtml(tracking.courier || 'ขนส่งเอกชน')}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="color: var(--text-muted); font-size: 0.85rem;">เลขพัสดุ:</span>
+              <strong style="font-family: monospace; font-size: 1rem; color: #fff;">${escapeHtml(tracking.trackingNumber)}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: var(--text-muted); font-size: 0.85rem;">สถานะปัจจุบัน:</span>
+              <span style="color: var(--success); font-weight: bold; font-size: 0.9rem;">${escapeHtml(tracking.statusText || tracking.status)}</span>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 15px;">
+            <h4 style="font-size: 0.9rem; margin-bottom: 10px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">${ICONS.clipboardList} ประวัติการเดินทางของพัสดุ (Milestones)</h4>
+            <div style="padding-left: 5px;">
+              ${eventsHtml}
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px;">
+            <a href="${officialUrl}" target="_blank" class="btn btn-primary btn-sm" style="flex: 1; text-align: center; justify-content: center; text-decoration: none; padding: 0.6rem; display: inline-flex; align-items: center; gap: 6px;">
+              ${ICONS.globe} เช็คสดบนเว็บ ${escapeHtml(tracking.courier)}
+            </a>
+            <button class="btn btn-outline btn-sm" onclick="closeTrackingTimelineModal()" style="flex: 0.4;">
+              ปิด
+            </button>
+          </div>
+        `;
+      } catch (err) {
+        body.innerHTML = `
+          <div class="empty-state">
+            <p style="color: var(--danger);">ไม่สามารถโหลดข้อมูลพัสดุได้: ${escapeHtml(err.message)}</p>
+            <button class="btn btn-outline btn-sm" onclick="closeTrackingTimelineModal()" style="margin-top: 10px;">ปิด</button>
+          </div>
+        `;
+      }
+    }
+
+    function closeTrackingTimelineModal() {
+      const modal = document.getElementById('tracking-detail-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    // Export Legal Evidence Dossier
+    async function exportEvidenceDossier(orderId) {
+      try {
+        Toast.info('กำลังรวบรวมข้อมูลหลักฐานทางกฎหมาย...');
+        const evidence = await API.get(`/bookings/${orderId}/evidence`);
+        
+        const win = window.open('', '_blank');
+        win.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Legal Evidence Dossier - #BO-${orderId}</title>
+            <style>
+              body { font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; color: #111; line-height: 1.5; }
+              .header { border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 25px; }
+              .title { font-size: 20px; font-weight: bold; }
+              .section { margin-bottom: 25px; }
+              .section-title { font-size: 14px; font-weight: bold; background: #f0f0f0; padding: 6px 10px; border-left: 4px solid #000; margin-bottom: 10px; }
+              table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              th { background: #f9f9f9; }
+              .evidence-img { max-width: 250px; max-height: 200px; border: 1px solid #ccc; margin-top: 5px; }
+              .badge { display: inline-block; padding: 2px 6px; font-size: 11px; background: #e0e0e0; border-radius: 3px; }
+              .audit-log { background: #fafafa; padding: 10px; border: 1px solid #eee; font-size: 12px; font-family: monospace; }
+              @media print {
+                body { padding: 0; }
+                .no-print { display: none; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="no-print" style="margin-bottom: 20px;">
+              <button onclick="window.print()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">${ICONS.printer} พิมพ์เอกสาร / บันทึกเป็น PDF</button>
+            </div>
+
+            <div class="header">
+              <div class="title" style="display: flex; align-items: center; gap: 8px;">${ICONS.scale} แฟ้มเอกสารหลักฐานธุรกรรมซื้อขาย (Transaction Evidence Dossier)</div>
+              <div>รหัสคำสั่งซื้อ: #BO-${orderId} | วันที่ออกเอกสาร: ${new Date().toLocaleString('th-TH')}</div>
+              <div style="font-size: 12px; color: #666;">เอกสารนี้ออกโดยระบบ PC Builder Pro เพื่อใช้เป็นหลักฐานทางกฎหมายในการดำเนินคดีหรือยืนยันความโปร่งใส</div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">1. ข้อมูลคู่สัญญา (Parties Involved)</div>
+              <table>
+                <tr>
+                  <th width="50%">ฝ่ายผู้ซื้อ (Buyer)</th>
+                  <th width="50%">ฝ่ายผู้ขาย (Verified Seller)</th>
+                </tr>
+                <tr>
+                  <td>
+                    <strong>ชื่อผู้ใช้:</strong> ${escapeHtml(evidence.buyer.username)}<br>
+                    <strong>เบอร์โทรศัพท์:</strong> ${escapeHtml(evidence.order.contact_phone || '-')}<br>
+                    <strong>ที่อยู่จัดส่ง:</strong> ${escapeHtml(evidence.order.shipping_address || '-')}
+                  </td>
+                  <td>
+                    <strong>ชื่อร้านค้า:</strong> ${escapeHtml(evidence.seller.shop_name || evidence.seller.username)}<br>
+                    <strong>ชื่อจริงตามบัตรประชาชน:</strong> ${escapeHtml(evidence.seller.seller_full_name || 'ยืนยันตัวตน KYC แล้ว')}<br>
+                    <strong>ธนาคารรับเงิน:</strong> ${escapeHtml(evidence.seller.seller_bank_name || '-')}<br>
+                    <strong>เลขที่บัญชี:</strong> ${escapeHtml(evidence.seller.seller_bank_account || '-')}<br>
+                    <strong>เบอร์โทรศัพท์:</strong> ${escapeHtml(evidence.seller.seller_phone || '-')}
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <div class="section">
+              <div class="section-title">2. รายละเอียดสินค้าและหลักฐานการครอบครอง (Product & Serial Number)</div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>รายการสินค้า</th>
+                    <th>สภาพ</th>
+                    <th>Serial Number</th>
+                    <th>ราคา</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${evidence.items.map(item => `
+                    <tr>
+                      <td>${escapeHtml(item.brand || '')} ${escapeHtml(item.model || item.part_name || 'ชุดคอมพิวเตอร์')}</td>
+                      <td>${escapeHtml(item.condition || 'Used')}</td>
+                      <td><strong>${escapeHtml(item.serial_number || '-')}</strong></td>
+                      <td>฿${Number(item.price).toLocaleString()}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+              
+              <div style="display: flex; gap: 20px; margin-top: 15px;">
+                ${evidence.items[0] && evidence.items[0].proof_image_url ? `
+                  <div>
+                    <div style="font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 4px;">${ICONS.camera} รูปหลักฐานคู่ป้ายชื่อร้าน (Proof of Possession):</div>
+                    <img src="${evidence.items[0].proof_image_url}" class="evidence-img">
+                  </div>
+                ` : ''}
+                ${evidence.items[0] && evidence.items[0].sn_image_url ? `
+                  <div>
+                    <div style="font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 4px;">${ICONS.hash} รูปถ่าย Serial Number:</div>
+                    <img src="${evidence.items[0].sn_image_url}" class="evidence-img">
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">3. หลักฐานการชำระเงินและการจัดส่ง (Payment & Logistics)</div>
+              <table>
+                <tr>
+                  <td><strong>ยอดชำระสุทธิ:</strong> ฿${Number(evidence.order.total_price).toLocaleString()}</td>
+                  <td><strong>สถานะคำสั่งซื้อ:</strong> <span class="badge">${evidence.order.status}</span></td>
+                </tr>
+                <tr>
+                  <td><strong>บริษัทขนส่ง:</strong> ${escapeHtml(evidence.order.courier_name || '-')}</td>
+                  <td><strong>หมายเลขติดตามพัสดุ:</strong> ${escapeHtml(evidence.order.tracking_number || '-')}</td>
+                </tr>
+              </table>
+              <div style="margin-top: 10px;">
+                ${evidence.order.payment_slip_url ? `
+                  <div style="display: inline-block; margin-right: 20px;">
+                    <div style="font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 4px;">${ICONS.fileText} สลิปหลักฐานการโอนเงิน:</div>
+                    <img src="${evidence.order.payment_slip_url}" class="evidence-img">
+                  </div>
+                ` : ''}
+                ${evidence.order.packing_proof_url ? `
+                  <div style="display: inline-block;">
+                    <div style="font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 4px;">${ICONS.package} ภาพถ่ายขณะบรรจุหีบห่อ (Packing Proof):</div>
+                    <img src="${evidence.order.packing_proof_url}" class="evidence-img">
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">4. บันทึกประวัติการเจรจา (Chat Audit Log)</div>
+              <div class="audit-log">
+                ${evidence.messages.map(m => `
+                  [${new Date(m.created_at).toLocaleString('th-TH')}] ${escapeHtml(m.sender_name || 'System')}: ${escapeHtml(m.message)}
+                `).join('<br>')}
+              </div>
+            </div>
+          </body>
+          </html>
+        `);
+        win.document.close();
+      } catch (err) {
+        Toast.error('ไม่สามารถส่งออกแฟ้มหลักฐานได้: ' + err.message);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!Auth.isLoggedIn()) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      currentUserId = Auth.getUser()?.id;
+      Auth.updateUI();
+      loadChatRooms();
+
+      // Socket setup
+      try {
+        const token = Auth.getToken();
+        socket = io({ auth: { token } });
+
+        socket.on('new_message', (msgData) => {
+          if (activeRoomId && msgData.room_id === activeRoomId) {
+            if (!document.getElementById(`msg-${msgData.id}`)) {
+              appendSingleMessage(msgData);
+            }
+          }
+          loadChatRooms();
+        });
+
+        socket.on('status_updated', (data) => {
+          if (activeRoomId && activeRoomDetails && activeRoomDetails.order_id === data.orderId) {
+            activeRoomDetails.order_status = data.status;
+            if (data.payment_slip_url !== undefined) activeRoomDetails.payment_slip_url = data.payment_slip_url;
+            const isBuyer = Number(activeRoomDetails.buyer_id) === Number(currentUserId);
+            renderChatWindowLayout(isBuyer ? activeRoomDetails.seller_name : activeRoomDetails.buyer_name, isBuyer, data.orderId);
+          }
+          loadChatRooms();
+        });
+      } catch (err) {
+        console.error('Socket init error:', err);
+      }
+
+      // Slip preview listener
+      document.getElementById('slip-file-input')?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            document.getElementById('slip-preview-img').src = event.target.result;
+            document.getElementById('slip-upload-preview').style.display = 'block';
+            document.getElementById('submit-slip-btn').disabled = false;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // Packing proof upload setup
+      document.getElementById('shipped-packing-file')?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('image', file);
+        try {
+          const res = await fetch('/api/upload', { method: 'POST', body: formData });
+          const data = await res.json();
+          document.getElementById('shipped-packing-url').value = data.url;
+          document.getElementById('shipped-packing-preview').innerHTML = `
+            <img src="${data.url}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); margin-top: 6px;">
+          `;
+        } catch (err) {
+          alert('อัปโหลดภาพไม่สำเร็จ: ' + err.message);
+        }
+      });
+    });
+  </script>
+
+  <!-- Modal แจ้งจัดส่งพัสดุและแนบรูปแพ็กของ (Seller) -->
+  <div id="shipped-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;" onclick="if(event.target===this) closeShippedModal();">
+    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 100%; max-width: 480px; padding: 1.8rem; display: flex; flex-direction: column; gap: 14px; position: relative;">
+      <button onclick="closeShippedModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+      
+      <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path><path d="M15 18H9"></path><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="18" r="2"></circle></svg> แจ้งจัดส่งพัสดุ & แนบหลักฐาน</h3>
+      <p class="text-muted" style="font-size: 0.85rem; margin: 0;">กรุณาระบุบริษัทขนส่ง หมายเลขติดตามพัสดุ และภาพถ่ายการแพ็กเพื่อป้องกันข้อพิพาท</p>
+      
+      <div>
+        <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 4px;">บริษัทผู้ให้บริการจัดส่ง :</label>
+        <select id="shipped-courier-select" class="form-input" style="width: 100%;">
+          <option value="Flash Express">Flash Express</option>
+          <option value="Kerry Express">Kerry Express</option>
+          <option value="ไปรษณีย์ไทย (EMS)">ไปรษณีย์ไทย (EMS)</option>
+          <option value="J&T Express">J&T Express</option>
+          <option value="SCG Express">SCG Express</option>
+          <option value="นัดรับสินค้าด้วยตัวเอง (Hand Pickup)">นัดรับสินค้าด้วยตัวเอง (Hand Pickup)</option>
+        </select>
+      </div>
+
+      <div>
+        <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 4px;">หมายเลขพัสดุ (Tracking Number) <span class="text-danger">*</span> :</label>
+        <input type="text" id="shipped-tracking-input" class="form-input" placeholder="เช่น TH0123456789" style="width: 100%;">
+      </div>
+
+      <div>
+        <label style="font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 4px; margin-bottom: 4px;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"></path><circle cx="12" cy="13" r="3"></circle></svg> แนบรูปถ่ายตอนแพ็กของ / กล่องพัสดุ (Packing Proof) :</label>
+        <input type="file" id="shipped-packing-file" accept="image/*" style="display: none;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('shipped-packing-file').click()" style="width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><path d="M12 3v12"></path><path d="m17 8-5-5-5 5"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path></svg> เลือกรูปภาพการแพ็กของ
+        </button>
+        <input type="hidden" id="shipped-packing-url">
+        <div id="shipped-packing-preview"></div>
+      </div>
+
+      <button type="button" class="btn btn-primary" onclick="submitShippedModal()" style="width: 100%; justify-content: center; padding: 0.75rem; margin-top: 0.5rem; display: inline-flex; align-items: center; gap: 6px;">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><path d="M20 6 9 17l-5-5"></path></svg> ยืนยันการจัดส่งพัสดุ
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal ชำระเงิน (Buyer) -->
+  <div id="payment-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;" onclick="if(event.target===this) closePaymentModal();">
+    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 100%; max-width: 480px; padding: 1.8rem; display: flex; flex-direction: column; gap: 14px; position: relative;">
+      <button onclick="closePaymentModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+      
+      <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg> โอนเงินตรงเข้าบัญชีผู้ขาย</h3>
+      <p class="text-muted" style="font-size: 0.85rem; margin: 0;">โอนเงินตามยอดสั่งจองเข้าบัญชีที่ผ่านการยืนยันตัวตน (KYC) แล้วแนบสลิป</p>
+      
+      <div style="background: var(--bg-secondary); padding: 12px; border-radius: var(--radius); font-size: 0.88rem; border: 1px solid var(--border);">
+        <div style="margin-bottom: 4px;"><strong>ผู้ขาย:</strong> <span id="seller-bank-name">-</span></div>
+        <div><strong>บัญชีรับเงิน:</strong> <span id="seller-bank-account-info" style="color: var(--highlight); font-weight: bold;">-</span></div>
+      </div>
+      
+      <!-- PromptPay QR -->
+      <div style="background: white; border: 2px solid #002D62; border-radius: 10px; width: 220px; padding: 10px; margin: 0 auto; text-align: center; color: black; display: flex; flex-direction: column; align-items: center;">
+        <div style="background: #002D62; color: white; padding: 4px 10px; font-weight: bold; border-radius: 4px; font-size: 0.75rem; margin-bottom: 6px; width: 100%;">
+          PROMPT PAY พร้อมเพย์
+        </div>
+        <img id="payment-promptpay-qr" src="" style="width: 140px; height: 140px;">
+        <div style="font-size: 0.82rem; margin-top: 6px; color: #333;">
+          ยอดโอน: <strong style="color: #002D62; font-size: 1rem;" id="payment-total-price">฿0</strong>
+        </div>
+      </div>
+      
+      <!-- File input -->
+      <div>
+        <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 4px;">แนบสลิปหลักฐานการโอนเงิน:</label>
+        <input type="file" id="slip-file-input" accept="image/*" style="display: none;">
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('slip-file-input').click()" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px;">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"></path><circle cx="12" cy="13" r="3"></circle></svg> เลือกรูปภาพสลิปเงินโอน
+        </button>
+        <div id="slip-upload-preview" style="display: none; text-align: center; margin-top: 10px;">
+          <img id="slip-preview-img" src="" style="max-height: 140px; max-width: 100%; border-radius: 6px; border: 1px solid var(--border);">
+        </div>
+      </div>
+      
+      <button type="button" class="btn btn-primary" id="submit-slip-btn" disabled onclick="submitSlip()" style="width: 100%; justify-content: center; padding: 0.75rem; display: inline-flex; align-items: center; gap: 6px;">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z"></path></svg> ส่งสลิปชำระเงินและตรวจสอบ
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal ตรวจสอบสลิป (Slip Modal) -->
+  <div id="slip-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;" onclick="if(event.target===this) closeSlipModal();">
+    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 100%; max-width: 460px; padding: 1.8rem; display: flex; flex-direction: column; gap: 14px; position: relative;">
+      <button onclick="closeSlipModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+      
+      <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg> สลิปหลักฐานการโอนเงิน</h3>
+      
+      <div style="text-align: center; background: #000; padding: 10px; border-radius: 8px;">
+        <img id="slip-view-img" src="" style="max-width: 100%; max-height: 340px; object-fit: contain; display: block; margin: 0 auto;">
+      </div>
+      
+      <div id="slip-seller-actions" style="display: none; gap: 10px;">
+        <button class="btn btn-primary" onclick="approveSlip()" style="flex: 1; justify-content: center; background: var(--success); border-color: var(--success); display: inline-flex; align-items: center; gap: 6px;">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg> ได้รับยอดโอนถูกต้อง
+        </button>
+        <button class="btn btn-outline" onclick="rejectSlip()" style="flex: 1; justify-content: center; color: var(--danger); border-color: var(--danger); display: inline-flex; align-items: center; gap: 6px;">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg> สลิปไม่ถูกต้อง (ปฏิเสธ)
+        </button>
+      </div>
+
+      <button class="btn btn-secondary" onclick="closeSlipModal()" style="width: 100%; justify-content: center; display: inline-flex; align-items: center; gap: 6px;">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg> ปิดหน้าต่าง
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal ติดตามสถานะพัสดุ (Live Tracking Modal) -->
+  <div id="tracking-detail-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;" onclick="if(event.target===this) closeTrackingTimelineModal();">
+    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 100%; max-width: 500px; padding: 1.8rem; display: flex; flex-direction: column; gap: 14px; position: relative;">
+      <button onclick="closeTrackingTimelineModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+      
+      <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path><path d="M15 18H9"></path><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="18" r="2"></circle></svg> ข้อมูลการจัดส่งและสถานะพัสดุ</h3>
+      
+      <div id="tracking-detail-modal-body">
+        <!-- ข้อมูลสถานะและเหตุการณ์จะถูกโหลดที่นี่ -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal แจ้งปัญหา / เปิดข้อพิพาท (Buyer/Seller) -->
+  <div id="dispute-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;" onclick="if(event.target===this) closeDisputeModal();">
+    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 100%; max-width: 480px; padding: 1.8rem; display: flex; flex-direction: column; gap: 14px; position: relative;">
+      <button onclick="closeDisputeModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+
+      <h3 style="margin: 0; display: flex; align-items: center; gap: 8px; color: #f39c12;">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+        แจ้งปัญหา / เปิดข้อพิพาท
+      </h3>
+      <p class="text-muted" style="font-size: 0.85rem; margin: 0;">
+        ทีมงานจะเข้ามาตรวจสอบและช่วยไกล่เกลี่ยระหว่างผู้ซื้อและผู้ขาย กรุณาอธิบายปัญหาให้ละเอียดที่สุดเท่าที่ทำได้
+      </p>
+
+      <div>
+        <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 4px;">รายละเอียดปัญหา <span class="text-danger">*</span> :</label>
+        <textarea id="dispute-reason-input" class="form-input" rows="5" style="width: 100%; resize: vertical; font-family: inherit;" placeholder="อธิบายปัญหาที่พบ เช่น สินค้าไม่ตรงตามที่ตกลง, ไม่ได้รับสินค้า, ผู้ขายไม่ตอบกลับ..." oninput="this.classList.remove('has-error')"></textarea>
+      </div>
+
+      <button type="button" class="btn btn-primary" id="submit-dispute-btn" onclick="submitDisputeModal()" style="width: 100%; justify-content: center; padding: 0.75rem; margin-top: 0.5rem; display: inline-flex; align-items: center; gap: 6px; background: #f39c12; border-color: #f39c12;">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+        ยืนยันเปิดข้อพิพาท
+      </button>
+    </div>
+  </div>
+</body>
+</html>
