@@ -316,6 +316,7 @@
         <p>Loading listings...</p>
       </div>
     </div>
+    <div class="pagination" id="products-pagination"></div>
   </section>
 
   <script src="/js/app.js"></script>
@@ -323,6 +324,7 @@
     let productCategories = [];
     let productBrands = [];
     let productParts = [];
+    let currentProductPage = 1;
 
     function conditionLabel(value) {
       return {
@@ -346,7 +348,9 @@
         productBrands.map(brand => `<option value="${escapeHtml(brand)}">${escapeHtml(brand)}</option>`).join('');
     }
 
-    async function loadProducts() {
+    async function loadProducts(page) {
+      currentProductPage = (typeof page === 'number' && page > 0) ? page : 1;
+
       const grid = document.getElementById('products-grid');
       const category = document.getElementById('product-category').value;
       const brand = document.getElementById('product-brand').value;
@@ -367,13 +371,16 @@
       if (sort) params.set('sort', sort);
       if (hasWarranty) params.set('has_warranty', 'true');
       if (search) params.set('search', search);
+      params.set('page', currentProductPage);
 
       if (params.toString()) url += '?' + params.toString();
 
       grid.innerHTML = '<div class="loading-overlay grid-span-full"><div class="spinner"></div><p>กำลังโหลดรายการสินค้า...</p></div>';
+      document.getElementById('products-pagination').innerHTML = '';
 
       try {
-        const products = await API.get(url);
+        const res = await API.get(url);
+        const products = res.data || [];
         if (!products.length) {
           grid.innerHTML = `
             <div class="empty-state grid-span-full">
@@ -483,9 +490,25 @@
             Auth.updateUI();
           });
         });
+
+        renderProductsPagination(res.page, res.totalPages);
       } catch (error) {
         grid.innerHTML = `<div class="empty-state grid-span-full"><h3>Could not load listings</h3><p>${escapeHtml(error.message)}</p></div>`;
       }
+    }
+
+    function renderProductsPagination(page, totalPages) {
+      const container = document.getElementById('products-pagination');
+      if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+      }
+
+      container.innerHTML = `
+        <button ${page <= 1 ? 'disabled' : ''} onclick="loadProducts(${page - 1})">ก่อนหน้า</button>
+        <span style="padding: 0 12px; color: var(--text-muted);">หน้า ${page} จาก ${totalPages}</span>
+        <button ${page >= totalPages ? 'disabled' : ''} onclick="loadProducts(${page + 1})">ถัดไป</button>
+      `;
     }
 
     function resetFilters() {

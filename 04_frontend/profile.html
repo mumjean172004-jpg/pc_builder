@@ -775,12 +775,12 @@
           myBuilds = builds;
         } else {
           // โหลดข้อมูลสินค้าที่ผู้ขายรายนี้ตั้งขาย
-          const allProducts = await API.get('/products?include_review=true');
+          const productsRes = await API.get('/products?include_review=true&limit=100');
           myBuilds = []; // ไม่โหลดสเปคจัดคอมในแท็บผู้ขาย
           wishlistItems = [];
-          
+
           // กรองเอาเฉพาะสินค้าของ Seller รายนี้
-          currentUserProfile.listings = allProducts.filter(p => p.seller_id === currentUserProfile.id);
+          currentUserProfile.listings = (productsRes.data || []).filter(p => p.seller_id === currentUserProfile.id);
         }
 
         renderProfileUI();

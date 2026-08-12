@@ -420,7 +420,7 @@
       try {
         // Load Products
         const prodRes = await API.get('/products?limit=20');
-        const products = prodRes.products || [];
+        const products = prodRes.data || [];
 
         // 1. Filter Prebuilt PC Sets
         const prebuilts = products.filter(p => p.is_prebuilt_set === 1 || p.category_slug === 'full-pc');
@@ -562,8 +562,9 @@
       searchTimeout = setTimeout(async () => {
         try {
           const res = await API.get('/products?search=' + encodeURIComponent(query));
-          if (res.length > 0) {
-            searchList.innerHTML = res.slice(0, 6).map(p => {
+          const results = res.data || [];
+          if (results.length > 0) {
+            searchList.innerHTML = results.slice(0, 6).map(p => {
               const photo = (p.photos && p.photos.length > 0) ? p.photos[0] : (p.image_url || p.proof_image_url || '/images/no-image.png');
               const title = p.is_prebuilt_set 
                 ? (p.description || 'คอมเซ็ตประกอบสำเร็จรูป') 

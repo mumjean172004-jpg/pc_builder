@@ -75,7 +75,7 @@
 |---|---|---|---|
 | GET | `/metadata` | - | หมวดหมู่/อะไหล่/แบรนด์ที่ใช้ในฟอร์มลงประกาศ |
 | POST | `/availability` | - | เช็คสถานะพร้อมขายของสินค้าหลายชิ้นพร้อมกัน |
-| GET | `/` | - | รายการสินค้า พร้อมตัวกรอง: `category`, `brand`, `condition`, `min_price`/`max_price`, `has_warranty`, `sort` (`created_desc`/`price_asc`/`price_desc`/`warranty_desc`), `search` — ⚠️ **ยังไม่มี pagination (LIMIT/OFFSET)** คืนทุกรายการที่ตรงเงื่อนไขในครั้งเดียว (แก้ N+1 query แล้ว — ใช้ `Promise.all` แทน for-loop ทีละสินค้า) |
+| GET | `/` | - | รายการสินค้า พร้อมตัวกรอง: `category`, `brand`, `condition`, `min_price`/`max_price`, `has_warranty`, `sort` (`created_desc`/`price_asc`/`price_desc`/`warranty_desc`), `search`, `page` (default 1), `limit` (default 24, สูงสุด 100) — **คืนเป็น envelope `{ data, total, page, totalPages }` ไม่ใช่ array ตรงๆ อีกต่อไป** (เปลี่ยนเมื่อ 2026-08-12 พร้อมกับแก้ทุกจุดที่เรียกฝั่ง frontend) ตรรกะคำนวณหน้าอยู่ที่ `services/paginationService.js` (มี unit test) |
 | GET | `/:id` | - | รายละเอียดสินค้า 1 ชิ้น |
 | POST | `/` | 🔒 | ลงประกาศขายใหม่ — ผ่าน `productValidator` (บังคับ `price≥0`, `stock_quantity≥1`, `condition`, `serial_number`) → คำนวณ `suspicious_score` อัตโนมัติ (ดู [[05_pc_builder/Marketplace_Listing_Checks]]) |
 | PUT | `/:id` | 🔒 | แก้ไขประกาศ (เจ้าของเท่านั้น) — partial update, มีการตรวจสอบ `price≥0`/`stock_quantity≥1` เช่นกันถ้าส่งค่ามา |

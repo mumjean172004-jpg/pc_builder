@@ -48,7 +48,7 @@ CREATE TABLE users (
     seller_bank_name VARCHAR(100) DEFAULT NULL,
     seller_bank_account VARCHAR(100) DEFAULT NULL,
     seller_bank_account_name VARCHAR(255) DEFAULT NULL,
-    seller_rating DECIMAL(3, 2) DEFAULT 5.0,
+    seller_rating DECIMAL(3, 2) DEFAULT 0.00,
     sales_count INT DEFAULT 0,
     has_seller_badge TINYINT DEFAULT 0,
     is_phone_verified TINYINT DEFAULT 0,

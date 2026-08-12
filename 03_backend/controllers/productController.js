@@ -1,6 +1,7 @@
 const pool = require('../config/database');
 const { scoreListing } = require('../services/antiFraudService');
 const { sendServerError } = require('../utils/errorHandler');
+const { normalizePage, normalizeLimit, computeOffset, computeTotalPages } = require('../services/paginationService');
 
 const LISTING_CATEGORY_SLUGS = [
   'cpu',
@@ -36,6 +37,13 @@ function normalizePhotos(photos) {
     .slice(0, 10);
 }
 
+const PRODUCT_JOINS = `
+    FROM products p
+    JOIN categories c ON p.category_id = c.id
+    JOIN users u ON p.seller_id = u.id
+    LEFT JOIN parts ON p.part_id = parts.id
+`;
+
 function productSelect(whereClause = '') {
   return `
     SELECT
@@ -58,12 +66,13 @@ function productSelect(whereClause = '') {
       u.seller_rating,
       u.sales_count,
       u.created_at as seller_created_at
-    FROM products p
-    JOIN categories c ON p.category_id = c.id
-    JOIN users u ON p.seller_id = u.id
-    LEFT JOIN parts ON p.part_id = parts.id
+    ${PRODUCT_JOINS}
     ${whereClause}
   `;
+}
+
+function productCountQuery(whereClause = '') {
+  return `SELECT COUNT(*) as total ${PRODUCT_JOINS} ${whereClause}`;
 }
 
 async function attachPhotos(product) {
@@ -192,14 +201,27 @@ exports.getAllProducts = async (req, res) => {
       orderBy = 'ORDER BY p.created_at DESC';
     }
 
+    const page = normalizePage(req.query.page);
+    const limit = normalizeLimit(req.query.limit);
+    const offset = computeOffset(page, limit);
+    const whereClause = `WHERE ${where.join(' AND ')}`;
+
+    const countResult = await pool.query(productCountQuery(whereClause), params);
+    const total = Number(countResult.rows[0].total);
+
     const result = await pool.query(
-      `${productSelect(`WHERE ${where.join(' AND ')}`)} ${orderBy}`,
-      params
+      `${productSelect(whereClause)} ${orderBy} LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
     );
 
     const products = await Promise.all((result.rows || []).map(attachPhotos));
 
-    res.json(products);
+    res.json({
+      data: products,
+      total,
+      page,
+      totalPages: computeTotalPages(total, limit)
+    });
   } catch (error) {
     sendServerError(res, error);
   }

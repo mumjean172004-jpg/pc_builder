@@ -89,6 +89,58 @@
       min-width: 0; /* Prevents flex items from overflowing */
     }
 
+    /* Mobile sidebar toggle (hidden on desktop) */
+    .admin-mobile-toggle {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      background: var(--admin-card-bg);
+      border: 1px solid var(--admin-border);
+      color: var(--text-light);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .admin-mobile-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 99;
+    }
+
+    .admin-mobile-overlay.active {
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .admin-mobile-toggle {
+        display: flex;
+      }
+
+      .admin-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+      }
+
+      .admin-sidebar.mobile-open {
+        transform: translateX(0);
+      }
+
+      .admin-content {
+        margin-left: 0;
+        padding: 1.25rem;
+      }
+
+      .admin-header {
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+    }
+
     .admin-header {
       display: flex;
       justify-content: space-between;
@@ -468,20 +520,27 @@
     </ul>
   </aside>
 
+  <div class="admin-mobile-overlay" id="admin-mobile-overlay" onclick="closeAdminSidebar()"></div>
+
   <!-- Main Content Panel -->
   <main class="admin-content">
-    
+
     <header class="admin-header">
-      <div>
-        <h1 id="view-title" style="margin: 0; font-size: 1.8rem;">
-          <svg class="icon" id="view-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <line x1="12" y1="20" x2="12" y2="10"></line>
-            <line x1="18" y1="20" x2="18" y2="4"></line>
-            <line x1="6" y1="20" x2="6" y2="16"></line>
-          </svg>
-          <span id="view-title-text">แดชบอร์ดหลังบ้าน</span>
-        </h1>
-        <p class="text-muted" style="margin: 5px 0 0 0;" id="view-desc">สถิติ ยอดขายรวม และภาพรวมระบบซื้อขายในบอร์ด</p>
+      <div style="display:flex; align-items:flex-start; gap:0.75rem;">
+        <button type="button" class="admin-mobile-toggle" onclick="toggleAdminSidebar()" aria-label="เปิด/ปิดเมนู">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
+        </button>
+        <div>
+          <h1 id="view-title" style="margin: 0; font-size: 1.8rem;">
+            <svg class="icon" id="view-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="12" y1="20" x2="12" y2="10"></line>
+              <line x1="18" y1="20" x2="18" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="16"></line>
+            </svg>
+            <span id="view-title-text">แดชบอร์ดหลังบ้าน</span>
+          </h1>
+          <p class="text-muted" style="margin: 5px 0 0 0;" id="view-desc">สถิติ ยอดขายรวม และภาพรวมระบบซื้อขายในบอร์ด</p>
+        </div>
       </div>
       <div id="admin-user-tag" style="font-size: 0.9rem; font-weight: bold; opacity: 0.8;">
         กำลังโหลดบัญชี...
@@ -868,7 +927,18 @@
     }
 
     // Tab Switching
+    function toggleAdminSidebar() {
+      document.querySelector('.admin-sidebar').classList.toggle('mobile-open');
+      document.getElementById('admin-mobile-overlay').classList.toggle('active');
+    }
+
+    function closeAdminSidebar() {
+      document.querySelector('.admin-sidebar').classList.remove('mobile-open');
+      document.getElementById('admin-mobile-overlay').classList.remove('active');
+    }
+
     function switchTab(tabName) {
+      closeAdminSidebar();
       activeTab = tabName;
       document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
       document.getElementById(`tab-${tabName}`).classList.add('active');
