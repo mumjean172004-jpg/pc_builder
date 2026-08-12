@@ -1,0 +1,11 @@
+.git
+.github
+node_modules
+03_backend/node_modules
+03_backend/uploads
+03_backend/.env
+03_backend/data
+KnowledgeBase
+.agents
+.claude
+*.md
