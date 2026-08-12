@@ -44,6 +44,7 @@ Emoji (💻 ☰ 🔒 🛒 🌙 etc.) read as "AI slop" and were the main complai
 | `.form-input.has-error` | red border + tinted background (light/dark paired) — toggle via JS on validation failure, alongside any `.form-error` text |
 | `.btn .spinner` | white-tinted variant of the base `.spinner` class, for use inside a button mid-request |
 | `.mobile-menu-toggle` | now flex-centered so an inline SVG sits correctly at the `max-width: 768px` breakpoint |
+| `#app-version-badge` | injected by `js/app.js` on `DOMContentLoaded` (not a CSS class you add yourself — it's fully automatic on every page that includes `js/app.js`, admin included). Fetches `/api/health`, renders `v<package.json version>` as a small, dim, fixed bottom-right tag. Don't hand-add a version string to any page's HTML — bump the version with `npm run version:patch/minor/major` in `03_backend/` instead, it propagates everywhere on its own. |
 
 **JS helper pattern** (currently duplicated inline per page in `<script>` blocks — copy this pattern rather than reinventing it; a shared `/js/ui-helpers.js` would be the next step if this grows past 2-3 pages):
 

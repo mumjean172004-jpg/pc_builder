@@ -46,6 +46,14 @@
 
 ---
 
+## 💓 Health Check & Version (`/api/health`)
+
+* **Method / Path**: `GET /api/health` — ไม่ต้อง auth
+* **Response**: `{ "status": "ok", "message": "...", "version": "<เลขจาก package.json>", "env": "development" | "production" }`
+* ใช้เช็คว่า server ตอบสนองอยู่ (uptime monitor/deploy verification) และดูว่า production กำลังรันโค้ดเวอร์ชันไหนอยู่จริง — เลขเวอร์ชันตัวเดียวกันนี้ยังถูกดึงไปแสดงเป็นป้ายมุมขวาล่างของทุกหน้า frontend/admin ด้วย (ดู [[08_design_system/UI_UX_Guidelines]])
+
+---
+
 ## 🛠️ PC Builder & Catalog (Prefix: `/api/builds` & `/api/parts`)
 
 ### `/api/builds`

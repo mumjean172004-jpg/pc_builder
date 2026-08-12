@@ -624,6 +624,27 @@ document.addEventListener('DOMContentLoaded', () => {
   Auth.updateUI();
 });
 
+// === ป้ายแสดงเลขเวอร์ชัน (มุมขวาล่าง, ตัวเล็ก, สีจาง) ===
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const res = await fetch(`${API_BASE}/health`);
+    const data = await res.json();
+    if (!data.version) return;
+
+    const badge = document.createElement('div');
+    badge.id = 'app-version-badge';
+    badge.textContent = `v${data.version}`;
+    badge.style.cssText = [
+      'position:fixed', 'bottom:8px', 'right:10px', 'z-index:50',
+      'font-size:0.7rem', 'color:#9ca3af', 'opacity:0.5',
+      'font-family:monospace', 'pointer-events:none', 'user-select:none'
+    ].join(';');
+    document.body.appendChild(badge);
+  } catch (err) {
+    // ไม่แสดงป้ายถ้าเรียก API ไม่สำเร็จ — ไม่ใช่ฟีเจอร์สำคัญ ไม่ควรรบกวนผู้ใช้
+  }
+});
+
 // === Mobile Menu Toggle ===
 document.addEventListener("DOMContentLoaded", () => {
   const mobileBtn = document.getElementById("mobile-menu-btn");

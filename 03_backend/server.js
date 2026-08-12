@@ -67,9 +67,15 @@ app.post('/api/upload', authMiddleware, (req, res) => {
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, '..', '04_frontend')));
 
-// API health check
+// API health check + version info
+const { version: APP_VERSION } = require('./package.json');
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'PC Builder Pro API is running' });
+  res.json({
+    status: 'ok',
+    message: 'PC Builder Pro API is running',
+    version: APP_VERSION,
+    env: process.env.NODE_ENV || 'development'
+  });
 });
 
 // 404 handler for API routes

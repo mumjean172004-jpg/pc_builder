@@ -19,6 +19,9 @@ Welcome to the Obsidian Knowledge Base for the **PC Builder Pro / Second-hand Ma
 ### 🌐 Backend API Documentation
 * [[07_document/API_Documentation]] - Active endpoints list, request/response formats, security middleware.
 
+### 🚀 Deployment
+* [[07_document/Deployment_Guide]] - How this project is actually deployed on Railway (Dockerfile-based — Railway's default Railpack builder loses the sibling `04_frontend/` folder), every gotcha hit during the first real deploy (trust proxy, DB_HOST misconfiguration, unused native dependency), and a checklist for redeploying or deploying a similar-shaped project.
+
 ### ⚙️ Core Logic Guides
 * [[05_pc_builder/PC_Builder_Compatibility]] - Detailed rules governing hardware compatibility checks.
 * [[05_pc_builder/Marketplace_Listing_Checks]] - Anti-fraud listing check logic, pricing floors, and serial matches.
@@ -51,3 +54,4 @@ Whenever new features, changes, bugs, or architectural updates are introduced to
 3. **Update `API_Documentation.md`** if endpoints are modified, added, or removed.
 4. **Update `AI_Agent_Entry.md`** if there are core modifications to rules, compilers, database adapters, or build logic.
 5. **Update `08_design_system/UI_UX_Guidelines.md`** (including its per-page status table) whenever a page is redesigned, or a new shared component/pattern is added to `css/style.css`.
+6. **Update `07_document/Deployment_Guide.md`** whenever the deploy process, build config, or infra (Railway settings, Dockerfile, env vars) changes — and never write real credentials/connection strings into any vault file, this repo is pushed to GitHub.

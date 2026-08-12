@@ -77,6 +77,13 @@ stateDiagram-v2
 
 ---
 
+## 🏷️ กฎการตั้งเลขเวอร์ชัน (Versioning Convention)
+* เลขเวอร์ชันทั้งระบบใช้ **ตัวเดียว** จาก `03_backend/package.json`'s `"version"` field (semver: `major.minor.patch`) — ไม่มีเลขเวอร์ชันแยกของ frontend/admin
+* **Bump ก่อน deploy จริงทุกครั้ง**: รัน `npm run version:patch` (bug fix เล็กๆ), `npm run version:minor` (เพิ่มฟีเจอร์ ไม่ breaking), หรือ `npm run version:major` (breaking change) ในโฟลเดอร์ `03_backend/` — ใช้ `--no-git-tag-version` เจตนา ไม่สร้าง git tag/commit อัตโนมัติ ให้ผู้ใช้เป็นคนสั่ง commit เอง
+* **แสดงผล**: `GET /api/health` คืนค่า `version` จาก `package.json` ตรงๆ (ดู [[07_document/API_Documentation]]) — ฝั่ง frontend (`js/app.js`) ดึงค่านี้มาแปะเป็นป้ายเล็กๆ สีจางมุมขวาล่างอัตโนมัติทุกหน้าที่โหลด `js/app.js` (รวม `admin/index.html` ด้วย เพราะไฟล์นี้ include `js/app.js` เหมือนหน้าอื่น) — **ไม่ต้องแก้ HTML ทีละหน้า** ถ้าจะปรับป้ายนี้ แก้ที่ `js/app.js` จุดเดียวพอ
+
+---
+
 ## 🚀 ลำดับการบูตระบบโลคอล (Local Setup Guide)
 1. ติดตั้ง MySQL หรือ MariaDB บนเครื่องของคุณ (และตรวจสอบพอร์ตให้อยู่ที่ `3306`)
 2. กรอกการเชื่อมต่อดาต้าเบสในไฟล์หลังบ้าน [.env](file:///c:/Users/Kanomjean/Downloads/project/03_backend/.env) (ระบุชื่อผู้ใช้และรหัสผ่านฐานข้อมูลให้ตรงจุด)

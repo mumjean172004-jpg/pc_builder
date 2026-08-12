@@ -49,6 +49,10 @@ cd 03_backend
 npm test
 ```
 
+## Deploy ขึ้น production
+
+Deploy จริงบน Railway ใช้ `Dockerfile` ที่ root (สำคัญ: ต้องเปลี่ยน Builder เป็น "Dockerfile" ใน Railway Settings เอง — ไม่ auto-switch ให้) ดูขั้นตอนเต็มและปัญหาที่เคยเจอที่ [`KnowledgeBase/07_document/Deployment_Guide.md`](KnowledgeBase/07_document/Deployment_Guide.md)
+
 ## โครงสร้างโปรเจกต์
 
 ```
