@@ -2,6 +2,7 @@ const pool = require('../config/database');
 const { scoreListing } = require('../services/antiFraudService');
 const { sendServerError } = require('../utils/errorHandler');
 const { normalizePage, normalizeLimit, computeOffset, computeTotalPages } = require('../services/paginationService');
+const { assembleSpecs, assembleSpecsBatch, upsertSpecs, CATEGORY_SPEC_CONFIG } = require('../services/specTables');
 
 const LISTING_CATEGORY_SLUGS = [
   'cpu',
@@ -9,15 +10,51 @@ const LISTING_CATEGORY_SLUGS = [
   'motherboard',
   'ram',
   'psu',
-  'case',
   'storage',
   'monitor',
-  'full-pc',
-  'accessories',
 ];
+
+// Spec-table columns exposed as advanced marketplace filters on products.html, mirroring
+// builder.html's CATEGORY_FILTERS (04_frontend/js/builder.js) minus 'brand' (already
+// covered by products.html's own Brand filter). Column/table names used to build SQL
+// below are ALWAYS taken from this whitelist or from CATEGORY_SPEC_CONFIG — never from a
+// raw request query key — so a `spec_<col>` param can only ever match a known-safe column.
+const FILTERABLE_SPEC_COLUMNS = {
+  cpu: ['socket', 'generation', 'series'],
+  motherboard: ['socket', 'chipset', 'generation', 'form_factor', 'ram_type'],
+  ram: ['type', 'speed', 'capacity_gb'],
+  gpu: ['chip', 'series'],
+  psu: ['modularity', 'efficiency'],
+  storage: ['interface', 'capacity_gb'],
+};
 
 const CONDITIONS = ['new', 'used_90', 'used_80', 'used_70'];
 const STATUSES = ['active', 'sold', 'paused'];
+const WARRANTY_TYPES = ['no_warranty', 'seller_warranty', 'manufacturer_warranty', 'lifetime'];
+// 'lifetime' has no real end date, but total_warranty_days/remaining_warranty_months
+// must stay numeric so range queries ("warranty remaining >= X days") keep working
+// without special-casing 'lifetime' everywhere — 99 years is a documented sentinel
+// for "effectively forever", not a real editable value.
+const LIFETIME_WARRANTY_YEARS = 99;
+
+function computeRemainingWarrantyMonths(years, months, days) {
+  const totalDays = (Number(years) || 0) * 365 + (Number(months) || 0) * 30 + (Number(days) || 0);
+  return Math.round(totalDays / 30);
+}
+
+function normalizeWarrantyFields({ warranty_type, warranty_years, warranty_months, warranty_days }) {
+  const type = WARRANTY_TYPES.includes(warranty_type) ? warranty_type : 'no_warranty';
+  if (type === 'no_warranty') {
+    return { warrantyType: type, years: 0, months: 0, days: 0 };
+  }
+  if (type === 'lifetime') {
+    return { warrantyType: type, years: LIFETIME_WARRANTY_YEARS, months: 0, days: 0 };
+  }
+  const years = Math.max(0, Number.isFinite(Number(warranty_years)) ? Math.trunc(Number(warranty_years)) : 0);
+  const months = Math.max(0, Number.isFinite(Number(warranty_months)) ? Math.trunc(Number(warranty_months)) : 0);
+  const days = Math.max(0, Number.isFinite(Number(warranty_days)) ? Math.trunc(Number(warranty_days)) : 0);
+  return { warrantyType: type, years, months, days };
+}
 
 function parseJson(value, fallback) {
   if (!value) return fallback;
@@ -41,7 +78,7 @@ const PRODUCT_JOINS = `
     FROM products p
     JOIN categories c ON p.category_id = c.id
     JOIN users u ON p.seller_id = u.id
-    LEFT JOIN parts ON p.part_id = parts.id
+    LEFT JOIN seller_profiles sp ON sp.user_id = u.id
 `;
 
 function productSelect(whereClause = '') {
@@ -50,21 +87,21 @@ function productSelect(whereClause = '') {
       p.*,
       c.name as category_name,
       c.slug as category_slug,
-      parts.name as part_name,
-      parts.brand,
-      parts.model,
-      parts.price as reference_price,
+      p.brand,
+      p.model,
+      CONCAT(p.brand, ' ', p.model) as part_name,
+      p.original_price as reference_price,
       u.username as seller_name,
-      u.shop_name,
-      u.seller_phone,
-      u.seller_bank_name,
-      u.seller_bank_account,
-      u.seller_bank_account_name,
-      u.seller_avatar_url,
-      u.is_seller_verified,
-      u.has_seller_badge,
-      u.seller_rating,
-      u.sales_count,
+      sp.shop_name,
+      sp.contact_phone as seller_phone,
+      sp.bank_name as seller_bank_name,
+      sp.bank_account_number as seller_bank_account,
+      sp.bank_account_name as seller_bank_account_name,
+      sp.shop_avatar_url as seller_avatar_url,
+      sp.is_verified as is_seller_verified,
+      sp.has_badge as has_seller_badge,
+      sp.rating as seller_rating,
+      sp.sales_count,
       u.created_at as seller_created_at
     ${PRODUCT_JOINS}
     ${whereClause}
@@ -75,6 +112,8 @@ function productCountQuery(whereClause = '') {
   return `SELECT COUNT(*) as total ${PRODUCT_JOINS} ${whereClause}`;
 }
 
+exports.attachPhotos = attachPhotos;
+
 async function attachPhotos(product) {
   const photos = await pool.query(
     'SELECT image_url FROM product_photos WHERE product_id = ? ORDER BY display_order ASC, id ASC',
@@ -83,9 +122,7 @@ async function attachPhotos(product) {
   return {
     ...product,
     photos: (photos.rows || []).map((row) => row.image_url),
-    suspicious_reasons: parseJson(product.suspicious_reasons, []),
-    prebuilt_specs: parseJson(product.prebuilt_specs, null),
-    prebuilt_components: parseJson(product.prebuilt_components, [])
+    suspicious_reasons: parseJson(product.suspicious_reasons, [])
   };
 }
 
@@ -94,24 +131,44 @@ async function getCategoryBySlug(slug) {
   return result.rows?.[0];
 }
 
-async function getPart(partId, categoryId) {
+// Anti-fraud reference price comes from OTHER already-listed, active, approved
+// products of the exact same brand+model — never the seller's own self-reported
+// `original_price` (that field is fully seller-controlled; using it as the fraud
+// reference made the price-floor check trivially bypassable by simply choosing a
+// self-consistent pair of numbers, confirmed by a live exploit test). Skips the
+// floor check entirely when this is the first-ever listing of that brand+model
+// (no independent ground truth to compare against), same as before.
+async function getCrossListingReferencePrice(brand, model, excludeProductId) {
+  if (!brand || !model) return null;
+  const params = [brand, model];
+  let excludeClause = '';
+  if (excludeProductId) {
+    excludeClause = 'AND id != ?';
+    params.push(excludeProductId);
+  }
   const result = await pool.query(
-    'SELECT * FROM parts WHERE id = ? AND category_id = ? AND is_active = 1',
-    [partId, categoryId]
+    `SELECT AVG(price) AS avg_price FROM products
+     WHERE brand = ? AND model = ? AND status = 'active' AND review_status = 'approved' ${excludeClause}`,
+    params
   );
-  return result.rows?.[0];
+  const avgPrice = result.rows?.[0]?.avg_price;
+  return avgPrice !== null && avgPrice !== undefined ? Number(avgPrice) : null;
 }
 
-async function evaluateSuspicion({ part, condition, price, serialNumber }) {
-  const duplicate = await pool.query(
-    `SELECT id FROM products
-     WHERE serial_number = ? AND status != 'sold'
-     LIMIT 1`,
-    [serialNumber]
-  );
-  const hasDuplicateSerial = !!duplicate.rows?.length;
+async function evaluateSuspicion({ condition, price, serialNumber, brand, model, excludeProductId }) {
+  let hasDuplicateSerial = false;
+  if (serialNumber) {
+    const duplicate = await pool.query(
+      `SELECT id FROM products
+       WHERE serial_number = ? AND status != 'sold'
+       LIMIT 1`,
+      [serialNumber]
+    );
+    hasDuplicateSerial = !!duplicate.rows?.length;
+  }
+  const catalogPrice = await getCrossListingReferencePrice(brand, model, excludeProductId);
 
-  return scoreListing({ catalogPrice: part?.price, condition, price, hasDuplicateSerial });
+  return scoreListing({ catalogPrice, condition, price, hasDuplicateSerial });
 }
 
 exports.getListingMetadata = async (req, res) => {
@@ -122,22 +179,46 @@ exports.getListingMetadata = async (req, res) => {
        ORDER BY display_order ASC`,
       LISTING_CATEGORY_SLUGS
     );
-    const parts = await pool.query(
-      `SELECT p.id, p.name, p.brand, p.model, p.price, p.category_id, c.slug as category_slug, c.name as category_name
-       FROM parts p JOIN categories c ON p.category_id = c.id
-       WHERE c.slug IN (${LISTING_CATEGORY_SLUGS.map(() => '?').join(',')})
-       AND p.is_active = 1
-       ORDER BY c.display_order ASC, p.brand ASC, p.model ASC`,
-      LISTING_CATEGORY_SLUGS
-    );
-    const brandsResult = await pool.query(
-      `SELECT DISTINCT brand FROM parts WHERE brand IS NOT NULL AND brand != '' ORDER BY brand ASC`
+    
+    // Master lookups
+    const sockets = await pool.query('SELECT id, name, brand FROM sockets ORDER BY brand, name');
+    const chipsets = await pool.query('SELECT id, socket_id, name FROM chipsets ORDER BY name');
+    const cpuGenerations = await pool.query('SELECT id, name, brand, socket_id FROM cpu_generations ORDER BY brand, id');
+    const cpuModels = await pool.query('SELECT id, generation_id, name FROM cpu_models ORDER BY name');
+    const cpuSeries = await pool.query('SELECT id, name FROM cpu_series ORDER BY name');
+    const vgaSeries = await pool.query('SELECT id, name FROM vga_series ORDER BY id');
+    const gpuChips = await pool.query('SELECT id, series_id, name FROM gpu_chips ORDER BY name');
+    const formFactors = await pool.query('SELECT id, name, size_level FROM form_factors ORDER BY size_level DESC');
+    const ramTypes = await pool.query('SELECT id, name FROM ram_types ORDER BY name');
+    const brands = await pool.query('SELECT id, name FROM brands ORDER BY name');
+    const psuModular = await pool.query('SELECT id, name FROM psu_modular ORDER BY id');
+    const psuEfficiency = await pool.query('SELECT id, name FROM psu_efficiency ORDER BY id');
+    const chipsetGenerations = await pool.query('SELECT chipset_id, generation_id FROM chipset_generations');
+
+    // Existing products for model suggestions / reference
+    const productsRes = await pool.query(
+      `SELECT p.id, p.brand, p.model, p.category_id, c.slug as category_slug, c.name as category_name
+       FROM products p JOIN categories c ON p.category_id = c.id
+       WHERE p.status = 'active'
+       ORDER BY p.brand ASC, p.model ASC`
     );
 
     res.json({
       categories: categories.rows || [],
-      parts: parts.rows || [],
-      brands: (brandsResult.rows || []).map((b) => b.brand),
+      sockets: sockets.rows || [],
+      chipsets: chipsets.rows || [],
+      cpu_generations: cpuGenerations.rows || [],
+      cpu_models: cpuModels.rows || [],
+      cpu_series: cpuSeries.rows || [],
+      vga_series: vgaSeries.rows || [],
+      gpu_chips: gpuChips.rows || [],
+      form_factors: formFactors.rows || [],
+      ram_types: ramTypes.rows || [],
+      psu_modular: psuModular.rows || [],
+      psu_efficiency: psuEfficiency.rows || [],
+      chipset_generations: chipsetGenerations.rows || [],
+      brands: (brands.rows || []).map(b => b.name),
+      parts: productsRes.rows || [],
       conditions: CONDITIONS,
       statuses: STATUSES,
     });
@@ -162,8 +243,8 @@ exports.getAllProducts = async (req, res) => {
     }
 
     if (search) {
-      where.push('(parts.name LIKE ? OR parts.brand LIKE ? OR parts.model LIKE ? OR p.description LIKE ?)');
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+      where.push('(p.brand LIKE ? OR p.model LIKE ? OR p.description LIKE ?)');
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     if (min_price && !isNaN(parseFloat(min_price))) {
@@ -186,8 +267,29 @@ exports.getAllProducts = async (req, res) => {
     }
 
     if (brand) {
-      where.push('parts.brand = ?');
+      where.push('p.brand = ?');
       params.push(brand);
+    }
+
+    // Advanced spec-based filters (Socket, RAM Type, Chipset, VRAM, ...). Only active
+    // when `category` narrows to a single known spec table; only whitelisted column
+    // names from FILTERABLE_SPEC_COLUMNS are ever used to build SQL, never the raw
+    // `spec_<key>` request key itself — an unrecognized key is silently ignored.
+    if (category && FILTERABLE_SPEC_COLUMNS[category]) {
+      const specConfig = CATEGORY_SPEC_CONFIG[category];
+      const specConditions = [];
+      const specParams = [];
+      for (const col of FILTERABLE_SPEC_COLUMNS[category]) {
+        const value = req.query[`spec_${col}`];
+        if (value !== undefined && value !== '') {
+          specConditions.push(`\`${col}\` = ?`);
+          specParams.push(value);
+        }
+      }
+      if (specConditions.length && specConfig) {
+        where.push(`p.id IN (SELECT product_id FROM ${specConfig.table} WHERE ${specConditions.join(' AND ')})`);
+        params.push(...specParams);
+      }
     }
 
     let orderBy = 'ORDER BY p.created_at DESC';
@@ -216,12 +318,75 @@ exports.getAllProducts = async (req, res) => {
 
     const products = await Promise.all((result.rows || []).map(attachPhotos));
 
+    // Batch enrich with specs, grouped by each product's OWN category — a single
+    // `?category=` filter narrows every row to one category already, but the
+    // unfiltered "browse everything" case (the default, most common request) mixes
+    // categories in one result set, so specs must be assembled per category group
+    // rather than assumed to be one category for the whole page (same pattern
+    // getListingMetadata/getAvailableParts already use correctly).
+    const productIdsByCategory = {};
+    for (const p of products) {
+      (productIdsByCategory[p.category_slug] ||= []).push(p.id);
+    }
+    const specsMap = {};
+    for (const [categorySlug, ids] of Object.entries(productIdsByCategory)) {
+      Object.assign(specsMap, await assembleSpecsBatch(pool, categorySlug, ids));
+    }
+
+    const enriched = products.map(p => ({
+      ...p,
+      specs: specsMap[p.id] || null
+    }));
+
     res.json({
-      data: products,
+      data: enriched,
       total,
       page,
       totalPages: computeTotalPages(total, limit)
     });
+  } catch (error) {
+    sendServerError(res, error);
+  }
+};
+
+// Distinct, real values for each advanced spec filter (FILTERABLE_SPEC_COLUMNS), sourced
+// only from currently active+approved listings — mirrors builder.html's CATEGORY_FILTERS
+// behavior of only ever showing options that actually have live listings, rather than the
+// full master lookup tables (which would include dead-end options with zero results).
+exports.getSpecFilterOptions = async (req, res) => {
+  try {
+    const result = {};
+    for (const [slug, columns] of Object.entries(FILTERABLE_SPEC_COLUMNS)) {
+      const specConfig = CATEGORY_SPEC_CONFIG[slug];
+      if (!specConfig) continue;
+
+      const selectCols = columns.map(c => `s.\`${c}\` AS \`${c}\``).join(', ');
+      const rows = await pool.query(
+        `SELECT ${selectCols}
+         FROM ${specConfig.table} s
+         JOIN products p ON p.id = s.product_id
+         JOIN categories c ON c.id = p.category_id
+         WHERE c.slug = ? AND p.status = 'active' AND p.review_status = 'approved'`,
+        [slug]
+      );
+
+      const valuesByColumn = {};
+      for (const col of columns) valuesByColumn[col] = new Set();
+      for (const row of rows.rows || []) {
+        for (const col of columns) {
+          const v = row[col];
+          if (v !== null && v !== undefined && v !== '') valuesByColumn[col].add(v);
+        }
+      }
+
+      result[slug] = {};
+      for (const col of columns) {
+        result[slug][col] = Array.from(valuesByColumn[col]).sort((a, b) =>
+          String(a).localeCompare(String(b), 'th', { numeric: true })
+        );
+      }
+    }
+    res.json(result);
   } catch (error) {
     sendServerError(res, error);
   }
@@ -241,7 +406,13 @@ exports.getProductById = async (req, res) => {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    res.json(await attachPhotos(product));
+    const withPhotos = await attachPhotos(product);
+    const specs = await assembleSpecs(pool, product.category_slug, product.id);
+
+    res.json({
+      ...withPhotos,
+      specs
+    });
   } catch (error) {
     sendServerError(res, error);
   }
@@ -251,11 +422,18 @@ exports.createProduct = async (req, res) => {
   try {
     const {
       category,
-      part_id,
+      brand,
+      model,
+      specs = {},
       condition = 'used_90',
-      remaining_warranty_months = 0,
+      warranty_type = 'no_warranty',
+      warranty_years = 0,
+      warranty_months = 0,
+      warranty_days = 0,
+      original_price,
       price,
       stock_quantity = 1,
+      sku: customSku,
       photos,
       serial_number,
       description = '',
@@ -264,19 +442,13 @@ exports.createProduct = async (req, res) => {
       allow_express = 1,
       pickup_location = '',
       proof_image_url = '',
-      sn_image_url = '',
-      is_prebuilt_set = 0,
-      prebuilt_specs = null,
-      prebuilt_components = []
+      sn_image_url = ''
     } = req.body;
 
-    const isPrebuilt = is_prebuilt_set === 1 || is_prebuilt_set === '1' || category === 'full-pc';
-    const targetCategory = isPrebuilt ? 'full-pc' : category;
-
-    if (!targetCategory || (!isPrebuilt && !part_id) || price === undefined || !serial_number) {
-      return res.status(400).json({ error: 'กรุณากรอกหมวดหมู่, รุ่นอุปกรณ์/คอมเซ็ต, ราคา และ Serial Number ให้ครบถ้วน' });
+    if (!category || !brand || !model || price === undefined) {
+      return res.status(400).json({ error: 'กรุณากรอกหมวดหมู่, ยี่ห้อ, รุ่นอุปกรณ์ และราคาให้ครบถ้วน' });
     }
-    if (!LISTING_CATEGORY_SLUGS.includes(targetCategory)) {
+    if (!LISTING_CATEGORY_SLUGS.includes(category)) {
       return res.status(400).json({ error: 'หมวดหมู่สินค้าไม่ถูกต้อง' });
     }
     if (!CONDITIONS.includes(condition)) {
@@ -285,7 +457,6 @@ exports.createProduct = async (req, res) => {
 
     const priceNumber = Number(price);
     const stockNumber = Number(stock_quantity);
-    const warrantyNumber = Number(remaining_warranty_months);
     const photoUrls = normalizePhotos(photos);
 
     if (!Number.isFinite(priceNumber) || priceNumber <= 0) {
@@ -295,45 +466,63 @@ exports.createProduct = async (req, res) => {
       return res.status(400).json({ error: 'จำนวนสต็อกต้องอย่างน้อย 1 ชิ้น' });
     }
 
-    // Check duplicate active serial number in database
-    const serialNumber = String(serial_number).trim();
-    const dupCheck = await pool.query(
-      `SELECT id FROM products WHERE serial_number = ? AND status = 'active' LIMIT 1`,
-      [serialNumber]
-    );
-    if (dupCheck.rows && dupCheck.rows.length > 0) {
-      return res.status(400).json({ error: `Serial Number "${serialNumber}" นี้มีประกาศวางขายอยู่ในระบบแล้ว ไม่สามารถลงซ้ำได้` });
-    }
-
-    const categoryRow = await getCategoryBySlug(targetCategory);
-    if (!categoryRow) return res.status(400).json({ error: 'ไม่พบหมวดหมู่สินค้านี้ในระบบ' });
-
-    let part = null;
-    if (!isPrebuilt && part_id) {
-      part = await getPart(part_id, categoryRow.id);
-      if (!part) {
-        return res.status(400).json({ error: 'อุปกรณ์ที่เลือกไม่มีอยู่ในแคตตาล็อกของหมวดหมู่นี้' });
+    let originalPriceNumber = null;
+    if (original_price !== undefined && original_price !== null && original_price !== '') {
+      originalPriceNumber = Number(original_price);
+      if (!Number.isFinite(originalPriceNumber) || originalPriceNumber <= 0) {
+        return res.status(400).json({ error: 'ราคาป้ายเดิมต้องเป็นตัวเลขมากกว่า 0 บาท' });
       }
     }
 
-    const suspicion = await evaluateSuspicion({ part, condition, price: priceNumber, serialNumber });
+    const warranty = normalizeWarrantyFields({ warranty_type, warranty_years, warranty_months, warranty_days });
+    const warrantyNumber = computeRemainingWarrantyMonths(warranty.years, warranty.months, warranty.days);
+
+    const serialNumber = serial_number ? String(serial_number).trim() : null;
+    if (serialNumber) {
+      const dupCheck = await pool.query(
+        `SELECT id FROM products WHERE serial_number = ? AND status = 'active' LIMIT 1`,
+        [serialNumber]
+      );
+      if (dupCheck.rows && dupCheck.rows.length > 0) {
+        return res.status(400).json({ error: `Serial Number "${serialNumber}" นี้มีประกาศวางขายอยู่ในระบบแล้ว ไม่สามารถลงซ้ำได้` });
+      }
+    }
+
+    const categoryRow = await getCategoryBySlug(category);
+    if (!categoryRow) return res.status(400).json({ error: 'ไม่พบหมวดหมู่สินค้านี้ในระบบ' });
+
+    const suspicion = await evaluateSuspicion({
+      condition,
+      price: priceNumber,
+      serialNumber,
+      brand: String(brand).trim(),
+      model: String(model).trim(),
+    });
     const reviewStatus = suspicion.score >= 80 ? 'pending_review' : 'approved';
 
     const result = await pool.query(
       `INSERT INTO products (
-        seller_id, category_id, part_id, \`condition\`, remaining_warranty_months, price,
-        stock_quantity, serial_number, description, status, review_status,
+        seller_id, category_id, brand, model, \`condition\`, remaining_warranty_months, price,
+        warranty_type, warranty_years, warranty_months, warranty_days, original_price,
+        sku, stock_quantity, serial_number, description, status, review_status,
         suspicious_score, suspicious_reasons,
-        proof_image_url, sn_image_url, is_prebuilt_set, prebuilt_specs, prebuilt_components,
+        proof_image_url, sn_image_url,
         allow_hand_pickup, allow_cod, allow_express, pickup_location
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         req.userId,
         categoryRow.id,
-        part ? part.id : null,
+        String(brand).trim(),
+        String(model).trim(),
         condition,
         warrantyNumber,
         priceNumber,
+        warranty.warrantyType,
+        warranty.years,
+        warranty.months,
+        warranty.days,
+        originalPriceNumber,
+        customSku ? String(customSku).trim() : null,
         stockNumber,
         serialNumber,
         description || null,
@@ -343,17 +532,29 @@ exports.createProduct = async (req, res) => {
         JSON.stringify(suspicion.reasons),
         proof_image_url || null,
         sn_image_url || null,
-        isPrebuilt ? 1 : 0,
-        prebuilt_specs ? JSON.stringify(prebuilt_specs) : null,
-        prebuilt_components ? JSON.stringify(prebuilt_components) : null,
         allow_hand_pickup ? 1 : 0,
-        0, // allow_cod = 0 (Direct transfer / pickup only)
+        0,
         allow_express ? 1 : 0,
         pickup_location || null
       ]
     );
 
     const productId = result.insertId;
+
+    if (!customSku) {
+      const generatedSku = `SKU-${category.toUpperCase()}-${String(productId).padStart(6, '0')}`;
+      await pool.query('UPDATE products SET sku = ? WHERE id = ?', [generatedSku, productId]);
+    }
+
+    // Save spec to spec_* table
+    if (specs && typeof specs === 'object') {
+      try {
+        await upsertSpecs(pool, category, productId, specs);
+      } catch (specErr) {
+        console.warn(`Warning: Could not upsert spec for product ${productId}:`, specErr.message);
+      }
+    }
+
     for (let i = 0; i < photoUrls.length; i++) {
       await pool.query(
         'INSERT INTO product_photos (product_id, image_url, display_order) VALUES (?, ?, ?)',
@@ -374,6 +575,8 @@ exports.createProduct = async (req, res) => {
         : 'ลงประกาศขายสินค้าสำเร็จ!',
       product: {
         id: productId,
+        brand,
+        model,
         review_status: reviewStatus,
         suspicious_score: suspicion.score,
         suspicious_reasons: suspicion.reasons,
@@ -387,53 +590,55 @@ exports.createProduct = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const current = await pool.query('SELECT * FROM products WHERE id = ?', [id]);
-    if (!current.rows?.length) return res.status(404).json({ error: 'Product not found' });
-    if (current.rows[0].seller_id !== req.userId) {
-      return res.status(403).json({ error: 'Not authorized to update this product' });
+    const existing = await pool.query('SELECT * FROM products WHERE id = ?', [id]);
+    if (!existing.rows?.length) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    const current = existing.rows[0];
+    if (req.userRole !== 'admin' && current.seller_id !== req.userId) {
+      return res.status(403).json({ error: 'Unauthorized to update this product' });
     }
 
     const {
-      remaining_warranty_months,
-      price,
-      stock_quantity,
-      photos,
-      description,
-      status,
+      brand = current.brand,
+      model = current.model,
+      condition = current.condition,
+      price = current.price,
+      original_price = current.original_price,
+      stock_quantity = current.stock_quantity,
+      serial_number = current.serial_number,
+      description = current.description,
+      status = current.status,
+      allow_hand_pickup = current.allow_hand_pickup,
+      allow_express = current.allow_express,
+      pickup_location = current.pickup_location,
+      specs,
+      photos
     } = req.body;
-
-    if (status && !STATUSES.includes(status)) {
-      return res.status(400).json({ error: 'Invalid product status' });
-    }
-
-    // Partial-update endpoint (COALESCE below), so only validate fields that
-    // were actually provided — mirrors productValidator's rules for creation
-    // (price >= 0, stock_quantity >= 1) without requiring every field.
-    if (price !== undefined && (isNaN(Number(price)) || Number(price) < 0)) {
-      return res.status(400).json({ error: 'ราคาสินค้าต้องเป็นตัวเลขและห้ามติดลบ' });
-    }
-    if (stock_quantity !== undefined && (!Number.isInteger(Number(stock_quantity)) || Number(stock_quantity) < 1)) {
-      return res.status(400).json({ error: 'จำนวนสินค้าต้องเป็นจำนวนเต็มตั้งแต่ 1 ชิ้นขึ้นไป' });
-    }
 
     await pool.query(
       `UPDATE products SET
-        remaining_warranty_months = COALESCE(?, remaining_warranty_months),
-        price = COALESCE(?, price),
-        stock_quantity = COALESCE(?, stock_quantity),
-        description = COALESCE(?, description),
-        status = COALESCE(?, status),
-        updated_at = CURRENT_TIMESTAMP
+        brand = ?, model = ?, \`condition\` = ?, price = ?, original_price = ?,
+        stock_quantity = ?, serial_number = ?, description = ?, status = ?,
+        allow_hand_pickup = ?, allow_express = ?, pickup_location = ?
        WHERE id = ?`,
-      [remaining_warranty_months, price, stock_quantity, description, status, id]
+      [
+        brand, model, condition, price, original_price,
+        stock_quantity, serial_number, description, status,
+        allow_hand_pickup, allow_express, pickup_location, id
+      ]
     );
 
-    if (photos) {
-      const photoUrls = normalizePhotos(photos);
-      const condition = current.rows[0].condition;
-      if (condition !== 'new' && photoUrls.length < 3) {
-        return res.status(400).json({ error: 'Used listings require at least 3 photos' });
+    if (specs && typeof specs === 'object') {
+      const cat = await pool.query('SELECT slug FROM categories WHERE id = ?', [current.category_id]);
+      if (cat.rows?.length) {
+        await upsertSpecs(pool, cat.rows[0].slug, id, specs);
       }
+    }
+
+    if (Array.isArray(photos)) {
+      const photoUrls = normalizePhotos(photos);
       await pool.query('DELETE FROM product_photos WHERE product_id = ?', [id]);
       for (let i = 0; i < photoUrls.length; i++) {
         await pool.query(
@@ -443,7 +648,7 @@ exports.updateProduct = async (req, res) => {
       }
     }
 
-    res.json({ message: 'Product updated' });
+    res.json({ message: 'แก้ไขข้อมูลสินค้าสำเร็จ' });
   } catch (error) {
     sendServerError(res, error);
   }
@@ -452,90 +657,31 @@ exports.updateProduct = async (req, res) => {
 exports.deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const productCheck = await pool.query('SELECT seller_id FROM products WHERE id = ?', [id]);
-    if (!productCheck.rows?.length) return res.status(404).json({ error: 'Product not found' });
-    if (productCheck.rows[0].seller_id !== req.userId) {
-      return res.status(403).json({ error: 'Not authorized to delete this product' });
+    const existing = await pool.query('SELECT * FROM products WHERE id = ?', [id]);
+    if (!existing.rows?.length) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    const current = existing.rows[0];
+    if (req.userRole !== 'admin' && current.seller_id !== req.userId) {
+      return res.status(403).json({ error: 'Unauthorized to delete this product' });
     }
 
     await pool.query('DELETE FROM products WHERE id = ?', [id]);
-    res.json({ message: 'Product deleted' });
+    res.json({ message: 'ลบประกาศสินค้าเรียบร้อยแล้ว' });
   } catch (error) {
     sendServerError(res, error);
   }
 };
 
-exports.getProductAvailability = async (req, res) => {
+exports.getMyProducts = async (req, res) => {
   try {
-    const { partIds } = req.body;
-    if (!partIds || !Array.isArray(partIds) || partIds.length === 0) {
-      return res.status(400).json({ error: 'partIds array is required' });
-    }
-
-    const placeholders = partIds.map(() => '?').join(',');
-    const query = `
-      SELECT p.id as product_id, p.part_id, p.price, p.condition, u.username as seller_name
-      FROM products p
-      JOIN users u ON p.seller_id = u.id
-      WHERE p.part_id IN (${placeholders})
-        AND p.status = 'active'
-        AND p.review_status = 'approved'
-        AND p.stock_quantity > 0
-    `;
-
-    const result = await pool.query(query, partIds);
-    const rows = result.rows || [];
-
-    const availability = {};
-    partIds.forEach(id => {
-      availability[id] = { available: false };
-    });
-
-    rows.forEach(row => {
-      const pid = row.part_id;
-      const price = parseFloat(row.price);
-      if (!availability[pid].available || price < availability[pid].price) {
-        availability[pid] = {
-          available: true,
-          product_id: row.product_id,
-          price: price,
-          condition: row.condition,
-          seller_name: row.seller_name
-        };
-      }
-    });
-
-    res.json(availability);
-  } catch (error) {
-    sendServerError(res, error);
-  }
-};
-
-// Public: list a seller's reviews (paginated)
-exports.getSellerReviews = async (req, res) => {
-  try {
-    const { sellerId } = req.params;
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = 10;
-    const offset = (page - 1) * limit;
-
     const result = await pool.query(
-      `SELECT r.id, r.rating, r.comment, r.created_at, u.username as reviewer_name
-       FROM reviews r
-       JOIN users u ON r.reviewer_id = u.id
-       WHERE r.seller_id = ?
-       ORDER BY r.created_at DESC
-       LIMIT ? OFFSET ?`,
-      [sellerId, limit, offset]
+      `${productSelect('WHERE p.seller_id = ?')} ORDER BY p.created_at DESC`,
+      [req.userId]
     );
-
-    const countResult = await pool.query('SELECT COUNT(*) as total FROM reviews WHERE seller_id = ?', [sellerId]);
-
-    res.json({
-      reviews: result.rows,
-      total: Number(countResult.rows[0].total),
-      page
-    });
+    const products = await Promise.all((result.rows || []).map(attachPhotos));
+    res.json(products);
   } catch (error) {
     sendServerError(res, error);
   }

@@ -1,5 +1,5 @@
 /**
- * PC Builder Pro — ฟังก์ชันหลักของแอปพลิเคชัน
+ * Second-hand Computer Marketplace System — ฟังก์ชันหลักของแอปพลิเคชัน
  * ตัวเรียก API, สถานะล็อกอิน, การแจ้งเตือน, และฟังก์ชันช่วยเหลือ
  */
 
@@ -448,14 +448,14 @@ const Auth = {
 
     if (this.isLoggedIn()) {
       const user = this.getUser();
-      const roleText = user?.active_role === 'seller' ? 'ผู้ขาย' : 'ผู้ซื้อ';
-      const adminLink = user?.role === 'admin' ? '<a href="/admin/index.html" class="btn btn-ghost btn-sm" style="color: #c084fc; margin-right: 6px; display: inline-flex; align-items: center; gap: 4px;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:15px;height:15px;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg> แอดมิน</a>' : '';
+      const roleText = user?.active_role === 'seller' ? 'Seller' : 'Buyer';
+      const adminLink = user?.role === 'admin' ? '<a href="/admin/index.html" class="btn btn-ghost btn-sm" style="color: #c084fc; margin-right: 6px; display: inline-flex; align-items: center; gap: 4px;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:15px;height:15px;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg> Admin</a>' : '';
       authButtons.innerHTML = `
         ${cartBadgeHtml}
         ${adminLink}
-        <a href="/inbox.html" class="btn btn-ghost btn-sm" style="margin-right: 6px; display: inline-flex; align-items: center; gap: 4px;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:15px;height:15px;"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg> ข้อความ</a>
-        <a href="/profile.html" class="btn btn-ghost btn-sm" style="display: inline-flex; align-items: center; gap: 4px;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:15px;height:15px;"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="8" r="5"></circle></svg> ${user?.username || 'โปรไฟล์'} <span style="font-size: 0.75rem; background: var(--bg-body); padding: 2px 6px; border-radius: 10px; border: 1px solid var(--border); margin-left: 2px;">${roleText}</span></a>
-        <button class="btn btn-outline btn-sm" id="logout-btn" style="margin-left: 6px;">ออกจากระบบ</button>
+        <a href="/inbox.html" class="btn btn-ghost btn-sm" style="margin-right: 6px; display: inline-flex; align-items: center; gap: 4px;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:15px;height:15px;"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg> Messages</a>
+        <a href="/profile.html" class="btn btn-ghost btn-sm" style="display: inline-flex; align-items: center; gap: 4px;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:15px;height:15px;"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="8" r="5"></circle></svg> ${user?.username || 'Profile'} <span style="font-size: 0.75rem; background: var(--bg-body); padding: 2px 6px; border-radius: 10px; border: 1px solid var(--border); margin-left: 2px;">${roleText}</span></a>
+        <button class="btn btn-outline btn-sm" id="logout-btn" style="margin-left: 6px;">Logout</button>
       `;
       document.getElementById('logout-btn')?.addEventListener('click', () => {
         this.logout();
@@ -463,8 +463,8 @@ const Auth = {
     } else {
       authButtons.innerHTML = `
         ${cartBadgeHtml}
-        <a href="/login.html" class="btn btn-ghost btn-sm">เข้าสู่ระบบ</a>
-        <a href="/login.html?register" class="btn btn-primary btn-sm">สมัครสมาชิก</a>
+        <a href="/login.html" class="btn btn-ghost btn-sm">Login</a>
+        <a href="/login.html?register" class="btn btn-primary btn-sm">Register</a>
       `;
     }
 
@@ -524,7 +524,27 @@ const API = {
     return this.request(endpoint, { method: 'DELETE' });
   },
 
+  async upload(endpoint, formData) {
+    const url = `${API_BASE}${endpoint}`;
+    const token = Auth.getToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || `ข้อผิดพลาด HTTP ${response.status}`);
+    }
+    return data;
+  }
 };
+
+function getCurrentUser() {
+  return Auth.getUser();
+}
 
 // === การแจ้งเตือนแบบ Toast ===
 const Toast = {
@@ -592,21 +612,17 @@ function getSpecsSummary(specs, category) {
   
   switch (category) {
     case 'cpu':
-      return `${parsedSpecs.cores || '?'}C/${parsedSpecs.threads || '?'}T · ${parsedSpecs.socket || ''} · ${parsedSpecs.tdp || '?'}W`;
-    case 'cpu-cooler':
-      return `${parsedSpecs.type === 'aio' ? `${parsedSpecs.radiator_mm}mm AIO` : `พัดลม · ${parsedSpecs.height_mm}mm`} · ${parsedSpecs.tdp_rating}W TDP`;
+      return `${parsedSpecs.cores || '?'}C/${parsedSpecs.threads || '?'}T · ${parsedSpecs.socket || ''}`;
     case 'motherboard':
       return `${parsedSpecs.socket} · ${parsedSpecs.chipset} · ${parsedSpecs.ram_type} · ${parsedSpecs.form_factor}`;
     case 'ram':
       return `${parsedSpecs.type} · ${parsedSpecs.capacity_gb}GB (${parsedSpecs.modules}x${Math.round(parsedSpecs.capacity_gb / parsedSpecs.modules)}GB) · ${parsedSpecs.speed}`;
     case 'gpu':
-      return `${parsedSpecs.vram_gb}GB ${parsedSpecs.vram_type} · ${parsedSpecs.tdp}W · ${parsedSpecs.length_mm}mm`;
+      return `${parsedSpecs.vram_gb}GB ${parsedSpecs.vram_type} · ${parsedSpecs.length_mm}mm`;
     case 'storage':
       return `${parsedSpecs.interface} · ${parsedSpecs.capacity_gb >= 1000 ? (parsedSpecs.capacity_gb / 1000) + 'TB' : parsedSpecs.capacity_gb + 'GB'} · ${parsedSpecs.read_speed}`;
     case 'psu':
-      return `${parsedSpecs.wattage}W · ${parsedSpecs.efficiency} · ${parsedSpecs.modularity === 'full' ? 'มอดูลาร์' : 'ไม่มอดูลาร์'}`;
-    case 'case':
-      return `${parsedSpecs.form_factor} · GPU สูงสุด ${parsedSpecs.max_gpu_length_mm}mm · คูลเลอร์สูงสุด ${parsedSpecs.max_cooler_height_mm}mm`;
+      return `${parsedSpecs.wattage}W · ${parsedSpecs.efficiency} · ${parsedSpecs.modularity || ''}`;
     default:
       return Object.values(parsedSpecs).slice(0, 3).join(' · ');
   }

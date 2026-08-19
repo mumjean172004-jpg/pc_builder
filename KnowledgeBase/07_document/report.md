@@ -175,403 +175,329 @@
 # บทที่ 3
 # ขั้นตอนการดำเนินงาน
 
-ในการดำเนินงานโครงการพัฒนาเว็บแอปพลิเคชัน **PC Builder Pro (แพลตฟอร์มจัดสเปกคอมพิวเตอร์ออนไลน์ และตลาดกลางซื้อขายชิ้นส่วนอะไหล่มือสอง C2C)** คณะผู้พัฒนาได้ดำเนินการตามขั้นตอนการวิเคราะห์ ออกแบบระบบ และมีแผนภาพขั้นตอนการดำเนินงานเชิงวิชาการอย่างเป็นระบบดังรายละเอียดต่อไปนี้:
+ในการดำเนินงานโครงการพัฒนาเว็บแอปพลิเคชัน **PC Builder Pro (แพลตฟอร์มจัดสเปกคอมพิวเตอร์ออนไลน์ และตลาดกลางซื้อขายชิ้นส่วนอะไหล่มือสอง C2C)** คณะผู้พัฒนาได้วิเคราะห์ ออกแบบระบบ และสร้างแผนภาพขั้นตอนการดำเนินงานเชิงวิศวกรรมซอฟต์แวร์ตามมาตรฐาน **ISO 5807** สำหรับผังงาน และมาตรฐาน **OMG UML 2.5** สำหรับแผนภาพระบบ ภายใต้สถาปัตยกรรม **Product-Centric Architecture** ซึ่งยึดถือรายการสินค้าที่ผู้ใช้งานลงประกาศขายจริงในระบบเป็นศูนย์กลางข้อมูลหลัก (Single Source of Truth) เพื่อนำไปใช้งานร่วมกันทั้งในตลาดกลางซื้อขายและเครื่องมือจัดสเปกคอมพิวเตอร์ โดยจำแนกรายละเอียดออกเป็นหัวข้อหลักดังต่อไปนี้:
 
-* 3.1 การศึกษาข้อมูลที่เกี่ยวข้อง
-* 3.2 การออกแบบระบบ
-* 3.3 พัฒนาเว็บแอปพลิเคชัน
+* 3.1 การศึกษาข้อมูลและสถาปัตยกรรมระบบ
+* 3.2 การออกแบบระบบและไดอะแกรมการทำงาน
+* 3.3 การพัฒนาเว็บแอปพลิเคชัน
 
 ---
 
-### 3.1 การศึกษาข้อมูลที่เกี่ยวข้อง
+### 3.1 การศึกษาข้อมูลและสถาปัตยกรรมระบบ
 
 #### 3.1.1 สถาปัตยกรรมการสื่อสารระบบ (System Architecture)
-ระบบได้รับการออกแบบโครงสร้างการทำงานในรูปแบบ **3-Tier Architecture** ซึ่งแยกหน้าที่การรับส่งและประมวลผลข้อมูลอย่างเด็ดขาดเพื่อความปลอดภัยและการขยายตัวในอนาคต ดังแสดงรายละเอียดการเชื่อมต่อเครือข่ายและการแลกเปลี่ยนข้อมูลใน **ภาพที่ 3.1**:
+ระบบได้รับการออกแบบโครงสร้างการทำงานในรูปแบบ **3-Tier Client-Server Architecture** ซึ่งแยกหน้าที่การรับส่งข้อมูล การประมวลผลตรรกะทางธุรกิจ และการจัดการฐานข้อมูลออกจากกันอย่างเป็นสัดส่วน ดังแสดงรายละเอียดใน **ภาพที่ 3.1**:
 
 ```mermaid
 graph TD
     subgraph Client-Side Presentation Layer
-        View["HTML5 / CSS3 Web Screens\n(User View & Action Handlers)"]
-        APIConnector["Axios / Fetch Web API Connector"]
-        ClientSocket["Socket.io Client"]
+        View["HTML5 / CSS3 / JavaScript Web UI
+(Glassmorphism & Responsive Layout)"]
+        APIConnector["Fetch / REST API Client"]
+        ClientSocket["Socket.io Client (Real-time WebSocket)"]
     end
 
     subgraph Logic / Application Server Layer
-        Server["Node.js & Express API Server\n(Port 3000, Request Middleware)"]
-        Engines["Compatibility & Fraud Engines"]
-        SocketServer["Socket.io Server"]
+        Server["Node.js & Express API Server
+(Request Validation & Middleware)"]
+        CompatibilityEngine["Compatibility Engine
+(8-Dimension Rules Evaluation)"]
+        AntiFraudEngine["Anti-Fraud Engine
+(Price Deviation & Duplicate Serial Scan)"]
+        SocketServer["Socket.io WebSocket Server
+(Duplex Event Management)"]
     end
 
     subgraph Database Access Layer
-        DBPool["MySQL Connection Pool"]
-        MySQL[("MySQL / MariaDB Database\n(Localhost Port 3306)")]
+        DBPool["MySQL Connection Pool (mysql2/promise)"]
+        MySQL[("MySQL Relational Database
+(InnoDB Engine, Foreign Keys & Transactions)")]
     end
 
-    View -->|REST Requests| APIConnector
+    View -->|HTTP REST Requests| APIConnector
     APIConnector -->|JSON Payload| Server
-    Server -->|Response| APIConnector
-    APIConnector -->|Update UI| View
+    Server -->|JSON Response| APIConnector
+    APIConnector -->|Render Dynamic DOM| View
     
-    ClientSocket <-->|WebSockets Duplex| SocketServer
+    ClientSocket <-->|WebSockets Duplex Tunnel| SocketServer
     
-    Server -->|Check Compatibility / Anti-Fraud| Engines
-    Engines -->|Pool Query| DBPool
-    SocketServer -->|Pool Query| DBPool
-    DBPool <-->|SQL Statements & Result Rows| MySQL
+    Server --> CompatibilityEngine
+    Server --> AntiFraudEngine
+    Server -->|Pool Connection| DBPool
+    SocketServer -->|Pool Connection| DBPool
+    DBPool <-->|SQL Statements & Transactions| MySQL
 ```
 **ภาพที่ 3.1** แผนภูมิสถาปัตยกรรมทางโครงสร้างและการรับส่งข้อมูลของระบบ PC Builder Pro
 
 #### 3.1.2 รายละเอียดโครงสร้างตารางข้อมูลในระบบ (Database Table Schemas)
-ฐานข้อมูลได้รับการสร้างและจัดการบนระบบ MySQL โดยกำหนดขนาดตัวแปร ดัชนีความเร็ว และการเชื่อมโยงความสัมพันธ์ของคีย์ข้อมูลภายนอก (Foreign Keys) ดังตารางสรุปตารางหลักต่อไปนี้:
+ฐานข้อมูลได้รับการออกแบบและพัฒนาบนระบบจัดการฐานข้อมูลเชิงสัมพันธ์ **MySQL (InnoDB Engine)** โดยกำหนดขนาดชนิดข้อมูล ดัชนีความเร็ว (Indexes) และข้อกำหนดคีย์นอก (Foreign Key Constraints) ดังตารางต่อไปนี้:
 
 ##### ตารางที่ 3.1 โครงสร้างตารางเก็บข้อมูลบัญชีผู้ใช้งาน (users)
-| ลำดับฟิลด์ | ชื่อคอลัมน์ (Column Name) | ประเภทข้อมูล (Data Type) | ข้อกำหนด (Key / Constraints) | คำอธิบาย (Description) |
+| ลำดับ | ชื่อคอลัมน์ (Column Name) | ประเภทข้อมูล (Data Type) | ข้อกำหนด (Key / Constraints) | คำอธิบาย (Description) |
 | :---: | :--- | :--- | :---: | :--- |
-| 1 | `id` | INT | PK, Auto Increment | รหัสผู้ใช้งานระบบ |
-| 2 | `username` | VARCHAR(255) | Unique, Not Null | ชื่อบัญชีเข้าสู่ระบบ |
+| 1 | `id` | INT | PK, Auto Increment | รหัสประจำตัวผู้ใช้งาน |
+| 2 | `username` | VARCHAR(255) | Unique, Not Null | ชื่อบัญชีผู้ใช้งาน |
 | 3 | `email` | VARCHAR(255) | Unique, Not Null | อีเมลประจำตัวผู้ใช้งาน |
-| 4 | `password` | VARCHAR(255) | Not Null | รหัสผ่านที่แฮชด้วย bcrypt |
-| 5 | `avatar_url` | TEXT | Nullable | พาธลิงก์รูปภาพประจำตัวผู้ซื้อ |
-| 6 | `active_role` | VARCHAR(50) | Check constraint | บทบาทที่เปิดใช้: `'buyer'`, `'seller'` |
-| 7 | `shop_name` | VARCHAR(255) | Nullable | ชื่อร้านค้ากรณีสมัครเป็นผู้ขาย |
-| 8 | `seller_bank_account` | VARCHAR(100) | Nullable | บัญชีธนาคารสำหรับรับเงินโอนค่าสินค้า |
-| 9 | `role` | VARCHAR(50) | Not Null (Default: `'member'`) | สิทธิ์ในระบบ: `'member'`, `'admin'` |
-| 10 | `status` | VARCHAR(50) | Not Null (Default: `'active'`) | สถานะบัญชี: `'active'`, `'suspended'` |
-| 11 | `created_at` | DATETIME | Default: CURRENT_TIMESTAMP | วันเวลาที่สร้างบัญชี |
+| 4 | `password` | VARCHAR(255) | Not Null | รหัสผ่านที่เข้ารหัสด้วย bcrypt |
+| 5 | `avatar_url` | TEXT | Nullable | พาธลิงก์รูปภาพโปรไฟล์ |
+| 6 | `phone` | VARCHAR(50) | Unique, Nullable | หมายเลขโทรศัพท์ติดต่อ |
+| 7 | `active_role` | VARCHAR(50) | Check constraint | บทบาทที่เปิดใช้: `'buyer'`, `'seller'` |
+| 8 | `role` | VARCHAR(50) | Not Null (Default: `'member'`) | สิทธิ์ในระบบ: `'member'`, `'admin'` |
+| 9 | `status` | VARCHAR(50) | Not Null (Default: `'active'`) | สถานะบัญชี: `'active'`, `'suspended'` |
+| 10 | `created_at` | DATETIME | Default: CURRENT_TIMESTAMP | วันเวลาที่สร้างบัญชีผู้ใช้ |
 
-##### ตารางที่ 3.2 โครงสร้างตารางเก็บรายการอะไหล่มาตรฐานระบบ (parts)
-| ลำดับฟิลด์ | ชื่อคอลัมน์ (Column Name) | ประเภทข้อมูล (Data Type) | ข้อกำหนด (Key / Constraints) | คำอธิบาย (Description) |
+##### ตารางที่ 3.2 โครงสร้างตารางเก็บข้อมูลโปรไฟล์และข้อมูลยืนยันตัวตนผู้ขาย (seller_profiles)
+| ลำดับ | ชื่อคอลัมน์ (Column Name) | ประเภทข้อมูล (Data Type) | ข้อกำหนด (Key / Constraints) | คำอธิบาย (Description) |
 | :---: | :--- | :--- | :---: | :--- |
-| 1 | `id` | INT | PK, Auto Increment | รหัสอุปกรณ์ในระบบแคตตาล็อก |
-| 2 | `name` | VARCHAR(255) | Not Null | ชื่อเต็มชิ้นส่วนอุปกรณ์ไอที |
-| 3 | `category_id` | INT | FK -> `categories.id` | รหัสอ้างอิงหมวดหมู่ชิ้นส่วน |
-| 4 | `brand` | VARCHAR(255) | Not Null, Index | ตราสินค้ายี่ห้อ (เช่น Intel, AMD) |
-| 5 | `model` | VARCHAR(255) | Nullable | รุ่นเฉพาะตัวชิ้นส่วนคอมพิวเตอร์ |
-| 6 | `specs` | JSON / TEXT | Not Null | สเปกรายละเอียดเชิงเทคนิคเก็บในรูป JSON |
-| 7 | `price` | DECIMAL(10, 2) | Not Null (Default: 0.00) | ราคากลางสินค้า MSRP อ้างอิงระบบ |
-| 8 | `is_active` | TINYINT | Default: 1 | ความพร้อมใช้ในแผงจัดสเปก (1=ใช่, 0=ไม่ใช่) |
+| 1 | `user_id` | INT | PK, FK -> `users.id` ON DELETE CASCADE | รหัสผู้ใช้งานที่ผูก 1:1 กับตาราง users |
+| 2 | `shop_name` | VARCHAR(255) | Nullable | ชื่อร้านค้าของผู้ขาย |
+| 3 | `full_name` | VARCHAR(255) | Nullable | ชื่อ-นามสกุลจริงของผู้ขาย |
+| 4 | `contact_phone` | VARCHAR(50) | Nullable | หมายเลขโทรศัพท์ร้านค้า |
+| 5 | `bank_name` | VARCHAR(100) | Nullable | ชื่อธนาคารสำหรับรับเงินโอน |
+| 6 | `bank_account_number` | VARCHAR(100) | Nullable | เลขที่บัญชีธนาคารสำหรับรับเงินโอน |
+| 7 | `bank_account_name` | VARCHAR(255) | Nullable | ชื่อบัญชีธนาคารผู้รับเงิน |
+| 8 | `kyc_status` | VARCHAR(50) | Default: `'none'` | สถานะยืนยันตัวตน: `'none'`, `'pending'`, `'verified'`, `'rejected'` |
+| 9 | `rating` | DECIMAL(3, 2) | Default: 0.00 | คะแนนเฉลี่ยความน่าเชื่อถือของผู้ขาย (1.00 - 5.00) |
+| 10 | `sales_count` | INT | Default: 0 | จำนวนรายการออเดอร์ที่จำหน่ายสำเร็จ |
 
-##### ตารางที่ 3.3 โครงสร้างตารางเก็บสินค้ามือสองลงขาย (products)
-| ลำดับฟิลด์ | ชื่อคอลัมน์ (Column Name) | ประเภทข้อมูล (Data Type) | ข้อกำหนด (Key / Constraints) | คำอธิบาย (Description) |
+##### ตารางที่ 3.3 โครงสร้างตารางเก็บรายการสินค้าที่ลงประกาศขาย (products - ศูนย์กลางข้อมูลหลัก)
+| ลำดับ | ชื่อคอลัมน์ (Column Name) | ประเภทข้อมูล (Data Type) | ข้อกำหนด (Key / Constraints) | คำอธิบาย (Description) |
 | :---: | :--- | :--- | :---: | :--- |
-| 1 | `id` | INT | PK, Auto Increment | รหัสรายการสินค้ามือสองลงขาย |
-| 2 | `seller_id` | INT | FK -> `users.id` | รหัสอ้างอิงผู้ขายชิ้นส่วนมือสอง |
-| 3 | `category_id` | INT | FK -> `categories.id` | รหัสอ้างอิงหมวดหมู่ชิ้นส่วนสินค้า |
-| 4 | `part_id` | INT | FK -> `parts.id` (Nullable) | รหัสเชื่อมโยงอะไหล่แคตตาล็อกกลาง |
-| 5 | `condition` | VARCHAR(50) | Check constraint | สภาพ: `'new'`, `'used_90'`, `'used_80'`, `'used_70'` |
-| 6 | `price` | DECIMAL(10, 2) | Not Null | ราคาประกาศขายชิ้นส่วนมือสอง |
-| 7 | `serial_number` | VARCHAR(255) | Not Null, Index | หมายเลขซีเรียลจากตัวถังฮาร์ดแวร์จริง |
-| 8 | `status` | VARCHAR(50) | Check, Index | สถานะจำหน่าย: `'active'`, `'sold'`, `'paused'` |
-| 9 | `review_status` | VARCHAR(50) | Check, Index | สถานะตรวจ: `'approved'`, `'pending_review'`, `'rejected'` |
-| 10 | `suspicious_score` | INT | Not Null (Default: 0) | คะแนนความน่าสงสัยของการทุจริต |
-| 11 | `suspicious_reasons` | JSON / TEXT | Not Null | บันทึกเหตุผลความน่าสงสัยแบบ JSON Array |
+| 1 | `id` | INT | PK, Auto Increment | รหัสสินค้าในระบบ |
+| 2 | `seller_id` | INT | FK -> `users.id`, Index | รหัสผู้ขายที่ลงประกาศ |
+| 3 | `category_id` | INT | FK -> `categories.id`, Index | รหัสหมวดหมู่ของสินค้า |
+| 4 | `brand` | VARCHAR(100) | Not Null, Index | ยี่ห้อผู้ผลิต (เช่น Intel, AMD, ASUS, MSI) |
+| 5 | `model` | VARCHAR(150) | Not Null, Index | รุ่นของสินค้า |
+| 6 | `condition` | VARCHAR(50) | Check constraint | สภาพสินค้า: `'new'`, `'used_90'`, `'used_80'`, `'used_70'` |
+| 7 | `price` | DECIMAL(10, 2) | Not Null, Index | ราคาประกาศขายสินค้า |
+| 8 | `original_price` | DECIMAL(10, 2) | Nullable | ราคาเปิดตัว/ราคาซื้อมือหนึ่ง (ใช้อ้างอิงราคา) |
+| 9 | `stock_quantity` | INT | Not Null (Default: 1) | จำนวนสินค้าในสต็อก |
+| 10 | `serial_number` | VARCHAR(255) | Nullable, Index | หมายเลขซีเรียลนัมเบอร์ฮาร์ดแวร์จริง |
+| 11 | `description` | TEXT | Nullable | รายละเอียดคำอธิบายสินค้า |
+| 12 | `status` | VARCHAR(50) | Check, Index | สถานะจำหน่าย: `'active'`, `'sold'`, `'paused'` |
+| 13 | `review_status` | VARCHAR(50) | Check, Index | สถานะการตรวจสอบ: `'approved'`, `'pending_review'`, `'rejected'` |
+| 14 | `suspicious_score` | INT | Not Null (Default: 0) | คะแนนความน่าสงสัยของการทุจริต (0-100) |
+| 15 | `suspicious_reasons` | TEXT | Not Null | เหตุผลความเสี่ยงเก็บในรูปแบบ JSON Array |
+| 16 | `created_at` | DATETIME | Default: CURRENT_TIMESTAMP | วันเวลาที่สร้างประกาศขาย |
 
-##### ตารางที่ 3.4 โครงสร้างตารางเก็บรายการสั่งซื้อจองและธุรกรรม C2C (orders)
-| ลำดับฟิลด์ | ชื่อคอลัมน์ (Column Name) | ประเภทข้อมูล (Data Type) | ข้อกำหนด (Key / Constraints) | คำอธิบาย (Description) |
-| :---: | :--- | :--- | :---: | :--- |
-| 1 | `id` | INT | PK, Auto Increment | รหัสใบสั่งจองสินค้าในระบบ |
-| 2 | `buyer_id` | INT | FK -> `users.id`, Index | รหัสอ้างอิงผู้ซื้อสินค้า |
-| 3 | `seller_id` | INT | FK -> `users.id`, Index | รหัสอ้างอิงผู้ขายสินค้า |
-| 4 | `status` | VARCHAR(50) | Check constraint | สถานะธุรกรรมสั่งซื้อของออเดอร์นั้น |
-| 5 | `shipping_address` | TEXT | Not Null | ที่อยู่ในการจัดส่งปลายทางของผู้ซื้อ |
-| 6 | `contact_phone` | VARCHAR(50) | Not Null | เบอร์โทรติดต่อของผู้จองรับสินค้า |
-| 7 | `total_price` | INT | Not Null | ยอดเงินชำระค่าสินค้าโอนเงินรวม |
-| 8 | `payment_slip_url` | VARCHAR(255) | Nullable | พาธเก็บภาพถ่ายสลิปเงินโอนหลักฐาน |
+##### ตารางที่ 3.4 โครงสร้างตารางเก็บคุณลักษณะเฉพาะทางเทคนิคของสินค้าครอบคลุมทุกหมวดหมู่ (Typed Spec Tables)
+ระบบแยกตารางสเปกเฉพาะทาง 8 หมวดหมู่ เชื่อมโยง 1:1 กับ `products.id` ผ่านคีย์นอก `product_id` (ON DELETE CASCADE):
 
-##### ตารางที่ 3.5 โครงสร้างตารางเก็บข้อความห้องแชตคุยโต้ตอบ (chat_messages)
-| ลำดับฟิลด์ | ชื่อคอลัมน์ (Column Name) | ประเภทข้อมูล (Data Type) | ข้อกำหนด (Key / Constraints) | คำอธิบาย (Description) |
-| :---: | :--- | :--- | :---: | :--- |
-| 1 | `id` | INT | PK, Auto Increment | รหัสข้อความแชต |
-| 2 | `room_id` | INT | FK -> `chat_rooms.id`, Index | รหัสอ้างอิงห้องสนทนาซื้อขาย |
-| 3 | `sender_id` | INT | FK -> `users.id` (Nullable) | รหัสผู้ส่งข้อความ (เป็น NULL หากเป็นระบบออโต้) |
-| 4 | `message_type` | VARCHAR(50) | Check constraint | ประเภทข้อความ: `'text'`, `'system'` |
-| 5 | `message` | TEXT | Not Null | ข้อความสนทนาเจรจาหรือบันทึกของระบบ |
-| 6 | `created_at` | DATETIME | Default: CURRENT_TIMESTAMP | วันเวลาที่ส่งข้อความโต้ตอบแชต |
+1. **ตาราง `spec_cpu` (หน่วยประมวลผลกลาง):**
+   * `product_id` (PK, FK), `socket` (VARCHAR(50), ซ็อกเก็ต เช่น LGA1700, AM5), `generation` (VARCHAR(50)), `series` (VARCHAR(50)), `tdp` (INT, กำลังไฟความร้อน วัตต์), `cores` (INT), `threads` (INT), `integrated_graphics` (TINYINT)
+2. **ตาราง `spec_cpu_cooler` (ชุดระบายความร้อนซีพียู):**
+   * `product_id` (PK, FK), `cooler_type` (VARCHAR(50), เช่น Air, Liquid 240mm), `radiator_size` (INT), `height_mm` (INT, ความสูงพัดลม มม.), `supported_sockets` (TEXT, ซ็อกเก็ตที่รองรับ)
+3. **ตาราง `spec_motherboard` (เมนบอร์ด):**
+   * `product_id` (PK, FK), `socket` (VARCHAR(50)), `chipset` (VARCHAR(50)), `generation` (VARCHAR(50)), `form_factor` (VARCHAR(50), เช่น ATX, Micro-ATX, Mini-ITX), `ram_type` (VARCHAR(20), เช่น DDR4, DDR5), `ram_slots` (INT), `max_ram_gb` (INT)
+4. **ตาราง `spec_ram` (หน่วยความจำหลัก):**
+   * `product_id` (PK, FK), `type` (VARCHAR(20), เช่น DDR4, DDR5), `capacity_gb` (INT, ความจุ GB), `speed` (INT, บัส MHz), `modules` (INT, จำนวนแถว)
+5. **ตาราง `spec_gpu` (การ์ดแสดงผล):**
+   * `product_id` (PK, FK), `series` (VARCHAR(50)), `chip` (VARCHAR(100)), `vram_gb` (INT), `vram_type` (VARCHAR(20)), `tdp` (INT, วัตต์), `length_mm` (INT, ความยาวการ์ด มม.)
+6. **ตาราง `spec_case` (เคสคอมพิวเตอร์):**
+   * `product_id` (PK, FK), `form_factor` (VARCHAR(50)), `case_type` (VARCHAR(50)), `max_gpu_length_mm` (INT, รองรับความยาวการ์ดจอสูงสุด), `max_cooler_height_mm` (INT, รองรับความสูงพัดลมสูงสุด), `radiator_support` (VARCHAR(100))
+7. **ตาราง `spec_psu` (พาวเวอร์ซัพพลาย):**
+   * `product_id` (PK, FK), `wattage` (INT, กำลังวัตต์ เช่น 650, 750, 850), `efficiency` (VARCHAR(50), เช่น 80 Plus Bronze/Gold), `modularity` (VARCHAR(50), เช่น Non-Modular, Fully-Modular)
+8. **ตาราง `spec_storage` (อุปกรณ์จัดเก็บข้อมูล):**
+   * `product_id` (PK, FK), `interface` (VARCHAR(50), เช่น NVMe PCIe 4.0, SATA III), `capacity_gb` (INT), `read_speed` (VARCHAR(50))
 
-##### ตารางที่ 3.6 โครงสร้างตารางเก็บหมวดหมู่ชิ้นส่วน (categories)
-| ลำดับฟิลด์ | ชื่อคอลัมน์ (Column Name) | ประเภทข้อมูล (Data Type) | ข้อกำหนด (Key / Constraints) | คำอธิบาย (Description) |
-| :---: | :--- | :--- | :---: | :--- |
-| 1 | `id` | INT | PK, Auto Increment | รหัสหมวดหมู่ชิ้นส่วนอุปกรณ์ |
-| 2 | `name` | VARCHAR(255) | Not Null | ชื่อหมวดหมู่ (เช่น CPU, RAM) |
-| 3 | `slug` | VARCHAR(255) | Unique, Not Null | ชื่ออ้างอิงย่อหมวดหมู่ใช้ทำ Routing URL |
-| 4 | `icon` | VARCHAR(255) | Default: 'microchip' | ชื่อไอคอนของหมวดหมู่เพื่อแสดงผลหน้าเว็บ |
-| 5 | `display_order` | INT | Default: 0 | ลำดับการจัดวางในการจัดกริดหน้าจอ |
-| 6 | `created_at` | DATETIME | Default: CURRENT_TIMESTAMP | วันเวลาสร้างหมวดหมู่ในระบบ |
+##### ตารางที่ 3.5 โครงสร้างตารางเก็บชุดจัดสเปกคอมพิวเตอร์และชิ้นส่วนในชุด (builds & build_parts)
+* **ตาราง `builds`:** `id` (PK), `user_id` (FK -> `users.id`), `name` (VARCHAR(255)), `description` (TEXT), `is_public` (TINYINT), `total_price` (DECIMAL(12, 2)), `created_at` (DATETIME)
+* **ตาราง `build_parts` (ตารางเชื่อมโยงการจัดสเปกกับสินค้าในตลาด):** `id` (PK), `build_id` (FK -> `builds.id`), `product_id` (FK -> `products.id`), `quantity` (INT), `price` (DECIMAL(10, 2))
 
-##### ตารางที่ 3.7 โครงสร้างตารางเก็บภาพประกอบสินค้ามือสอง (product_photos)
-| ลำดับฟิลด์ | ชื่อคอลัมน์ (Column Name) | ประเภทข้อมูล (Data Type) | ข้อกำหนด (Key / Constraints) | คำอธิบาย (Description) |
-| :---: | :--- | :--- | :---: | :--- |
-| 1 | `id` | INT | PK, Auto Increment | รหัสรูปภาพประกอบสินค้า |
-| 2 | `product_id` | INT | FK -> `products.id` on delete cascade | รหัสอ้างอิงประกาศสินค้ามือสองของภาพนี้ |
-| 3 | `image_url` | VARCHAR(255) | Not Null | เส้นทางลิงก์ไฟล์รูปภาพประกอบสินค้า |
-| 4 | `display_order` | INT | Not Null (Default: 0) | ลำดับตำแหน่งการวางแสดงผลรูปภาพ |
+##### ตารางที่ 3.6 โครงสร้างตารางเก็บรายการสั่งซื้อจองและรายการสินค้า (orders & order_items)
+* **ตาราง `orders`:** `id` (PK), `buyer_id` (FK -> `users.id`), `seller_id` (FK -> `users.id`), `status` (VARCHAR(50), Check: `'pending'`, `'waiting_verification'`, `'paid'`, `'shipped'`, `'completed'`, `'cancelled'`, `'disputed'`), `shipping_address` (TEXT), `contact_phone` (VARCHAR(50)), `total_price` (DECIMAL(12, 2)), `courier_name` (VARCHAR(100)), `tracking_number` (VARCHAR(100)), `payment_slip_url` (VARCHAR(255)), `created_at` (DATETIME)
+* **ตาราง `order_items`:** `id` (PK), `order_id` (FK -> `orders.id`), `product_id` (FK -> `products.id`), `price` (INT)
 
-##### ตารางที่ 3.8 โครงสร้างตารางเก็บรายการปักธงเตือนความเสี่ยง (product_review_flags)
-| ลำดับฟิลด์ | ชื่อคอลัมน์ (Column Name) | ประเภทข้อมูล (Data Type) | ข้อกำหนด (Key / Constraints) | คำอธิบาย (Description) |
-| :---: | :--- | :--- | :---: | :--- |
-| 1 | `id` | INT | PK, Auto Increment | รหัสการปักธงแจ้งเตือนสินค้าเสี่ยงโกง |
-| 2 | `product_id` | INT | FK -> `products.id` on delete cascade | รหัสสินค้าที่ถูกปักธงเตือนความเสี่ยง |
-| 3 | `reason` | TEXT | Not Null | เหตุผลเชิงวิเคราะห์รายละเอียดการแจ้งเตือน |
-| 4 | `severity` | VARCHAR(50) | Not Null (Default: 'medium') | ระดับความรุนแรงความเสี่ยง: `'low'`, `'medium'`, `'high'` |
-| 5 | `created_at` | DATETIME | Default: CURRENT_TIMESTAMP | วันเวลาที่ถูกปักธงระงับหรือเตือน |
-
-##### ตารางที่ 3.9 โครงสร้างตารางเก็บชุดจัดสเปกคอมพิวเตอร์ (builds)
-| ลำดับฟิลด์ | ชื่อคอลัมน์ (Column Name) | ประเภทข้อมูล (Data Type) | ข้อกำหนด (Key / Constraints) | คำอธิบาย (Description) |
-| :---: | :--- | :--- | :---: | :--- |
-| 1 | `id` | INT | PK, Auto Increment | รหัสชุดข้อมูลจัดสเปกคอมพิวเตอร์ |
-| 2 | `user_id` | INT | FK -> `users.id` on delete cascade | รหัสอ้างอิงบัญชีผู้จัดเซตสเปกชุดนี้ |
-| 3 | `name` | VARCHAR(255) | Not Null | ชื่อหัวข้อการจัดสเปกคอมพิวเตอร์ |
-| 4 | `description` | TEXT | Nullable | คำบรรยายวัตถุประสงค์สเปกที่บันทึก |
-| 5 | `is_public` | TINYINT(1) | Default: 1 | ป้ายแชร์ความยินยอมสาธารณะ (1=แชร์, 0=ไม่แชร์) |
-| 6 | `total_price` | DECIMAL(10, 2) | Default: 0 | ราคามูลค่ารวมของทั้งระบบคอมพิวเตอร์ |
-| 7 | `created_at` | DATETIME | Default: CURRENT_TIMESTAMP | วันเวลาจัดเซตสเปกเริ่มบันทึกครั้งแรก |
-| 8 | `updated_at` | DATETIME | Default: CURRENT_TIMESTAMP ON UPDATE | วันเวลาแก้ไขชุดสเปกล่าสุด |
-
-##### ตารางที่ 3.10 โครงสร้างตารางเก็บรายการอุปกรณ์ในชุดจัดสเปก (build_parts)
-| ลำดับฟิลด์ | ชื่อคอลัมน์ (Column Name) | ประเภทข้อมูล (Data Type) | ข้อกำหนด (Key / Constraints) | คำอธิบาย (Description) |
-| :---: | :--- | :--- | :---: | :--- |
-| 1 | `id` | INT | PK, Auto Increment | รหัสรายการเชื่อมโยงชิ้นส่วนประกอบ |
-| 2 | `build_id` | INT | FK -> `builds.id` on delete cascade | รหัสชุดจัดสเปกหลักของอุปกรณ์นี้ |
-| 3 | `part_id` | INT | FK -> `parts.id` | รหัสชิ้นส่วนอุปกรณ์จากระบบแคตตาล็อก |
-| 4 | `quantity` | INT | Not Null (Default: 1) | จำนวนปริมาณชิ้นส่วนที่เลือกสวมใส่ |
-
-##### ตารางที่ 3.11 โครงสร้างตารางเก็บรายการสินค้าภายใต้ออเดอร์ (order_items)
-| ลำดับฟิลด์ | ชื่อคอลัมน์ (Column Name) | ประเภทข้อมูล (Data Type) | ข้อกำหนด (Key / Constraints) | คำอธิบาย (Description) |
-| :---: | :--- | :--- | :---: | :--- |
-| 1 | `id` | INT | PK, Auto Increment | รหัสสินค้าในระบบสั่งซื้อ |
-| 2 | `order_id` | INT | FK -> `orders.id` on delete cascade | รหัสอ้างอิงใบสั่งจองออเดอร์หลัก |
-| 3 | `product_id` | INT | FK -> `products.id` | รหัสอ้างอิงผลิตภัณฑ์ที่ทำรายการโอนเงิน |
-| 4 | `price` | INT | Not Null | ราคาขายจริงของสินค้าชิ้นดังกล่าวขณะจอง |
-
-##### ตารางที่ 3.12 โครงสร้างตารางเก็บข้อมูลห้องสนทนาแชต (chat_rooms)
-| ลำดับฟิลด์ | ชื่อคอลัมน์ (Column Name) | ประเภทข้อมูล (Data Type) | ข้อกำหนด (Key / Constraints) | คำอธิบาย (Description) |
-| :---: | :--- | :--- | :---: | :--- |
-| 1 | `id` | INT | PK, Auto Increment | รหัสห้องแชตเจรจาซื้อขายอะไหล่ |
-| 2 | `order_id` | INT | FK -> `orders.id` on delete set null | รหัสอ้างอิงธุรกรรมออเดอร์ที่เชื่อมคุย |
-| 3 | `buyer_id` | INT | FK -> `users.id` | รหัสอ้างอิงผู้ซื้อประวัติสนทนา |
-| 4 | `seller_id` | INT | FK -> `users.id` | รหัสอ้างอิงผู้ขายประวัติสนทนา |
-| 5 | `created_at` | DATETIME | Default: CURRENT_TIMESTAMP | วันเวลาเริ่มต้นเปิดใช้ห้องแชตสนทนา |
+##### ตารางที่ 3.7 โครงสร้างตารางห้องแชตเจรจาและข้อความเรียลไทม์ (chat_rooms & chat_messages)
+* **ตาราง `chat_rooms`:** `id` (PK), `order_id` (FK -> `orders.id`), `buyer_id` (FK -> `users.id`), `seller_id` (FK -> `users.id`), `created_at` (DATETIME)
+* **ตาราง `chat_messages`:** `id` (PK), `room_id` (FK -> `chat_rooms.id`), `sender_id` (FK -> `users.id`), `message_type` (VARCHAR(50), `'text'`, `'system'`), `message` (TEXT), `created_at` (DATETIME)
 
 ---
 
-### 3.2 การออกแบบระบบ
+### 3.2 การออกแบบระบบและไดอะแกรมการทำงาน
 
-#### 3.2.1 การออกแบบ Flowchart การทำงานของระบบ (System Process Flowcharts)
-
-##### 3.2.1.1 Flowchart การเข้าสู่ระบบและการสลับบทบาท (Login & Role Verification)
-แสดงขั้นตอนการดำเนินงานตรวจสอบความถูกต้องของสิทธิ์บัญชีผู้ใช้งานเมื่อเข้าระบบ ดังภาพที่ 3.2:
-
-```mermaid
-flowchart TD
-    Start([เริ่มต้น]) --> Input[ผู้ใช้กรอก Email และ Password]
-    Input --> RequestAuth[ส่งคำร้องไปยัง API POST /api/auth/login]
-    RequestAuth --> VerifyHash{รหัสตรงกับ bcrypt Hash?}
-    VerifyHash -- ไม่ใช่ --> ShowError[แสดงข้อความแจ้งเตือนรหัสผ่านผิด] --> Input
-    VerifyHash -- ใช่ --> CreateJWT[สร้าง JWT Token]
-    CreateJWT --> SendCookie[ส่งคุกกี้ HttpOnly Secure Lax ในชื่อ token]
-    SendCookie --> CheckRole{บทบาทผู้ใช้?}
-    CheckRole -- Admin --> RedirectAdmin[นำทางผู้ใช้ไปยังแผงแอดมิน /admin]
-    CheckRole -- Member --> SetRoleSession[บันทึก Role session หน้าบ้าน]
-    SetRoleSession --> RedirectMember[นำทางไปหน้าหลักตลาด /products]
-    RedirectAdmin --> End([สิ้นสุด])
-    RedirectMember --> End
-```
-**ภาพที่ 3.2** เป็นการดำเนินงานขั้นตอนการเข้าสู่ระบบและการคัดกรองบทบาทผู้ใช้งาน ซึ่งมีรายละเอียดขั้นตอนการทำงานดังนี้:
-1) ผู้ใช้ระบุข้อมูลอีเมลและรหัสผ่านจากนั้นส่งคำร้องผ่านทางเครือข่าย API มายังระบบส่วนหลังบ้าน
-2) ระบบส่วนหลังบ้านดำเนินการตรวจสอบความถูกต้องโดยเปรียบเทียบค่าแฮช bcrypt ในฐานข้อมูล หากค่าข้อมูลไม่ถูกต้องระบบจะปฏิเสธการเข้าใช้งาน
-3) หากการตรวจสอบความถูกต้องเสร็จสิ้นและรหัสผ่านถูกต้อง ระบบจะทำการจัดสรรชุดโทเค็น JWT และตอบกลับเพื่อนำไปบันทึกบนคุกกี้เว็บเบราว์เซอร์ที่มีความปลอดภัยระดับ HttpOnly
-4) ระบบประเมินและคัดกรองบทบาทสิทธิ์ หากพบว่าเป็นผู้ดูแลระบบ (Admin) ระบบจะนำทางไปยังแผงควบคุมระบบจัดสรรสิทธิ์ (/admin) หากเป็นสมาชิกทั่วไป (Member) ระบบจะนำทางเข้าสู่หน้าตลาดกลางซื้อขายสินค้าหลัก (/products)
-
-##### 3.2.1.2 Flowchart การจัดสเปกคอมพิวเตอร์และการตรวจสอบความเข้ากันได้ (PC Builder & Compatibility)
-แสดงขั้นตอนการทำงานตรวจสอบความถูกต้องเชิงวิศวกรรมสเปกคอมพิวเตอร์ ดังภาพที่ 3.3:
-
-```mermaid
-flowchart TD
-    Start([ผู้ใช้เลือกชิ้นส่วนในหน้า Builder]) --> SendAPICheck[ส่งรายการสินค้าเข้าหน้า API /api/builds/compatibility]
-    SendAPICheck --> QuerySpecs[ค้นหา Specs ชนิด JSON ของชิ้นส่วนที่ถูกส่งมา]
-    
-    %% Socket & Motherboard
-    QuerySpecs --> CheckSocket{มี CPU และ Motherboard ครบ?<br/>Socket ตรงกัน?}
-    CheckSocket -- ไม่ตรงกัน --> AddError[บันทึก ERROR: Socket ขัดแย้งกัน]
-    CheckSocket -- ตรงกัน --> CheckChipset{Chipset รองรับ CPU ไหม?}
-    CheckChipset -- ไม่รองรับ/ตระกูลต่ำ --> AddWarning[บันทึก WARNING: Chipset อาจต้องอัปเกรด BIOS]
-    CheckChipset -- รองรับดี --> CheckRAM
-    AddError --> CheckRAM
-    AddWarning --> CheckRAM
-    
-    %% RAM & Motherboard
-    CheckRAM{มี RAM และ Motherboard ครบ?<br/>RAM Type ตรงกับ Ram Slots?}
-    CheckRAM -- ไม่ตรงกัน --> AddRamError[บันทึก ERROR: ประเภท RAM ไม่เข้ากัน]
-    CheckRAM -- ตรงกัน --> CheckRamLimit{ความจุ RAM และจำนวนแถวรวม เกินขีดจำกัดบอร์ด?}
-    CheckRamLimit -- เกินสเปกบอร์ด --> AddRamWarning[บันทึก WARNING: ความจุ/จำนวนแถวเกินลิมิตบอร์ด]
-    CheckRamLimit -- ไม่เกิน --> CheckGPUCase
-    AddRamError --> CheckGPUCase
-    AddRamWarning --> CheckGPUCase
-    
-    %% GPU / Cooler Dimension vs Case
-    CheckGPUCase{มีการ์ดจอ/พัดลม CPU และเคส ครบ?<br/>ขนาดความยาว/ความสูง เกินพื้นที่เคส?}
-    CheckGPUCase -- เกินพิกัดเคส --> AddSizeError[บันทึก ERROR: อุปกรณ์ยาว/สูงเกินพื้นที่เคส]
-    CheckGPUCase -- ใกล้เคียงเคส เกิน 90% --> AddSizeWarning[บันทึก WARNING: ขนาดเบียดพื้นที่เคสเกินไป ติดตั้งยาก]
-    CheckGPUCase -- ขนาดพอดีเคส --> CheckPSU
-    AddSizeError --> CheckPSU
-    AddSizeWarning --> CheckPSU
-    
-    %% PSU Wattage Calculation
-    CheckPSU{มี PSU และอุปกรณ์ใช้ไฟในระบบ?<br/>กำลังวัตต์ PSU เพียงพอ?}
-    CheckPSU --> CalcWatt[คำนวณ TDP รวม = TDP ของ CPU + TDP ของ GPU + 100W สำหรับอุปกรณ์อื่น]
-    CalcWatt --> ComparePSU{วัตต์ PSU < วัตต์ TDP รวม?}
-    ComparePSU -- น้อยกว่าพลังงานขั้นต่ำ --> AddPsuError[บันทึก ERROR: กำลังไฟ PSU ไม่พอกับพลังงานที่ระบบใช้จริง]
-    ComparePSU -- น้อยกว่า วัตต์รวม * 1.2 --> AddPsuWarning[บันทึก WARNING: กำลังไฟ PSU ต่ำกว่าระดับแนะนำสำหรับความเสถียร 20% Headroom]
-    ComparePSU -- วัตต์เหลือเพียงพอ --> SendResult
-    AddPsuError --> SendResult
-    AddPsuWarning --> SendResult
-    
-    SendResult[ส่งข้อมูล Errors และ Warnings ทั้งหมดกลับหน้าบ้านเพื่อแจ้งผู้ใช้] --> End([จบการตรวจสอบ])
-```
-**ภาพที่ 3.3** เป็นการดำเนินงานขั้นตอนการประเมินความเข้ากันได้ของอุปกรณ์ฮาร์ดแวร์ ซึ่งมีรายละเอียดขั้นตอนการทำงานดังนี้:
-1) ระบบส่วนติดต่อผู้ใช้งาน (Frontend Client-side) ส่งข้อมูลอาร์เรย์รหัสอะไหล่ชิ้นส่วนที่เลือกผ่านทาง REST API ไปยังตัวคำนวณประเมินผล
-2) ตัวเครื่องมือวิเคราะห์ความเข้ากันได้ (Compatibility Engine) ดึงรายละเอียดสเปกและคุณสมบัติทางเทคนิคจากคลังแคตตาล็อกระบบมาทำการตรวจสอบภายใต้ระบบประมวลผลเชิงกฎเกณฑ์ (Rule-based Constraints)
-3) ระบบดำเนินการเปรียบเทียบความถูกต้องของชนิด Socket, มาตรฐานพอร์ต DDR ของหน่วยความจำแรม, ตลอดจนขนาดมิติกายภาพความยาวการ์ดแสดงผลและความสูงของพัดลมระบายความร้อนเทียบกับขนาดของตู้เคสคอมพิวเตอร์
-4) ระบบประเมินค่าพลังงานความร้อน TDP รวมเปรียบเทียบกับกำลังวัตต์จ่ายกระแสไฟของพาวเวอร์ซัพพลาย (PSU) หากกำลังไฟไม่เพียงพอระบบจะแสดงข้อผิดพลาดระดับวิกฤต (Error) เพื่อระงับขั้นตอนการบันทึก และหากกำลังวัตต์มีสำรองไม่ถึง 25% ตามเกณฑ์แนะนำระบบจะแจ้งเตือน (Warning) ให้ทราบ
-
-##### 3.2.1.3 Flowchart การลงประกาศขายสินค้าและการคำนวณคะแนนความเสี่ยง (Anti-Fraud Listing Screen)
-แสดงขั้นตอนคัดกรองพฤติกรรมความน่าสงสัยของการทุจริตก่อนสินค้าแสดงผลในตลาด ดังภาพที่ 3.4:
-
-```mermaid
-flowchart TD
-    Start([เริ่มต้น]) --> InputProduct[ผู้ขายป้อนราคา สภาพ และซีเรียลสินค้า]
-    InputProduct --> VerifyRules[ประเมินความเบี่ยงเบนราคาและเช็คประวัติซีเรียล]
-    VerifyRules --> CheckMSRP{ราคาตั้ง < MSRP * Multiplier(สภาพ)?}
-    CheckMSRP -- ใช่ --> AddPointsMSRP[บวกคะแนนความเสี่ยง +70 คะแนน] --> CheckSerial
-    CheckMSRP -- ไม่ใช่ --> CheckSerial{Serial ซ้ำกับสินค้าที่ยังไม่ขาย?}
-    CheckSerial -- ใช่ --> AddPointsSerial[บวกคะแนนความเสี่ยง +90 คะแนน] --> EvaluateScore
-    CheckSerial -- ไม่ใช่ --> EvaluateScore
-    EvaluateScore{คะแนนความเสี่ยงสะสม >= 70 คะแนน?}
-    EvaluateScore -- ใช่ --> SetPending[ปรับ review_status เป็น pending_review และซ่อนสินค้า]
-    EvaluateScore -- ไม่ใช่ --> ApproveActive[ปรับ review_status เป็น approved และเผยแพร่ลงตลาด]
-    SetPending --> SendQueue[ส่งรายการไปยัง Moderation Queue ของแอดมิน]
-    SendQueue --> End([สิ้นสุด])
-    ApproveActive --> End
-```
-**ภาพที่ 3.4** เป็นการดำเนินงานขั้นตอนการคัดกรองพฤติกรรมการทุจริตและการกรองความเสี่ยงสินค้า ซึ่งมีรายละเอียดขั้นตอนการทำงานดังนี้:
-1) เมื่อผู้ลงโฆษณาขายส่งข้อมูลประกาศขายผลิตภัณฑ์เข้ามาในระบบ ระบบจะดำเนินการสกัดรับค่าข้อมูลราคา สภาพการใช้งาน และหมายเลขซีเรียลนัมเบอร์เข้าสู่อัลกอริทึม
-2) ระบบทำการประมวลผลคำนวณค่าเพดานราคาปลอดภัยต่ำสุด (Price Floor Limit) เทียบกับสภาพสินค้าและราคากลางแนะนำ (MSRP Catalog) หากตั้งราคาต่ำกว่าเกณฑ์วิเคราะห์จะบวกระดับคะแนนความเสี่ยงทันที +70 คะแนน
-3) ระบบดำเนินการคิวรีฐานข้อมูลเพื่อตรวจสอบความซ้ำซ้อนของเลขซีเรียลนัมเบอร์กับผลิตภัณฑ์อื่นที่มีอยู่ในระบบและยังไม่ได้ถูกจำหน่ายออกไป หากพบข้อมูลซ้ำซ้อนจะทำการบวกระดับคะแนนความเสี่ยงทันที +90 คะแนน
-4) ระบบรวมระดับคะแนนความเสี่ยงสะสม หากคะแนนสะสมเท่ากับหรือมากกว่า 70 คะแนน ระบบจะปรับสถานะการตรวจสอบเป็นรอกลั่นกรอง (Pending Review) เพื่อซ่อนสินค้าออกจากหน้าตลาดปกติโดยอัตโนมัติ และผลักรายการโพสต์ดังกล่าวเข้าสู่คิวงานตรวจสอบของผู้ดูแลระบบ (Moderation Queue) ต่อไป
-
-##### 3.2.1.4 Flowchart การสั่งซื้อและการเปลี่ยนสถานะธุรกรรม C2C (C2C Order State & Booking)
-แสดงขั้นตอนการล็อคสต็อกสินค้าและการสั่งคืนสถานะสต็อกเมื่อยกเลิกออเดอร์ ดังภาพที่ 3.5:
-
-```mermaid
-flowchart TD
-    Start([เริ่มต้น]) --> BuyerBook[ผู้ซื้อกดยืนยันจองสินค้าจากประกาศ]
-    BuyerBook --> LockStock[ล็อคสถานะสินค้าเป็น sold ชั่วคราว และสร้างออเดอร์ pending]
-    LockStock --> OpenChat[เปิดห้องสนทนาระหว่างคู่ซื้อขายเพื่อเจรจา]
-    OpenChat --> ActionCheck{การกระทำของคู่ซื้อขาย?}
-    ActionCheck -- ยกเลิกจอง หรือ ปฏิเสธสลิป --> TriggerRollback[เรียกคำสั่ง DB Transaction Rollback]
-    TriggerRollback --> RestoreStock[คืนสถานะสินค้าเป็น active พร้อมขายลงตลาด] --> End([สิ้นสุด])
-    ActionCheck -- ผู้ซื้ออัปโหลดภาพสลิป --> SetWaiting[ปรับสถานะออเดอร์เป็น waiting_verification]
-    SetWaiting --> SellerApprove{ผู้ขายตรวจสอบ ยอดเงินโอนถูกต้อง?}
-    SellerApprove -- ไม่ถูกต้อง --> TriggerRollback
-    SellerApprove -- ถูกต้อง --> SetPaid[ปรับสถานะออเดอร์เป็น paid]
-    SetPaid --> SellerShip[ผู้ขายนำส่งพัสดุและระบุเลข Tracking]
-    SellerShip --> SetShipped[ปรับสถานะออเดอร์เป็น shipped]
-    SetShipped --> BuyerConfirm[ผู้ซื้อยืนยันรับสินค้าสำเร็จ]
-    BuyerConfirm --> SetCompleted[ปรับสถานะออเดอร์เป็น completed] --> End
-```
-**ภาพที่ 3.5** เป็นการดำเนินงานขั้นตอนการสั่งซื้อและการควบคุมสถานะธุรกรรม C2C ซึ่งมีรายละเอียดขั้นตอนการทำงานดังนี้:
-1) เมื่อผู้ใช้ฝั่งผู้ซื้อกดยืนยันการสั่งจอง ระบบจะดำเนินการสลับสถานะของผลิตภัณฑ์เป้าหมายในตารางสินค้าเป็นจัดจำหน่ายแล้ว ('sold') ทันทีเพื่อป้องกันการสั่งจองซ้ำซ้อน พร้อมทั้งสถาปนาเปิดห้องสนทนาแชตและใบสั่งซื้อชั่วคราว (Pending Order)
-2) ผู้ซื้ออัปโหลดภาพถ่ายหลักฐานสลิปเงินโอนผ่านทางฟังก์ชันห้องแชต ระบบจะเปลี่ยนสถานะธุรกรรมคำสั่งจองเป็นรอตรวจรับการชำระเงิน ('waiting_verification') และทำการแจ้งเตือนไปยังผู้ขายผ่านสัญญาณ WebSockets
-3) ผู้ขายทำการวิเคราะห์ภาพถ่ายสลิปเงินโอนและยอดเงินในบัญชีธนาคารส่วนตัว หากการตรวจสอบความถูกต้องเสร็จสิ้นและถูกต้อง ผู้ขายจะกดอนุมัติยอดเพื่อปรับเปลี่ยนสถานะของธุรกรรมเป็นชำระเงินเสร็จสิ้น ('paid') เพื่อเตรียมดำเนินการจัดส่งสินค้า
-4) ในกรณีที่มีการแจ้งยกเลิกออเดอร์ หรือผู้ขายปฏิเสธความถูกต้องของสลิปเงินโอน ระบบหลังบ้านจะรันธุรกรรม SQL Database Transaction ในโหมด Rollback เพื่อทำการอัปเดตคืนสถานะของผลิตภัณฑ์ชิ้นดังกล่าวกลับเป็นพร้อมขาย ('active') ในระบบตลาดกลางอย่างรวดเร็วและปลอดภัย
-
----
-
-#### 3.2.2 การออกแบบแผนภาพจำแนกการโต้ตอบผู้ใช้งาน (Use Case Diagram)
-แผนภาพ Use Case Diagram อธิบายขอบเขตปฏิสัมพันธ์และสิทธิ์การเข้าถึงข้อมูลระบบแยกตามบทบาท (Roles) ของ ผู้ใช้งานทั่วไป (Member) และผู้ดูแลระบบ (Admin) ดังแสดงใน **ภาพที่ 3.6**:
-
-```mermaid
-graph LR
-    Member((ผู้ใช้ทั่วไป / Member))
-    Admin((ผู้ดูแลระบบ / Admin))
-
-    subgraph PC Builder Pro Web Application
-        UC1[สมัครสมาชิก/เข้าสู่ระบบ Cookie JWT]
-        UC2[จัดสเปกคอมพิวเตอร์ & เช็คความเข้ากันได้]
-        UC3[บันทึก/กดไลก์/คอมเมนต์สเปกสาธารณะ]
-        UC4[ลงประกาศขายชิ้นส่วนอะไหล่มือสอง]
-        UC5[จองสินค้า & เจรจาในแชตเรียลไทม์]
-        UC6[อัปโหลดสลิปโอนเงินชำระค่าสินค้า]
-        UC7[ยืนยันการรับพัสดุ/ยกเลิกรายการจอง]
-        
-        UC8[ตรวจสอบคิวอนุมัติสินค้าเสี่ยงทุจริต]
-        UC9[เข้าถึงตรวจสอบระบบ Admin Activity Logs]
-    end
-
-    Member --> UC1
-    Member --> UC2
-    Member --> UC3
-    Member --> UC4
-    Member --> UC5
-    Member --> UC6
-    Member --> UC7
-
-    Admin --> UC1
-    Admin --> UC8
-    Admin --> UC9
-```
-**ภาพที่ 3.6** Use Case Diagram แสดงขอบเขตการใช้งานจำแนกตามบทบาทผู้ใช้
-
----
-
-#### 3.2.3 การออกแบบความสัมพันธ์ตารางข้อมูลฐานข้อมูล (Entity-Relationship Diagram)
-แผนภาพ ER Diagram แสดงความเชื่อมโยงและความสัมพันธ์ระหว่างตารางหลักในฐานข้อมูลเชิงสัมพันธ์ของระบบ เพื่อควบคุมความบูรณภาพของข้อมูลด้วยคีย์นอก (Foreign Keys) ดังแสดงใน **ภาพที่ 3.7**:
+#### 3.2.1 การออกแบบความสัมพันธ์ตารางข้อมูลฐานข้อมูล (Entity-Relationship Diagram: ERD)
+แผนภาพ ER Diagram แสดงความเชื่อมโยงภายใต้สถาปัตยกรรม **Product-Centric** ตามมาตรฐาน Crow's Foot Notation โดยรายการสินค้าที่ลงประกาศขาย (`products`) เป็นศูนย์กลางเชื่อมโยงไปยังตารางสเปกย่อยทั้ง 8 หมวดหมู่, แกลเลอรีรูปภาพสินค้า, ชุดจัดสเปกคอมพิวเตอร์ และรายการสั่งซื้อ ดังแสดงใน **ภาพที่ 3.2**:
 
 ```mermaid
 erDiagram
-    users ||--o{ products : "ลงขายสินค้า"
-    users ||--o{ orders : "สร้างคำสั่งซื้อ"
-    users ||--o{ chat_rooms : "อยู่ร่วมห้องสนทนา"
-    categories ||--o{ parts : "จัดหมวดหมู่อะไหล่"
-    categories ||--o{ products : "จัดหมวดหมู่สินค้า"
-    parts ||--o{ products : "อ้างอิงคุณสมบัติ"
-    products ||--|| orders : "ผูกสินค้าจำหน่าย"
-    chat_rooms ||--o{ chat_messages : "ประกอบด้วย"
+    users ||--o| seller_profiles : "มีโปรไฟล์ผู้ขาย (1:0..1)"
+    users ||--o{ buyer_addresses : "มีที่อยู่จัดส่ง (1:0..N)"
+    users ||--o{ products : "ลงประกาศขาย (1:0..N)"
+    users ||--o{ builds : "สร้างชุดจัดสเปก (1:0..N)"
+    users ||--o{ build_likes : "กดถูกใจสเปก (1:0..N)"
+    users ||--o{ orders : "สั่งซื้อสินค้า (1:0..N)"
+    users ||--o{ reviews : "เขียนรีวิวผู้ขาย (1:0..N)"
+    users ||--o{ wishlists : "บันทึกสินค้าโปรด (1:0..N)"
+    users ||--o{ admin_logs : "บันทึกการกระทำแอดมิน (1:0..N)"
+
+    categories ||--o{ products : "จำแนกหมวดหมู่ (1:0..N)"
+    products ||--o{ product_photos : "มีรูปภาพประกอบ (1:0..N)"
+    products ||--o{ product_review_flags : "มีธงแจ้งเตือนความเสี่ยง (1:0..N)"
+    products ||--o{ wishlists : "ถูกบันทึกเป็นสินค้าโปรด (1:0..N)"
     
+    %% 8 Typed Specs (1:0..1)
+    products ||--o| spec_cpu : "มีสเปก CPU (1:0..1)"
+    products ||--o| spec_cpu_cooler : "มีสเปก Cooler (1:0..1)"
+    products ||--o| spec_motherboard : "มีสเปก Motherboard (1:0..1)"
+    products ||--o| spec_ram : "มีสเปก RAM (1:0..1)"
+    products ||--o| spec_gpu : "มีสเปก GPU (1:0..1)"
+    products ||--o| spec_case : "มีสเปก Case (1:0..1)"
+    products ||--o| spec_psu : "มีสเปก PSU (1:0..1)"
+    products ||--o| spec_storage : "มีสเปก Storage (1:0..1)"
+
+    %% Junction Tables for N:M
+    builds ||--|{ build_parts : "ประกอบด้วยชิ้นส่วน (1:1..N)"
+    products ||--o{ build_parts : "ถูกเลือกเข้าจัดสเปก (1:0..N)"
+    builds ||--o{ build_likes : "ได้รับการกดถูกใจ (1:0..N)"
+
+    orders ||--|{ order_items : "ประกอบด้วยรายการสินค้า (1:1..N)"
+    products ||--o{ order_items : "ผูกสินค้าที่ซื้อ (1:0..N)"
+
+    %% Orders, Chat & Review
+    orders ||--|| chat_rooms : "เปิดห้องสนทนาซื้อขาย (1:1)"
+    chat_rooms ||--o{ chat_messages : "บันทึกข้อความแชต (1:0..N)"
+    orders ||--o| reviews : "ได้รับผลรีวิว (1:0..1)"
+
     users {
         int id PK
         varchar username
         varchar email
         varchar password
         varchar active_role
-        varchar shop_name
-        varchar seller_bank_account
         varchar role
         varchar status
         datetime created_at
     }
-    parts {
+    seller_profiles {
+        int user_id PK,FK
+        varchar shop_name
+        varchar contact_phone
+        varchar bank_name
+        varchar bank_account_number
+        varchar kyc_status
+        decimal rating
+        int sales_count
+    }
+    buyer_addresses {
+        int id PK
+        int user_id FK
+        varchar recipient_name
+        varchar phone
+        text address_line
+        tinyint is_default
+    }
+    categories {
         int id PK
         varchar name
-        int category_id FK
-        varchar brand
-        varchar model
-        json specs
-        decimal price
-        tinyint is_active
+        varchar slug
+        varchar icon
     }
     products {
         int id PK
         int seller_id FK
         int category_id FK
-        int part_id FK
+        varchar brand
+        varchar model
         varchar condition
         decimal price
+        int stock_quantity
         varchar serial_number
         varchar status
         varchar review_status
         int suspicious_score
-        json suspicious_reasons
+    }
+    product_photos {
+        int id PK
+        int product_id FK
+        text image_url
+        tinyint is_primary
+        int sort_order
+    }
+    product_review_flags {
+        int id PK
+        int product_id FK
+        varchar reason
+        varchar severity
+        datetime created_at
+    }
+    spec_cpu {
+        int product_id PK,FK
+        varchar socket
+        varchar generation
+        varchar series
+        int tdp
+        int cores
+        int threads
+    }
+    spec_cpu_cooler {
+        int product_id PK,FK
+        varchar cooler_type
+        int radiator_size
+        int height_mm
+        text supported_sockets
+    }
+    spec_motherboard {
+        int product_id PK,FK
+        varchar socket
+        varchar chipset
+        varchar form_factor
+        varchar ram_type
+        int ram_slots
+        int max_ram_gb
+    }
+    spec_ram {
+        int product_id PK,FK
+        varchar type
+        int capacity_gb
+        int speed
+        int modules
+    }
+    spec_gpu {
+        int product_id PK,FK
+        varchar series
+        varchar chip
+        int vram_gb
+        int tdp
+        int length_mm
+    }
+    spec_case {
+        int product_id PK,FK
+        varchar form_factor
+        int max_gpu_length_mm
+        int max_cooler_height_mm
+    }
+    spec_psu {
+        int product_id PK,FK
+        int wattage
+        varchar efficiency
+        varchar modularity
+    }
+    spec_storage {
+        int product_id PK,FK
+        varchar interface
+        int capacity_gb
+        varchar read_speed
+    }
+    builds {
+        int id PK
+        int user_id FK
+        varchar name
+        tinyint is_public
+        decimal total_price
+    }
+    build_parts {
+        int id PK
+        int build_id FK
+        int product_id FK
+        int quantity
+        decimal price
+    }
+    build_likes {
+        int id PK
+        int build_id FK
+        int user_id FK
+        datetime created_at
     }
     orders {
         int id PK
@@ -580,12 +506,22 @@ erDiagram
         varchar status
         text shipping_address
         varchar contact_phone
-        int total_price
+        decimal total_price
+        varchar courier_name
+        varchar tracking_number
         varchar payment_slip_url
+    }
+    order_items {
+        int id PK
+        int order_id FK
+        int product_id FK
+        decimal price
     }
     chat_rooms {
         int id PK
         int order_id FK
+        int buyer_id FK
+        int seller_id FK
         datetime created_at
     }
     chat_messages {
@@ -596,179 +532,509 @@ erDiagram
         text message
         datetime created_at
     }
+    reviews {
+        int id PK
+        int order_id FK
+        int reviewer_id FK
+        int seller_id FK
+        int rating
+        text comment
+    }
+    wishlists {
+        int id PK
+        int user_id FK
+        int product_id FK
+        datetime created_at
+    }
+    admin_logs {
+        int id PK
+        int admin_id FK
+        varchar action
+        text details
+        datetime created_at
+    }
 ```
-**ภาพที่ 3.7** Entity-Relationship Diagram (ERD) แสดงโครงสร้างความสัมพันธ์ฐานข้อมูลเชิงสัมพันธ์
+**ภาพที่ 3.2** Entity-Relationship Diagram (ERD) แสดงโครงสร้างความสัมพันธ์ฐานข้อมูลเชิงสัมพันธ์แบบ Product-Centric Architecture (Crow's Foot Notation)
+
+---
+
+#### 3.2.2 การออกแบบแผนภาพจำแนกการโต้ตอบผู้ใช้งาน (Use Case Diagram)
+แผนภาพ Use Case Diagram อธิบายขอบเขตปฏิสัมพันธ์และสิทธิ์การเข้าถึงข้อมูลระบบแยกตามบทบาทของผู้ใช้งาน 3 กลุ่ม ได้แก่ ผู้ขาย (Seller), ผู้ซื้อ/ผู้จัดสเปก (Buyer), และผู้ดูแลระบบ (Admin) ตามมาตรฐาน **OMG UML 2.5** ดังแสดงใน **ภาพที่ 3.3**:
+
+```mermaid
+graph LR
+    Seller((ผู้ขาย / Seller))
+    Buyer((ผู้ซื้อ / Buyer))
+    Admin((ผู้ดูแลระบบ / Admin))
+
+    subgraph SystemBoundary ["ระบบ PC Builder Pro Platform"]
+        %% Core Security & Auth
+        UC_Auth([เข้าสู่ระบบด้วย Cookie JWT])
+        UC_KYC([ยืนยันตัวตนร้านค้า KYC])
+        
+        %% Seller Operations
+        UC_ListProd([ลงประกาศขายสินค้า])
+        UC_InputSpec([ระบุคุณลักษณะเฉพาะทาง Typed Specs])
+        UC_ManageStock([จัดการสต็อกและแก้ไขประกาศขาย])
+        UC_VerifySlip([ตรวจสอบและอนุมัติสลิปโอนเงิน])
+        UC_AddTracking([ระบุหมายเลขพัสดุจัดส่ง])
+        
+        %% Buyer Operations
+        UC_SearchMarket([ค้นหาและกรองสินค้าในตลาดกลาง])
+        UC_BuildPC([จัดสเปกคอมพิวเตอร์จากสินค้าจริง])
+        UC_CheckCompat([ตรวจสอบความเข้ากันได้ 8 มิติ])
+        UC_ShareBuild([บันทึกและแชร์ชุดจัดสเปก])
+        UC_BookProduct([สั่งจองสินค้าและล็อคสต็อก])
+        UC_ChatNegotiate([เจรจาซื้อขายในห้องแชตเรียลไทม์])
+        UC_UploadSlip([อัปโหลดสลิปโอนเงินชำระค่าสินค้า])
+        UC_CancelOrder([ยกเลิกคำสั่งจองและคืนสต็อก])
+        UC_ReviewSeller([เขียนรีวิวและให้คะแนนร้านค้า])
+        
+        %% Admin Operations
+        UC_ReviewQueue([พิจารณาคิวสินค้าเสี่ยง Moderation Queue])
+        UC_ManageUsers([จัดการสถานะและระงับบัญชีผู้ใช้])
+        UC_ViewLogs([ตรวจสอบบันทึกประวัติ Admin Logs])
+        
+        %% Relationships: Include & Extend
+        UC_ListProd -.->|"<<include>>"| UC_InputSpec
+        UC_BuildPC -.->|"<<include>>"| UC_CheckCompat
+        UC_BookProduct -.->|"<<include>>"| UC_ChatNegotiate
+        UC_ShareBuild -.->|"<<extend>>"| UC_BuildPC
+        UC_UploadSlip -.->|"<<extend>>"| UC_ChatNegotiate
+        UC_CancelOrder -.->|"<<extend>>"| UC_ChatNegotiate
+        UC_ReviewSeller -.->|"<<extend>>"| UC_BookProduct
+    end
+
+    %% Actor to Use Case Associations (Solid lines, no arrows)
+    Seller --- UC_Auth
+    Seller --- UC_KYC
+    Seller --- UC_ListProd
+    Seller --- UC_ManageStock
+    Seller --- UC_VerifySlip
+    Seller --- UC_AddTracking
+
+    Buyer --- UC_Auth
+    Buyer --- UC_SearchMarket
+    Buyer --- UC_BuildPC
+    Buyer --- UC_BookProduct
+
+    Admin --- UC_Auth
+    Admin --- UC_ReviewQueue
+    Admin --- UC_ManageUsers
+    Admin --- UC_ViewLogs
+```
+**ภาพที่ 3.3** Use Case Diagram แสดงขอบเขตการใช้งานจำแนกตามขั้นตอนการดำเนินงานของผู้ใช้แต่ละบทบาท (OMG UML 2.5 Standard)
+
+---
+
+#### 3.2.3 การออกแบบ Flowchart การทำงานของระบบ (System Process Flowcharts)
+ลำดับขั้นตอนการทำงานของระบบจำแนกตามวงจรการทำงานจริง (Data Lifecycle: จากการลงขาย -> ตลาด -> จัดสเปก -> การสั่งจอง -> จบธุรกรรม) ตามมาตรฐาน **ISO 5807** ดังนี้:
+
+##### 3.2.3.1 Flowchart 1: การลงประกาศขายสินค้าและการตรวจคัดกรองความเสี่ยง Anti-Fraud
+แสดงกระบวนการตั้งแต่ผู้ขายป้อนข้อมูลสินค้า อัปโหลดรูปภาพ บันทึกสเปกเฉพาะทาง 1:1 และการคำนวณคะแนนความเสี่ยง ดังแสดงใน **ภาพที่ 3.4**:
+
+```mermaid
+flowchart TD
+    Start([เริ่มต้น: ผู้ขายลงประกาศขาย]) --> InputBasic[/รับข้อมูลพื้นฐาน: แบรนด์, รุ่น, สภาพ, ราคา, Serial Number/]
+    InputBasic --> UploadPhotos[อัปโหลดรูปภาพสินค้าเข้าสู่ระบบ]
+    UploadPhotos --> SelectCategory{เลือกหมวดหมู่สินค้า?}
+    
+    SelectCategory -- CPU --> SpecCPU[/กรอกสเปก: Socket, TDP, Cores, Threads/]
+    SelectCategory -- Motherboard --> SpecMB[/กรอกสเปก: Socket, Chipset, Form Factor, RAM Type/]
+    SelectCategory -- GPU --> SpecGPU[/กรอกสเปก: VRAM, TDP, Length mm/]
+    SelectCategory -- RAM --> SpecRAM[/กรอกสเปก: Type, Capacity GB, Speed MHz/]
+    SelectCategory -- อื่นๆ --> SpecOther[/กรอกสเปก Case, PSU, Storage, Cooler/]
+    
+    SpecCPU --> SaveSpecs[บันทึกสเปกลงตาราง spec_* ที่ผูกกับ product_id]
+    SpecMB --> SaveSpecs
+    SpecGPU --> SaveSpecs
+    SpecRAM --> SaveSpecs
+    SpecOther --> SaveSpecs
+    
+    SaveSpecs --> RunAntiFraud[รันเอนจิ้น Anti-Fraud ตรวจสอบความผิดปกติ]
+    RunAntiFraud --> CheckPrice{ราคาขาย < เพดานราคาขั้นต่ำตามสภาพ?}
+    
+    CheckPrice -- ใช่: ราคาต่ำผิดปกติ --> AddScorePrice[บวกคะแนนความเสี่ยง +70 คะแนน] --> CheckSN
+    CheckPrice -- ไม่ใช่: ราคาปกติ --> CheckSN{Serial Number ซ้ำกับสินค้าที่ยังไม่ขาย?}
+    
+    CheckSN -- ใช่: ซีเรียลซ้ำซ้อน --> AddScoreSN[บวกคะแนนความเสี่ยง +90 คะแนน] --> EvalScore
+    CheckSN -- ไม่ใช่: ซีเรียลไม่ซ้ำ --> EvalScore{คะแนนความเสี่ยงสะสม >= 70 คะแนน?}
+    
+    AddScorePrice --> CheckSN
+    AddScoreSN --> EvalScore
+    
+    EvalScore -- ใช่: มีความเสี่ยงสูง --> FlagPending[ปรับ review_status = 'pending_review'<br/>ซ่อนสินค้าจากตลาด และส่งเข้า Moderation Queue]
+    EvalScore -- ไม่ใช่: ผ่านเกณฑ์ --> SetApproved[ปรับ review_status = 'approved'<br/>สถานะ status = 'active' เผยแพร่ลงตลาดกลาง]
+    
+    FlagPending --> End([สิ้นสุดกระบวนการ])
+    SetApproved --> End
+```
+**ภาพที่ 3.4** Flowchart การลงประกาศขายสินค้า การบันทึก Typed Specs และการประเมินความเสี่ยง Anti-Fraud Engine (ISO 5807)
+
+---
+
+##### 3.2.3.2 Flowchart 2: การค้นหาสินค้าในตลาดกลางและการเลือกดูสเปก
+แสดงขั้นตอนที่ผู้ซื้อเข้าใช้งานตลาดกลางเพื่อค้นหาและตรวจสอบสเปกชิ้นส่วนคอมพิวเตอร์ ดังแสดงใน **ภาพที่ 3.5**:
+
+```mermaid
+flowchart TD
+    Start([เริ่มต้น: ผู้ซื้อเข้าหน้าตลาดกลาง]) --> FetchActive[ดึงรายการสินค้าที่สถานะ active และ approved]
+    FetchActive --> ShowCards[/แสดงผลการ์ดสินค้าในตลาดกลาง/]
+    ShowCards --> UserFilter{ผู้ซื้อใช้ตัวกรองหรือไม่?}
+    
+    UserFilter -- ค้นหา Keyword --> FilterKeyword[กรองตามคำค้นหา Brand / Model / Serial]
+    UserFilter -- เลือกหมวดหมู่ --> FilterCategory[กรองตาม Category Slug]
+    UserFilter -- เลือกสภาพสินค้า --> FilterCondition[กรองตาม Condition: new, 90%, 80%, 70%]
+    UserFilter -- ไม่ใช้ตัวกรอง --> BrowseAll[ดูรายการสินค้าทั้งหมด]
+    
+    FilterKeyword --> UpdateList[/อัปเดตรายการสินค้าบนหน้าจอ/]
+    FilterCategory --> UpdateList
+    FilterCondition --> UpdateList
+    BrowseAll --> UpdateList
+    
+    UpdateList --> ClickProduct[ผู้ซื้อคลิกเลือกดูสินค้า 1 รายการ]
+    ClickProduct --> FetchDetails[ดึงข้อมูลสเปกจาก spec_* และโปรไฟล์ผู้ขาย]
+    FetchDetails --> ShowModal[/แสดงรายละเอียดสเปกครบถ้วนและประวัติผู้ขาย/]
+    
+    ShowModal --> ActionSelect{เลือกการดำเนินการ?}
+    ActionSelect -- บันทึกสิ่งที่ชอบ --> AddWishlist[บันทึกลงตาราง wishlists] --> End([สิ้นสุดกระบวนการ])
+    ActionSelect -- นำไปจัดสเปกคอม --> SendToBuilder[ส่งรายการเข้าสู่หน้า PC Builder] --> End
+    ActionSelect -- ทำการสั่งจอง --> StartBooking[ส่งคำร้องจองสินค้าเข้าสู่ระบบคำสั่งซื้อ] --> End
+```
+**ภาพที่ 3.5** Flowchart การสืบค้นสินค้าและการเรียกดูคุณลักษณะทางเทคนิคในตลาดกลาง (ISO 5807)
+
+---
+
+##### 3.2.3.3 Flowchart 3: การนำสินค้าในระบบมาจัดสเปกและตรวจสอบความเข้ากันได้ 8 มิติ
+แสดงกระบวนการจัดชุดคอมพิวเตอร์โดยดึงสินค้าที่มีอยู่จริงในระบบมารันตรวจสอบเงื่อนไขทางวิศวกรรม ดังแสดงใน **ภาพที่ 3.6**:
+
+```mermaid
+flowchart TD
+    Start([เริ่มต้น: เข้าสู่หน้า PC Builder]) --> PickSlot[เลือกช่องหมวดหมู่อุปกรณ์]
+    PickSlot --> FetchMarketItems[ดึงรายการสินค้าจริงที่มีในตลาดของหมวดนั้น]
+    FetchMarketItems --> SelectProduct[เลือกสินค้า 1 ชิ้นเข้าสู่ชุดจัดสเปก]
+    SelectProduct --> TriggerEngine[ส่ง Product IDs เข้าประเมิน Compatibility]
+    
+    TriggerEngine --> CheckSocket{1. CPU Socket ตรงกับ Motherboard Socket?}
+    CheckSocket -- ไม่ตรงกัน --> AddErr1[บันทึก ERROR: Socket ขัดแย้งกัน ไม่สามารถติดตั้งได้] --> CheckChipset
+    CheckSocket -- ตรงกัน --> CheckChipset{2. Chipset รองรับ Generation ของ CPU?}
+    
+    CheckChipset -- ต้องอัปเกรด BIOS --> AddWarn2[บันทึก WARNING: Chipset อาจต้องอัปเดต BIOS] --> CheckRAMType
+    CheckChipset -- รองรับสมบูรณ์ --> CheckRAMType{3. RAM Type DDR ตรงกับ Motherboard?}
+    
+    AddErr1 --> CheckChipset
+    AddWarn2 --> CheckRAMType
+    
+    CheckRAMType -- ไม่ตรงกัน --> AddErr3[บันทึก ERROR: ชนิด DDR ของ RAM ไม่ตรงกับเมนบอร์ด] --> CheckRAMLimit
+    CheckRAMType -- ตรงกัน --> CheckRAMLimit{4. จำนวนแถวหรือความจุ RAM เกินสเปกบอร์ด?}
+    
+    CheckRAMLimit -- เกินขีดจำกัด --> AddWarn4[บันทึก WARNING: ความจุหรือแถว RAM เกินลิมิตบอร์ด] --> CheckGPULength
+    CheckRAMLimit -- ไม่เกิน --> CheckGPULength{5. ความยาว GPU เกินขนาดพื้นที่ของ Case?}
+    
+    AddErr3 --> CheckRAMLimit
+    AddWarn4 --> CheckGPULength
+    
+    CheckGPULength -- ยาวเกินเคส --> AddErr5[บันทึก ERROR: การ์ดจอยาวเกินพื้นที่ตู้เคส] --> CheckCoolerHeight
+    CheckGPULength -- ขนาดพอดี --> CheckCoolerHeight{6. ความสูงพัดลม CPU เกินฝาข้าง Case?}
+    
+    AddErr5 --> CheckCoolerHeight
+    
+    CheckCoolerHeight -- สูงเกินเคส --> AddErr6[บันทึก ERROR: พัดลมระบายความร้อนสูงเกินฝาข้างเคส] --> CheckMBForm
+    CheckCoolerHeight -- ขนาดพอดี --> CheckMBForm{7. Form Factor เมนบอร์ดใส่ใน Case ได้?}
+    
+    AddErr6 --> CheckMBForm
+    
+    CheckMBForm -- ขนาดบอร์ดใหญ่เกินเคส --> AddErr7[บันทึก ERROR: ขนาดเมนบอร์ดใหญ่กว่าที่เคสรองรับ] --> CalcPower
+    CheckMBForm -- ขนาดพอดี --> CalcPower[8. คำนวณ TDP รวม = CPU TDP + GPU TDP + 70W อุปกรณ์อื่น]
+    
+    AddErr7 --> CalcPower
+    
+    CalcPower --> CheckPSU{วัตต์ PSU < TDP รวม?}
+    CheckPSU -- วัตต์ไม่พอจ่ายไฟ --> AddErr8[บันทึก ERROR: กำลังไฟ PSU ไม่เพียงพอกับที่ระบบใช้] --> ReturnResult
+    CheckPSU -- วัตต์พอ แต่สำรอง < 25% --> AddWarn8[บันทึก WARNING: วัตต์ PSU สำรองน้อยกว่า 25%] --> ReturnResult
+    CheckPSU -- วัตต์เพียงพอสมบูรณ์ --> ReturnResult[/ส่งผลการประเมิน Errors/Warnings และราคารวมกลับหน้าจอ/]
+    
+    AddErr8 --> ReturnResult
+    AddWarn8 --> ReturnResult
+    
+    ReturnResult --> UserDecision{ผู้ใช้บันทึกชุดสเปกหรือไม่?}
+    UserDecision -- ใช่ --> SaveDB[บันทึกลงตาราง builds และ build_parts] --> End([สิ้นสุดกระบวนการ])
+    UserDecision -- ไม่ใช่/ปรับแต่งต่อ --> PickSlot
+```
+**ภาพที่ 3.6** Flowchart การจัดสเปกคอมพิวเตอร์และการประเมินความเข้ากันได้ 8 มิติ (ISO 5807)
+
+---
+
+##### 3.2.3.4 Flowchart 4: วงจรคำสั่งซื้อ การล็อคสต็อก การแชตส่งสลิป และการ Rollback
+แสดงขั้นตอนการทำธุรกรรมแบบ C2C ผ่านระบบห้องสนทนา และการคืนสต็อกสินค้าเมื่อมีการยกเลิกคำสั่งซื้อ ดังแสดงใน **ภาพที่ 3.7**:
+
+```mermaid
+flowchart TD
+    Start([เริ่มต้น: ผู้ซื้อกดปุ่มจองสินค้า]) --> BeginTx[เริ่ม SQL Database Transaction]
+    BeginTx --> LockStock[ล็อคและตรวจสต็อก: SELECT stock_quantity FOR UPDATE]
+    LockStock --> CheckAvail{สินค้ามีสต็อกพร้อมขาย?}
+    
+    CheckAvail -- ไม่มี/ถูกจองแล้ว --> RollbackFail[Rollback Transaction และแจ้งเตือนผู้ซื้อ] --> EndFail([สิ้นสุด: จองไม่สำเร็จ])
+    CheckAvail -- มีสต็อกพร้อม --> DeductStock[ปรับ products.status = 'sold']
+    
+    DeductStock --> CreateOrder[สร้างเรคคอร์ด orders สถานะ 'pending']
+    CreateOrder --> CreateItems[บันทึกสินค้าลง order_items]
+    CreateItems --> CreateChat[เปิดห้องสนทนาลง chat_rooms]
+    CreateChat --> CommitTx[Commit Transaction สมบูรณ์]
+    
+    CommitTx --> OpenChatRoom[/เปิดหน้าต่างห้องสนทนาซื้อขาย/]
+    OpenChatRoom --> WaitAction{การกระทำของคู่ซื้อขาย?}
+    
+    WaitAction -- กดยกเลิกการจอง --> CancelTx[เริ่ม Cancel Transaction]
+    CancelTx --> RollbackStock[ปรับ products.status = 'active' คืนสต็อกสู่ตลาด]
+    RollbackStock --> SetOrderCancel[ปรับ orders.status = 'cancelled']
+    SetOrderCancel --> EmitCancel[/ยิงสัญญาณ Socket แจ้งเตือนการยกเลิก/] --> EndCancel([สิ้นสุด: คำสั่งซื้อถูกยกเลิก])
+    
+    WaitAction -- ผู้ซื้อแนบสลิปโอนเงิน --> UploadSlip[/อัปโหลดรูปภาพสลิปเงินโอนหลักฐาน/]
+    UploadSlip --> UpdateSlipDB[บันทึก payment_slip_url และปรับสถานะ 'waiting_verification']
+    UpdateSlipDB --> EmitSlipNotify[/ยิง Socket แจ้งเตือนผู้ขายพร้อมส่งรูปสลิป/]
+    
+    EmitSlipNotify --> SellerCheck{ผู้ขายตรวจสอบยอดเงินในบัญชี?}
+    SellerCheck -- สลิปปลอม/ยอดไม่ถูกต้อง --> SellerReject[ผู้ขายกดปฏิเสธสลิป] --> CancelTx
+    SellerCheck -- ยอดเงินถูกต้องครบถ้วน --> SellerApprove[ผู้ขายกดอนุมัติสลิป]
+    
+    SellerApprove --> SetPaid[ปรับ orders.status = 'paid' และบันทึกเวลาที่ยืนยัน]
+    SetPaid --> SellerShip[ผู้ขายจัดส่งพัสดุและระบุ Tracking Number]
+    SellerShip --> SetShipped[ปรับ orders.status = 'shipped']
+    SetShipped --> BuyerReceive[ผู้ซื้อได้รับสินค้าและตรวจสอบความถูกต้อง]
+    BuyerReceive --> BuyerConfirm[ผู้ซื้อกดยืนยันรับพัสดุ Complete Order]
+    
+    BuyerConfirm --> SetCompleted[ปรับ orders.status = 'completed'<br/>และเพิ่มยอดขาย seller_profiles.sales_count +1]
+    SetCompleted --> OpenReviewModal[/เปิดแบบฟอร์มรีวิวและให้คะแนนร้านค้า/] --> EndSuccess([สิ้นสุดกระบวนการซื้อขาย])
+```
+**ภาพที่ 3.7** Flowchart วงจรคำสั่งซื้อ C2C การล็อคสต็อก การตรวจสอบสลิปเงินโอน และการ Rollback คืนสต็อก (ISO 5807)
+
+---
+
+##### 3.2.3.5 Flowchart 5: การส่งมอบสินค้า การปิดยอดออเดอร์ และการให้คะแนนรีวิวร้านค้า
+แสดงกระบวนการปิดรอบธุรกรรมและการให้คะแนนผู้ขายเพื่อคำนวณคะแนนเฉลี่ยความน่าเชื่อถือใหม่ ดังแสดงใน **ภาพที่ 3.8**:
+
+```mermaid
+flowchart TD
+    Start([เริ่มต้น: ออเดอร์สถานะ completed]) --> OpenReviewForm[/ผู้ซื้อเปิดแบบฟอร์มรีวิวร้านค้า/]
+    OpenReviewForm --> InputReview[/เลือกคะแนน 1 - 5 ดาว และพิมพ์ข้อความความคิดเห็น/]
+    InputReview --> SubmitReview[ส่งคำร้อง API POST /api/reviews]
+    
+    SubmitReview --> CheckExisting{เคยรีวิวออเดอร์นี้แล้วหรือยัง?}
+    CheckExisting -- เคยรีวิวแล้ว --> ShowErr[/แสดงข้อผิดพลาด: รีวิวได้เพียง 1 ครั้งต่อออเดอร์/] --> EndFail([สิ้นสุด: ปฏิเสธการรีวิว])
+    CheckExisting -- ยังไม่เคยรีวิว --> InsertReview[บันทึกข้อมูลลงตาราง reviews]
+    
+    InsertReview --> CalcAvgRating[คำนวณคะแนนเฉลี่ยใหม่: SELECT AVG(rating) FROM reviews WHERE seller_id = ?]
+    CalcAvgRating --> UpdateProfile[อัปเดต seller_profiles.rating = ค่าเฉลี่ยใหม่]
+    UpdateProfile --> UpdateSellerBadge[คำนวณสิทธิ์เข็มกลัดร้านค้ายอดเยี่ยม Top Rated Seller]
+    UpdateSellerBadge --> ShowSuccess[/แสดงผลคะแนนดาวใหม่บนหน้าร้านค้า/] --> EndSuccess([สิ้นสุดกระบวนการรีวิว])
+```
+**ภาพที่ 3.8** Flowchart การประเมินคะแนนรีวิวร้านค้าและการคำนวณคะแนนความน่าเชื่อถือ (ISO 5807)
 
 ---
 
 #### 3.2.4 แผนภาพลำดับการทำงานของระบบ (Sequence Diagrams)
 
-##### 3.2.4.1 Sequence Diagram การจัดสเปกคอมพิวเตอร์และการตรวจสอบความเข้ากันได้
-แสดงลำดับการโต้ตอบเมื่อผู้ใช้ดำเนินการแก้ไขหรืออัปเดตชิ้นส่วนในชุดจัดสเปกคอม ดังแสดงใน **ภาพที่ 3.8**:
+##### 3.2.4.1 Sequence Diagram 1: การลงขายสินค้า การบันทึกสเปก 1:1 และการคำนวณคะแนนความเสี่ยง
+แสดงลำดับการสื่อสารเมื่อผู้ขายลงประกาศขายสินค้าและการทำงานของ Anti-Fraud Engine ตามมาตรฐาน **OMG UML 2.5** ดังแสดงใน **ภาพที่ 3.9**:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Seller as ผู้ขายสินค้า (Client)
+    participant App as เว็บเบราว์เซอร์
+    participant Server as Express API Server
+    participant AntiFraud as Anti-Fraud Engine
+    participant DB as ฐานข้อมูล MySQL
+
+    Seller->>App: กรอกข้อมูลสินค้า, เลือกหมวด, อัปโหลดรูป, กรอกสเปก 1:1
+    App->>+Server: POST /api/products (Form-data)
+    
+    Server->>+DB: INSERT INTO products (brand, model, price, serial_number, status='active')
+    DB-->>-Server: คืนค่า product_id ใหม่
+    
+    Server->>+DB: INSERT INTO product_photos (product_id, image_url)
+    DB-->>-Server: ยืนยันบันทึกรูปภาพ
+    
+    Server->>+DB: INSERT INTO spec_* (product_id, specs...)
+    DB-->>-Server: ยืนยันบันทึก Typed Specs
+    
+    Server->>+AntiFraud: evaluateSuspicion(productId, category, price, condition, sn)
+    AntiFraud->>+DB: SELECT AVG(price) FROM products WHERE model = ? (Check Price Floor)
+    DB-->>-AntiFraud: ส่งคืนราคาประวัติอ้างอิง
+    
+    AntiFraud->>+DB: SELECT id FROM products WHERE serial_number = ? AND status != 'sold'
+    DB-->>-AntiFraud: ส่งคืนรายการซีเรียลที่ซ้ำซ้อน
+    
+    AntiFraud-->>-Server: ส่งคืน suspicious_score และ suspicious_reasons
+    
+    alt suspicious_score >= 70 คะแนน (มีความเสี่ยงสูง)
+        Server->>+DB: UPDATE products SET review_status = 'pending_review'
+        DB-->>-Server: บันทึกสถานะรอกลั่นกรอง
+        Server-->>App: 201 Created (แจ้งเตือน: สินค้าถูกส่งเข้า Moderation Queue)
+    else suspicious_score < 70 คะแนน (ผ่านเกณฑ์ความปลอดภัย)
+        Server->>+DB: UPDATE products SET review_status = 'approved'
+        DB-->>-Server: บันทึกสถานะอนุมัติพร้อมขาย
+        Server-->>-App: 201 Created (แจ้งเตือน: ประกาศขายสำเร็จ แสดงในตลาดทันที)
+    end
+    
+    App-->>Seller: แสดงสถานะประกาศขายบนแผงควบคุม
+```
+**ภาพที่ 3.9** Sequence Diagram ลำดับขั้นตอนการลงประกาศขาย การจัดเก็บสเปก 1:1 และการตรวจสอบความเสี่ยงทุจริต (OMG UML 2.5)
+
+---
+
+##### 3.2.4.2 Sequence Diagram 2: การดึงสินค้าในตลาดมาประกอบสเปกและการประเมินความเข้ากันได้
+แสดงลำดับการเลือกชิ้นส่วนและการรันตรวจสอบความเข้ากันได้แบบ 8 มิติ ดังแสดงใน **ภาพที่ 3.10**:
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User as ผู้จัดสเปกคอม (Client)
-    participant Browser as เว็บเบราว์เซอร์
+    participant UI as เว็บเบราว์เซอร์ (Builder UI)
     participant Server as Express API Server
+    participant Engine as Compatibility Engine
     participant DB as ฐานข้อมูล MySQL
 
-    User->>Browser: คลิกเลือกชิ้นส่วนคอมพิวเตอร์ (เช่น CPU)
-    Browser->>Server: ส่ง JSON รายการชิ้นส่วนที่เลือก POST /api/builds/compatibility
-    activate Server
-    Server->>DB: ดึงรายละเอียดสเปก specs ของอะไหล่ที่ส่ง
-    activate DB
-    DB-->>Server: ส่งคืนข้อมูล specs (JSON object) ของชิ้นส่วน
-    deactivate DB
-    Server->>Server: รัน Compatibility Engine ตรวจสอบ Socket/RAM/TDP/Dimensions
-    Server-->>Browser: ส่งคืนผลการตรวจสอบ (compatible: boolean, errors, warnings)
-    deactivate Server
-    Browser-->>User: แสดงผลป้ายแจ้งเตือนสีแดง (Error) หรือสีเหลือง (Warning) บนหน้าจอเวิร์กสเปซ
+    User->>UI: คลิกเลือกสินค้าจากตลาดเข้าชุดจัดสเปก (CPU, MB, GPU, Case, PSU, RAM)
+    UI->>+Server: POST /api/builds/compatibility (Body: { productIds: [...] })
+    
+    Server->>+DB: SELECT p.*, s_cpu.*, s_mb.*, s_gpu.*, s_case.*, s_psu.*, s_ram.* FROM products p LEFT JOIN spec_* ON p.id = spec_*.product_id WHERE p.id IN (...)
+    DB-->>-Server: ส่งคืนข้อมูลสเปกเชิงลึกของอุปกรณ์ทั้งหมด
+    
+    Server->>+Engine: checkCompatibility(items)
+    Engine->>Engine: 1. ตรวจสอบ Socket CPU vs Motherboard
+    Engine->>Engine: 2. ตรวจสอบ RAM Type DDR vs Motherboard Slots
+    Engine->>Engine: 3. ตรวจสอบ GPU Length vs Case Max GPU Length
+    Engine->>Engine: 4. ตรวจสอบ Cooler Height vs Case Max Cooler Height
+    Engine->>Engine: 5. ตรวจสอบ Form Factor Motherboard vs Case
+    Engine->>Engine: 6. คำนวณ Total TDP และเปรียบเทียบ PSU Wattage (+25% Headroom)
+    Engine-->>-Server: ส่งคืนผลลัพธ์ { compatible, errors: [...], warnings: [...], totalTdp }
+    
+    Server-->>-UI: 200 OK (ผลการประเมินความเข้ากันได้ + ราคารวม)
+    
+    opt มีข้อผิดพลาดวิกฤต (Errors)
+        UI-->>User: แสดงแผง Error Box สีแดง (ระบุเหตุผลที่ติดตั้งไม่ได้)
+    end
+    opt มีข้อควรระวัง (Warnings)
+        UI-->>User: แสดงแผง Warning Box สีเหลือง (แนะนำการอัปเกรด BIOS หรือเพิ่ม PSU)
+    end
+    
+    UI-->>User: อัปเดตแถบ PSU Wattage Gauge และราคารวมสดบนหน้าจอ
 ```
-**ภาพที่ 3.8** Sequence Diagram แสดงลำดับเหตุการณ์การประเมินสเปกฮาร์ดแวร์
+**ภาพที่ 3.10** Sequence Diagram ลำดับการประเมินความเข้ากันได้ของชิ้นส่วนคอมพิวเตอร์ในระบบจัดสเปก (OMG UML 2.5)
 
-##### 3.2.4.2 Sequence Diagram การสั่งซื้อสินค้าและธุรกรรมโอนเงินห้องแชตเรียลไทม์
-แสดงการรับส่งสัญญาณ Socket โต้ตอบข้อมูลชำระเงินเรียลไทม์ ดังแสดงใน **ภาพที่ 3.9**:
+---
+
+##### 3.2.4.3 Sequence Diagram 3: การสั่งจองสินค้า การเจรจาโอนเงินผ่าน WebSockets และการอนุมัติสลิป
+แสดงลำดับการทำงานของการล็อคสต็อก การส่งสลิปผ่านห้องแชต และการกระจายสัญญาณ Socket ดังแสดงใน **ภาพที่ 3.11**:
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Buyer as ผู้ซื้อสินค้า (Client A)
+    actor Buyer as ผู้ซื้อ (Client A)
     participant BrowserA as เบราว์เซอร์ผู้ซื้อ
-    participant Server as Express / Socket.io Server
-    actor Seller as ผู้ขายสินค้า (Client B)
-    participant BrowserB as เบราว์เซอร์ผู้ขาย
+    participant Server as Express API Server
+    participant Socket as Socket.io Server
     participant DB as ฐานข้อมูล MySQL
+    actor Seller as ผู้ขาย (Client B)
+    participant BrowserB as เบราว์เซอร์ผู้ขาย
 
-    Buyer->>BrowserA: คลิกจองสินค้าและแนบไฟล์รูปสลิปโอนเงิน
-    BrowserA->>Server: ส่งหลักฐานสลิป API POST /api/bookings/upload-slip
-    activate Server
-    Server->>DB: บันทึก Slip URL และอัปเดตสถานะออเดอร์เป็น waiting_verification
-    activate DB
-    DB-->>Server: ยืนยันบันทึกสำเร็จ
-    deactivate DB
-    Server->>BrowserB: ยิงสัญญาณ Socket status_updated (เรียลไทม์)
-    deactivate Server
-    activate BrowserB
-    BrowserB->>Server: ส่งคำขอดึงข้อมูลออเดอร์ GET /api/bookings/:id
-    activate Server
-    Server-->>BrowserB: ส่งข้อมูลรูปภาพสลิปเงินโอนหลักฐานการชำระเงิน
-    deactivate Server
-    BrowserB-->>Seller: แสดงรูปสลิปและปุ่มอนุมัติ Approve บนหน้าต่างห้องสนทนา
-    deactivate BrowserB
+    Buyer->>BrowserA: คลิกปุ่มจองสินค้า (Book Now)
+    BrowserA->>+Server: POST /api/bookings (Body: { productId, shippingAddress, phone })
+    
+    Server->>+DB: BEGIN TRANSACTION
+    Server->>DB: SELECT stock_quantity FROM products WHERE id = ? FOR UPDATE
+    Server->>DB: UPDATE products SET status = 'sold' WHERE id = ?
+    Server->>DB: INSERT INTO orders (buyer_id, seller_id, status='pending', total_price)
+    Server->>DB: INSERT INTO chat_rooms (order_id, buyer_id, seller_id)
+    Server->>DB: COMMIT
+    DB-->>-Server: ยืนยันการสร้างคำสั่งจองและล็อคสต็อกสำเร็จ
+    
+    Server->>Socket: emit("room_created", { orderId, roomId })
+    Socket-->>BrowserB: สัญญาณแจ้งเตือนมีรายการสั่งจองใหม่
+    Server-->>-BrowserA: 201 Created { orderId, roomId }
+    
+    BrowserA->>BrowserA: นำทางเข้าสู่หน้าห้องสนทนา /inbox?room=roomId
+    BrowserB->>BrowserB: นำทางเข้าสู่หน้าห้องสนทนา /inbox?room=roomId
+    
+    Buyer->>BrowserA: อัปโหลดรูปภาพสลิปหลักฐานการโอนเงิน
+    BrowserA->>+Server: POST /api/bookings/:id/upload-slip (Multipart Form-data)
+    Server->>+DB: UPDATE orders SET status = 'waiting_verification', payment_slip_url = ?
+    Server->>DB: INSERT INTO chat_messages (room_id, message_type='system', message='ผู้ซื้อได้แนบสลิปโอนเงินแล้ว')
+    DB-->>-Server: บันทึกข้อมูลสลิปสำเร็จ
+    
+    Server->>Socket: to(roomId).emit("status_updated", { status: "waiting_verification", slipUrl })
+    Socket-->>BrowserB: อัปเดตสถานะและแสดงภาพสลิปเงินโอนบนหน้าจอผู้ขายแบบเรียลไทม์
+    Server-->>-BrowserA: 200 OK (บันทึกสลิปเรียบร้อย)
+    
+    Seller->>BrowserB: ตรวจสอบยอดเงินโอน และคลิกปุ่ม "Approve Slip"
+    BrowserB->>+Server: POST /api/bookings/:id/approve
+    Server->>+DB: UPDATE orders SET status = 'paid', slip_verified_at = NOW()
+    DB-->>-Server: ยืนยันการเปลี่ยนสถานะ
+    
+    Server->>Socket: to(roomId).emit("status_updated", { status: "paid" })
+    Socket-->>BrowserA: อัปเดตสถานะเป็น "ชำระเงินแล้ว (Paid)" บนหน้าจอผู้ซื้อทันที
+    Server-->>-BrowserB: 200 OK (อนุมัติสำเร็จ)
+    
+    BrowserB-->>Seller: ปลดล็อคฟอร์มสำหรับกรอกหมายเลขพัสดุ Tracking Number
 ```
-**ภาพที่ 3.9** เป็นการดำเนินงานขั้นตอนลำดับกระบวนการรับส่งข้อมูลหลักฐานสลิปโอนชำระเงินเรียลไทม์ ซึ่งมีรายละเอียดขั้นตอนการทำงานดังนี้:
-1) ผู้ซื้อ (Client A) ทำการแนบภาพถ่ายสลิปเงินโอนหลักฐานการชำระเงินเพื่อบันทึกลงในส่วนแสดงผลเว็บเบราว์เซอร์ A
-2) เบราว์เซอร์ฝั่งผู้ซื้อ (Browser A) ทำการยิง API ในรูปแบบ REST Request ไปยังเซิร์ฟเวอร์หลัก (POST /api/bookings/upload-slip)
-3) เซิร์ฟเวอร์หลัก (Express Server) ประมวลผลและส่งข้อมูลไปอัปเดตสถานะธุรกรรมคำสั่งจองเป็นรอตรวจรับการชำระเงิน ('waiting_verification') และบันทึก Slip URL ลงในฐานข้อมูล MySQL
-4) เซิร์ฟเวอร์หลักส่งสัญญาณแจ้งเตือนและกระจายข้อมูลสดผ่านช่องทาง WebSockets (Socket event: status_updated) ไปยังเครื่องเว็บเบราว์เซอร์ B ของฝั่งผู้ขายแบบเรียลไทม์
-5) เว็บเบราว์เซอร์ฝั่งผู้ขาย (Browser B) ได้รับสัญญาณและยิง API ส่งคำร้องขอเพื่อดึงรายละเอียดเอกสารออเดอร์มาตรวจสอบ (GET /api/bookings/:id)
-6) เซิร์ฟเวอร์หลักดึงข้อมูลรูปภาพสลิปเงินโอนหลักฐานดังกล่าวและคืนรูปภาพสลิปกลับมาแสดงผลที่เบราว์เซอร์ฝั่งผู้ขาย
-7) เบราว์เซอร์ฝั่งผู้ขายนำข้อมูลมาประเมินผลแสดงรูปสลิปและแสดงปุ่มกดยืนยันยอดโอนเงิน (Approve) บนหน้าต่างห้องสนทนาแชตของผู้ขาย (Client B) เพื่อให้กดยืนยันชำระเงิน
+**ภาพที่ 3.11** Sequence Diagram ลำดับการสั่งจอง การส่งสลิปเงินโอน และการยืนยันยอดเงินผ่านห้องสนทนาเรียลไทม์ (OMG UML 2.5)
 
 ---
 
 #### 3.2.5 การออกแบบส่วนติดต่อผู้ใช้งาน (UX/UI Wireframes Design)
-คณะผู้พัฒนาได้ดำเนินงานวาดภาพพิมพ์เขียวโครงร่าง (Wireframes UI) เพื่อเป็นต้นแบบในส่วนติดต่อผู้ใช้งาน โดยจัดสไตล์หน้าจอยึดตามโครงสร้าง Glassmorphism ดังนี้:
-* **การจัดวางองค์ประกอบหลัก (Sidebar Navigation Layout):** จัดลำดับเมนูนำทางไว้ชิดขอบซ้ายเพื่อความรวดเร็วในการสลับหน้าจอ (เช่น หน้าหลัก, คลังสินค้า, ระบบจัดสเปก, กล่องข้อความ)
-* **กล่องข้อมูลกลาง (Main Glassmorphic Container):** วางไว้กึ่งกลางหน้ากระดาษ โดยใช้เส้นขอบบางโปร่งใสร่วมกับเอฟเฟกต์เบลอหลังเพื่อเพิ่มมิติความลึกและความน่าสนใจในการอ่าน
-* **แถบแจ้งเตือนเงื่อนไขวิกฤต (Error & Warning Panel):** แถบแจ้งเตือนแบบลอย (Floating Alert Box) จะแสดงขึ้นด้านบนสุดของหน้าจัดประกอบสเปกทันทีเมื่อระบบประเมินผลความไม่เข้ากันได้ของชิ้นส่วนฮาร์ดแวร์ เพื่อดึงดูดสายตาและป้องกันไม่ให้ผู้ใช้บันทึกสเปกที่ใช้งานไม่ได้จริง
-
-โครงร่างหน้าจอดังกล่าวอธิบายรูปแบบโครงสร้างสัดส่วนแบบกระจกฝ้าเรืองแสงผ่านไดอะแกรมโครงร่างภาพใน **ภาพที่ 3.10** และ **ภาพที่ 3.11** ดังนี้:
-
-##### ภาพที่ 3.10 โครงร่างหน้าจอระบบจัดสเปกคอมพิวเตอร์ (PC Builder Workspace Wireframe)
-```mermaid
-graph TD
-    subgraph PC_Builder_Workspace_Layout [โครงร่างหน้าจอ PC Builder Workspace]
-        direction TB
-        subgraph TopBar [แถบเมนูนำทางหลักด้านบน / Navigation Header]
-            Brand["Logo: PC Builder Pro"] --- NavLinks["Home | Marketplace | Builds | Profile"]
-        end
-
-        subgraph MainContent [พื้นที่ประมวลผลหลัก / Workspace Grid]
-            direction LR
-            subgraph LeftBuilder [แผงเลือกชิ้นส่วนจัดสเปก / Component Selection Table]
-                AlertBox["⚠️ [Warning Box]: กำลังวัตต์ PSU สำรองไม่ถึง 25% (20% Headroom)"]
-                ErrorBox["❌ [Error Box]: Socket CPU (AM5) ไม่ตรงกับ Motherboard (LGA1700)"]
-                
-                Slot1["1. CPU Slot [ + เลือก CPU ]"]
-                Slot2["2. Motherboard Slot [ MSI PRO Z790-A | x ลบออก ]"]
-                Slot3["3. Memory Slot [ DDR5 16GB 5600MHz | x ลบออก ]"]
-                Slot4["4. Graphic Card Slot [ RTX 4070 Ti | x ลบออก ]"]
-                Slot5["5. Case Slot [ Corsair 4000D | x ลบออก ]"]
-            end
-
-            subgraph RightPanel [กล่องคำนวณและสรุปข้อมูลสเปกรวม / Summary Sidebar]
-                PSUInfo["⚡ อัตราการใช้ไฟคำนวณ: 480 W\nPSU ที่แนะนำ: 600 W ขึ้นไป"]
-                PriceTotal["💰 ราคารวม: 45,900 บาท"]
-                SaveBtn["[ 💾 บันทึกชุดจัดสเปกนี้ ]"]
-                ShareBtn["[ 🔗 คัดลอกลิงก์แชร์สเปก ]"]
-            end
-        end
-    end
-    
-    style AlertBox fill:#ff3c00,stroke:#333,stroke-width:2px,color:#fff
-    style ErrorBox fill:#d90429,stroke:#333,stroke-width:2px,color:#fff
-    style SaveBtn fill:#06d6a0,stroke:#333,stroke-width:1px,color:#000
-    style Slot2 fill:#1a1a2e,stroke:#00f0ff,stroke-width:1px,color:#fff
-```
-**ภาพที่ 3.10** โครงร่างสัดส่วนการออกแบบหน้าจอจัดสเปกคอมพิวเตอร์ (PC Builder Workspace)
-
-##### ภาพที่ 3.11 โครงร่างหน้าจอห้องสนทนาเจรจาซื้อขาย C2C (C2C Live Chat Room Wireframe)
-```mermaid
-graph TD
-    subgraph C2C_Chat_Layout [โครงร่างหน้าจอห้องแชตและใบสั่งจองเรียลไทม์]
-        direction TB
-        subgraph ChatHeader [แถบข้อมูลออเดอร์ด้านบน / Order Status Banner]
-            ItemDetail["📦 สินค้าจอง: Intel Core i5-13400 | ราคา 6,000 บาท"]
-            OrderStatus["สถานะธุรกรรม: 🟡 รอตรวจสอบสลิปเงินโอน (waiting_verification)"]
-        end
-
-        subgraph ChatBody [แผงส่วนเจรจาสนทนา / Chat Conversation Split Grid]
-            direction LR
-            subgraph LeftChat [กล่องสนทนาแชตเรียลไทม์ / Live Messages Room]
-                Msg1["[ผู้ซื้อ]: สวัสดีครับ ขอกดจองสินค้าไว้ก่อนนะครับ"]
-                Msg2["[ระบบ]: ผู้ซื้อจองสินค้าสำเร็จ สต็อกสินค้าถูกล็อคชั่วคราว"]
-                Msg3["[ผู้ซื้อ]: โอนเงินเรียบร้อยครับ แนบหลักฐานสลิปด้านล่างครับ\n[ 📁 ดูรูปภาพสลิปโอนเงิน: slip_2026_07.jpg ]"]
-            end
-
-            subgraph RightAction [กล่องการดำเนินการคำสั่งจอง / Escrow Action Console]
-                SellerBank["🏦 โอนเงินเข้า: ธนาคารกสิกรไทย\nเลขบัญชี: 123-xxxx-789 (ชื่อบัญชีผู้ขาย)"]
-                ApproveBtn["[ ✓ ยืนยันยอดเงินโอนและอนุมัติใบจอง ]"]
-                RejectBtn["[ ❌ ปฏิเสธสลิป / ยกเลิกออเดอร์และคืนคิวตลาด ]"]
-                TrackingInput["🚚 ป้อนเลขพัสดุ: [ TH-123456789-TH ]\n[ ส่งเลข Tracking ]"]
-            end
-        end
-    end
-
-    style OrderStatus fill:#ffd166,stroke:#333,stroke-width:2px,color:#000
-    style ApproveBtn fill:#06d6a0,stroke:#333,stroke-width:1px,color:#000
-    style RejectBtn fill:#ef476f,stroke:#333,stroke-width:1px,color:#fff
-    style Msg2 fill:#118ab2,stroke:#333,stroke-width:1px,color:#fff
-```
-**ภาพที่ 3.11** โครงร่างสัดส่วนการออกแบบแผงห้องสนทนาซื้อขาย C2C (C2C Negotiation & Chat Console)
+คณะผู้พัฒนาได้ออกแบบโครงสร้างส่วนติดต่อผู้ใช้งานภายใต้แนวคิด **Glassmorphism Aesthetic** ผสานความสวยงามแบบพรีเมียมล้ำสมัย (Futuristic Look) เข้ากับความสะดวกในการใช้งานจริง:
+* **Sidebar Navigation:** แถบเมนูนำทางจัดวางชิดซ้ายเพื่อความสะดวกในการสลับหน้าจอระหว่าง ตลาดกลาง (Marketplace), เวิร์กสเปซจัดสเปก (PC Builder), ห้องสนทนา (Chats), และโปรไฟล์ร้านค้า (Seller Hub)
+* **Product Listing Grid:** จัดวางการ์ดสินค้าแบบ CSS Grid Layout ที่ปรับขนาดอัตโนมัติตามความกว้างหน้าจอ แสดงรูปภาพสินค้า สภาพ ป้ายความเข้ากันได้ และราคาชัดเจน
+* **PC Builder Workspace:** แบ่งหน้าจอเป็น 2 ฝั่งหลัก ฝั่งซ้ายเป็นรายการช่องชิ้นส่วนอุปกรณ์ 8 หมวดหมู่ ฝั่งขวาเป็นแผงสรุปผลกำลังวัตต์ PSU และแถบแจ้งเตือนระดับวิกฤต (Error Panel) ที่จะปรากฏขึ้นทันทีหากพบความไม่เข้ากันได้ทางวิศวกรรม
 
 ---
 
-### 3.3 พัฒนาเว็บแอปพลิเคชัน
+### 3.3 การพัฒนาเว็บแอปพลิเคชัน
 
-#### 3.3.1 การพัฒนาส่วนติดต่อผู้ใช้งานฝั่ง Client-side (Vanilla HTML/CSS/JS)
-การดำเนินงานในส่วนของระบบหน้าบ้าน (Frontend) พัฒนาขึ้นโดยใช้ภาษาหลัก HTML5 ในการควบคุมความสมบูรณ์ของแบบฟอร์มข้อมูล, ภาษา CSS3 จัดรูปแบบ Glassmorphism โดยเลือกใช้ฟังก์ชันหลักดังนี้:
-* `backdrop-filter: blur(10px)` สำหรับทำความเบลอของวัตถุพื้นหลังให้ความรู้สึกเหมือนกระจกฝ้าหรูหราพรีเมียม
-* `background: rgba(20, 20, 30, 0.6)` กำหนดค่าความเข้มมืดโปร่งแสง 60%
-* `border: 1px solid rgba(255, 255, 255, 0.1)` เพื่อสร้างเส้นกรอบบางคมเน้นพื้นที่แสดงผล
+#### 3.3.1 โครงสร้างไฟล์และสถาปัตยกรรมซอฟต์แวร์ (Project Structure)
+ระบบได้รับการจัดวางโครงสร้างไดเรกทอรีอย่างเป็นระบบตามมาตรฐาน Separation of Concerns:
+```text
+project/
+├── 02_database/
+│   ├── schema_mysql.sql          # สคริปต์โครงสร้างตาราง MySQL Product-Centric
+│   └── seed_data_mysql.sql       # ข้อมูลตัวอย่างสินค้าและสเปกสำหรับทดสอบ
+├── 03_backend/
+│   ├── config/
+│   │   ├── db.js                 # ระบบ MySQL Connection Pool (mysql2/promise)
+│   │   └── socket.js             # การกำหนดค่า WebSockets Event Handlers
+│   ├── controllers/
+│   │   ├── authController.js     # ควบคุมระบบ Login, Register, JWT Cookies
+│   │   ├── productController.js  # จัดการสินค้า, Typed Specs และ Anti-Fraud Engine
+│   │   ├── buildsController.js   # ควบคุมการจัดสเปกคอมพิวเตอร์
+│   │   ├── bookingController.js  # ควบคุมวงจรออเดอร์, ล็อคสต็อก, สลิป และ Rollback
+│   │   └── adminController.js    # จัดการ Moderation Queue และ Activity Logs
+│   ├── services/
+│   │   └── compatibilityService.js # เอนจิ้นตรวจสอบความเข้ากันได้ 8 มิติ
+│   └── server.js                 # จุดเริ่มต้นหลักของ Express Application Server
+└── 04_frontend/
+    ├── css/                      # สไตล์ชีท Glassmorphism และธีม Dark/Light
+    ├── js/                       # สคริปต์ควบคุมการโต้ตอบหน้าเว็บและ Socket Client
+    ├── index.html                # หน้าแรกและทางเข้าสู่ระบบ
+    ├── products.html             # หน้าตลาดกลางซื้อขายสินค้า C2C
+    ├── builder.html              # หน้าเวิร์กสเปซจัดสเปกคอมพิวเตอร์ออนไลน์
+    ├── inbox.html                # หน้าต่างห้องสนทนาเจรจาซื้อขายเรียลไทม์
+    └── admin.html                # แผงควบคุมสำหรับผู้ดูแลระบบ
+```
 
-การเชื่อมต่อ API หน้าบ้านนำการเรียกใช้ `fetch` มาประยุกต์ร่วมกับชุดควบคุมเอกสาร (DOM Manipulation) เพื่อรองรับการเปลี่ยนถ่ายหน้าจอแบบหน้าเดียว (Single Page UI Experience) โดยไม่มีการรีเฟรชหรือกระพริบหน้าจอช่วยยกระดับความสะดวกในการโต้ตอบของผู้รับบริการ
+#### 3.3.2 การพัฒนาส่วนติดต่อผู้ใช้งานฝั่ง Client-side (Vanilla HTML/CSS/JS)
+ส่วนติดต่อผู้ใช้งานพัฒนาขึ้นโดยใช้เทคโนโลยีมาตรฐานเว็บที่ไม่พึ่งพาเฟรมเวิร์กขนาดใหญ่ เพื่อให้โหลดได้รวดเร็วและตอบสนองได้ทันที:
+* **Glassmorphic Styling:** ใช้คำสั่ง CSS `backdrop-filter: blur(12px)`, `background: rgba(25, 25, 35, 0.65)` และเส้นขอบบาง `border: 1px solid rgba(255, 255, 255, 0.08)`
+* **Dynamic DOM & Asynchronous Fetch:** ควบคุมการดึงข้อมูลและอัปเดตหน้าจอแบบ Single-Page Experience ผ่านการส่งคำขอแบบ Asynchronous โดยไม่มีการรีเฟรชหน้าเว็บ
 
-#### 3.3.2 การพัฒนาส่วนเว็บแอปพลิเคชันเซิร์ฟเวอร์หลังบ้าน (Node.js & Express API)
-ระบบหลังบ้านทำหน้าที่ประมวลผลคำขอยิงเส้นทาง API (Routing API) โดยแยก Controller ออกตามความรับผิดชอบอย่างชัดเจน:
-* `authController.js` จัดเก็บความปลอดภัยโดยการรับรหัส JWT แกะวิเคราะห์สถานะ HttpOnly Cookie
-* `productController.js` ฝังตรรกะกรองสินค้าทุจริต (Anti-Fraud Listing Scan) ทำการรวบรวมข้อมูลราคา Msrp และซีเรียลนัมเบอร์เพื่อวิเคราะห์พฤติกรรมการทุจริตก่อนส่งต่อข้อมูลสินค้าในคิวเข้าฐานข้อมูล
-* `bookingController.js` ควบคุม Transaction ของการล็อคสต็อกและการ Rollback ย้อนคืนข้อมูลทั้งหมดกลับสู่ตลาดเมื่อใบสั่งจองออเดอร์หมดอายุการชำระเงินหรือโดนปฏิเสธยกเลิก
+#### 3.3.3 การพัฒนาฝั่ง Logic Tier & RESTful API (Express.js)
+เซิร์ฟเวอร์หลังบ้านพัฒนาขึ้นบน Node.js และ Express.js ทำหน้าที่ประมวลผลคำขอและตรวจสอบสิทธิ์:
+* **JWT Cookie Authentication:** ดึงโทเค็นจาก HttpOnly Cookie ในทุกคำขอเพื่อระบุตัวตนและตรวจสอบสิทธิ์ตามบทบาท (`member` หรือ `admin`)
+* **Atomic Database Transactions:** ใช้คำสั่ง `await conn.beginTransaction()`, `await conn.commit()` และ `await conn.rollback()` ในขั้นตอนการจองและยกเลิกออเดอร์ เพื่อรับประกันว่าสถานะสต็อกและธุรกรรมจะมีความถูกต้องสมบูรณ์เสมอ
 
-#### 3.3.3 การผูกสัญญาณสื่อสารเรียลไทม์ (WebSockets & Socket.io Integration)
-การสื่อสารในห้องสนทนาเจรจาระหว่างผู้ซื้อและผู้ขาย มีการดำเนินงานติดตั้ง Socket.io เข้ากับวงจรไลฟ์ไซเคิลของเว็บเซิร์ฟเวอร์หลัก โดยมีการสกัดโทเค็น JWT ออกจากข้อมูลคุกกี้ที่ส่งมาแนบ Handshake ตั้งแต่การขอเปิดใช้สัญญาณเชื่อมต่อ (Connection Setup) เพื่อยืนยันสิทธิ์บัญชีผู้ใช้งาน เมื่อมีการกระทำใดๆ ในห้องแชต ระบบจะยิงสัญญาณอีเวนต์ `new_message` และ `status_updated` เพื่อส่งผลลัพธ์ข้อมูลอัปเดตไปยังเบราว์เซอร์ของอีกฝั่งในเสี้ยววินาทีโดยปราศจากความหน่วงเชิงระบบ
+#### 3.3.4 การสื่อสารสองทิศทางแบบเรียลไทม์ผ่าน WebSockets (Socket.io)
+การเชื่อมต่อ WebSockets ถูกติดตั้งเข้ากับเซิร์ฟเวอร์ HTTP หลัก โดยมีการตรวจสอบโทเค็น JWT ตั้งแต่ขั้นตอน Handshake เมื่อเกิดเหตุการณ์ในระบบ เช่น การส่งข้อความแชต การอัปโหลดสลิป หรือการเปลี่ยนสถานะคำสั่งซื้อ เซิร์ฟเวอร์จะยิงอีเวนต์ `new_message` และ `status_updated` ไปยังห้องสนทนา (`room_id`) เฉพาะของคู่ซื้อขาย ส่งผลให้หน้าจอของทั้งสองฝ่ายอัปเดตสถานะตรงกันในทันทีโดยไม่ต้องกดรีเฟรชหน้าจอ
 
 ---
 

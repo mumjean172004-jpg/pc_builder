@@ -104,12 +104,11 @@ exports.updateUserStatus = async (req, res) => {
 exports.getFlaggedProducts = async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT p.id, p.price, p.condition, p.serial_number, p.status, p.review_status, 
+      SELECT p.id, p.price, p.condition, p.serial_number, p.status, p.review_status,
              p.suspicious_score, p.suspicious_reasons, p.created_at,
-             u.username as seller_name, pr.name as part_name
+             u.username as seller_name, p.brand, p.model
       FROM products p
       JOIN users u ON p.seller_id = u.id
-      LEFT JOIN parts pr ON p.part_id = pr.id
       WHERE p.suspicious_score > 0 OR p.review_status = 'pending_review'
       ORDER BY p.suspicious_score DESC, p.id DESC
     `);
@@ -265,116 +264,82 @@ exports.overrideOrderStatus = async (req, res) => {
   }
 };
 
-// 8. Add new part to standard catalog
-exports.addCatalogPart = async (req, res) => {
+// 8. All marketplace products, for the admin "จัดการสินค้าในตลาด" tab — repurposed
+// 2026-08-17 from what used to be CRUD for a standalone `parts` reference catalog
+// (removed along with the `parts` table itself, see scripts/migrate_remove_parts.js).
+// Read-only listing; moderation actions reuse the existing reviewProduct endpoint
+// and the seller-facing PUT /api/products/:id status toggle rather than duplicating
+// new mutation endpoints here.
+exports.getAllProductsAdmin = async (req, res) => {
   try {
-    const { name, category_id, brand, model, specs, price } = req.body;
-    const adminId = req.userId;
-
-    if (!name || !category_id || !brand || !price) {
-      return res.status(400).json({ error: 'Name, Category ID, Brand, and Price are required' });
+    const { category, status, review_status, search } = req.query;
+    const where = [];
+    const params = [];
+    if (category) {
+      where.push('c.slug = ?');
+      params.push(category);
     }
+    if (status) {
+      where.push('p.status = ?');
+      params.push(status);
+    }
+    if (review_status) {
+      where.push('p.review_status = ?');
+      params.push(review_status);
+    }
+    if (search) {
+      where.push('(p.brand LIKE ? OR p.model LIKE ? OR p.serial_number LIKE ?)');
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+    const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
-    // Stringify specs if object is passed
-    const specsString = typeof specs === 'object' ? JSON.stringify(specs) : (specs || '{}');
+    const result = await pool.query(`
+      SELECT p.id, p.brand, p.model, p.price, p.original_price, p.condition, p.serial_number,
+             p.status, p.review_status, p.suspicious_score, p.stock_quantity, p.created_at,
+             u.username as seller_name, c.name as category_name, c.slug as category_slug
+      FROM products p
+      JOIN users u ON p.seller_id = u.id
+      JOIN categories c ON p.category_id = c.id
+      ${whereClause}
+      ORDER BY p.created_at DESC
+      LIMIT 200
+    `, params);
 
-    const insertResult = await pool.query(`
-      INSERT INTO parts (name, category_id, brand, model, specs, price)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `, [name, category_id, brand, model || null, specsString, price]);
-
-    // Audit log
-    await pool.query(
-      'INSERT INTO admin_logs (admin_id, action, details) VALUES (?, ?, ?)',
-      [adminId, 'add_catalog_part', `Part ID: ${insertResult.insertId}, Name: ${name}`]
-    );
-
-    res.status(201).json({
-      message: 'เพิ่มชิ้นส่วนมาตรฐานเข้าสู่ระบบแคตตาล็อกสำเร็จ',
-      partId: insertResult.insertId
-    });
+    res.json(result.rows || []);
   } catch (error) {
-    console.error('Admin addCatalogPart error:', error);
+    console.error('Admin getAllProductsAdmin error:', error);
     sendServerError(res, error);
   }
 };
 
-// 10. Update a catalog part (partial update — only provided fields change)
-exports.updateCatalogPart = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, category_id, brand, model, specs, price, image_url, is_active } = req.body;
-    const adminId = req.userId;
-
-    const existing = await pool.query('SELECT id FROM parts WHERE id = ?', [id]);
-    if (!existing.rows || existing.rows.length === 0) {
-      return res.status(404).json({ error: 'ไม่พบชิ้นส่วนนี้ในระบบแคตตาล็อก' });
-    }
-
-    const specsString = specs === undefined ? null : (typeof specs === 'object' ? JSON.stringify(specs) : specs);
-
-    await pool.query(`
-      UPDATE parts SET
-        name = COALESCE(?, name),
-        category_id = COALESCE(?, category_id),
-        brand = COALESCE(?, brand),
-        model = COALESCE(?, model),
-        specs = COALESCE(?, specs),
-        price = COALESCE(?, price),
-        image_url = COALESCE(?, image_url),
-        is_active = COALESCE(?, is_active)
-      WHERE id = ?
-    `, [
-      name || null,
-      category_id || null,
-      brand || null,
-      model || null,
-      specsString,
-      price === undefined ? null : price,
-      image_url || null,
-      is_active === undefined ? null : (is_active ? 1 : 0),
-      id
-    ]);
-
-    await pool.query(
-      'INSERT INTO admin_logs (admin_id, action, details) VALUES (?, ?, ?)',
-      [adminId, 'update_catalog_part', `Part ID: ${id}`]
-    );
-
-    res.json({ message: 'แก้ไขข้อมูลชิ้นส่วนมาตรฐานสำเร็จ' });
-  } catch (error) {
-    console.error('Admin updateCatalogPart error:', error);
-    sendServerError(res, error);
-  }
-};
-
-// 11. Delete a catalog part — blocked at the DB level (FK RESTRICT) if any
-// product listing or saved build still references it.
-exports.deleteCatalogPart = async (req, res) => {
+// 9. Hard-delete a product listing (moderation) — distinct from the seller-facing
+// DELETE /api/products/:id (which also allows admin via a role check) so admin deletions
+// get an admin_logs audit entry, matching reviewProduct/overrideOrderStatus/deleteReview.
+exports.deleteProductAdmin = async (req, res) => {
   try {
     const { id } = req.params;
     const adminId = req.userId;
 
-    const existing = await pool.query('SELECT id, name FROM parts WHERE id = ?', [id]);
-    if (!existing.rows || existing.rows.length === 0) {
-      return res.status(404).json({ error: 'ไม่พบชิ้นส่วนนี้ในระบบแคตตาล็อก' });
+    const existing = await pool.query('SELECT id, brand, model FROM products WHERE id = ?', [id]);
+    if (!existing.rows?.length) {
+      return res.status(404).json({ error: 'ไม่พบสินค้านี้ในระบบ' });
     }
 
-    await pool.query('DELETE FROM parts WHERE id = ?', [id]);
+    const orderRef = await pool.query('SELECT id FROM order_items WHERE product_id = ? LIMIT 1', [id]);
+    if (orderRef.rows?.length) {
+      return res.status(400).json({ error: 'ไม่สามารถลบสินค้านี้ได้ เนื่องจากมีคำสั่งซื้อที่อ้างอิงสินค้านี้อยู่แล้ว' });
+    }
+
+    await pool.query('DELETE FROM products WHERE id = ?', [id]);
 
     await pool.query(
       'INSERT INTO admin_logs (admin_id, action, details) VALUES (?, ?, ?)',
-      [adminId, 'delete_catalog_part', `Part ID: ${id}, Name: ${existing.rows[0].name}`]
+      [adminId, 'delete_product', `Product ID: ${id}, ${existing.rows[0].brand || ''} ${existing.rows[0].model || ''}`.trim()]
     );
 
-    res.json({ message: 'ลบชิ้นส่วนมาตรฐานออกจากระบบแคตตาล็อกสำเร็จ' });
+    res.json({ message: 'ลบประกาศสินค้าเรียบร้อยแล้ว' });
   } catch (error) {
-    if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.code === 'ER_ROW_IS_REFERENCED' || error.errno === 1451) {
-      return res.status(409).json({
-        error: 'ไม่สามารถลบชิ้นส่วนนี้ได้ เนื่องจากมีประกาศขายสินค้าหรือชุดจัดสเปคที่อ้างอิงชิ้นส่วนนี้อยู่ กรุณาปิดการใช้งาน (ปิดสถานะ) แทนการลบ'
-      });
-    }
-    console.error('Admin deleteCatalogPart error:', error);
+    console.error('Admin deleteProductAdmin error:', error);
     sendServerError(res, error);
   }
 };
@@ -395,7 +360,7 @@ exports.deleteReview = async (req, res) => {
 
     const remaining = await pool.query('SELECT rating FROM reviews WHERE seller_id = ?', [sellerId]);
     const newAverage = computeAverageRating(remaining.rows.map(r => r.rating));
-    await pool.query('UPDATE users SET seller_rating = ? WHERE id = ?', [newAverage, sellerId]);
+    await pool.query('UPDATE seller_profiles SET rating = ? WHERE user_id = ?', [newAverage, sellerId]);
 
     await pool.query(
       'INSERT INTO admin_logs (admin_id, action, details) VALUES (?, ?, ?)',

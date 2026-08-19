@@ -5,12 +5,11 @@ const { authMiddleware } = require('../middleware/auth');
 
 // Public routes
 router.get('/', buildsController.getBuilds);
+router.get('/available-parts', buildsController.getAvailableParts);
 router.get('/user/:userId', authMiddleware, buildsController.getUserBuilds);
 router.get('/:id', authMiddleware, buildsController.getBuildById);
 router.post('/compatibility', buildsController.checkBuildCompatibility);
-router.post('/intelligence', buildsController.getBuildIntelligence);
 router.post('/cross-match', buildsController.crossMatchBuildParts);
-router.post('/auto', buildsController.autoBuild);
 
 // Protected routes
 router.post('/', authMiddleware, buildsController.createBuild);

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Marketplace | PC Builder Pro</title>
+  <title>Marketplace | Second-hand Computer Marketplace System</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
     /* === Marketplace filter toolbar === */
@@ -105,6 +105,20 @@
     .filter-reset-btn {
       font-size: 0.8rem;
       padding: 0.35rem 0.85rem;
+    }
+
+    .advanced-filter-panel {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .advanced-filter-heading {
+      margin-bottom: 0.6rem;
+    }
+
+    .advanced-filter-grid {
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     }
 
     /* === Product cards === */
@@ -217,7 +231,7 @@
           <line x1="8" y1="21" x2="16" y2="21"></line>
           <line x1="12" y1="17" x2="12" y2="21"></line>
         </svg>
-        PC Builder <span>Pro</span>
+        <span class="navbar-logo-text">Second-hand Computer Marketplace <span>System</span></span>
       </a>
       <button class="mobile-menu-toggle" id="mobile-menu-btn" aria-label="Toggle menu">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -228,11 +242,15 @@
       </button>
       <ul class="navbar-links">
         <li><a href="/index.html">Home</a></li>
-        <li><a href="/builder.html">Builder</a></li>
         <li><a href="/products.html" class="active">Marketplace</a></li>
-        <li><a href="/sell-product.html">Sell</a></li>
+        <li><a href="/builder.html">PC Builder</a></li>
+        <li><a href="/sell-product.html">Sell Product</a></li>
+        <li><a href="/inbox.html">Messages</a></li>
       </ul>
-      <div class="navbar-auth" id="navbar-auth"></div>
+      <div class="navbar-auth" id="navbar-auth">
+        <a href="/login.html" class="btn btn-ghost btn-sm">Login</a>
+        <a href="/login.html?register" class="btn btn-primary btn-sm">Register</a>
+      </div>
     </div>
   </nav>
 
@@ -298,6 +316,8 @@
         </div>
       </div>
 
+      <div class="advanced-filter-panel" id="advanced-filter-panel" style="display: none;"></div>
+
       <div class="filter-footer-row">
         <label class="warranty-check-label">
           <input type="checkbox" id="product-has-warranty">
@@ -324,6 +344,43 @@
     let productBrands = [];
     let productParts = [];
     let currentProductPage = 1;
+    let specFilterOptions = {};
+
+    // Advanced spec-based filters shown once a category is picked, mirroring
+    // builder.html's CATEGORY_FILTERS (js/builder.js) minus 'brand' (already covered by
+    // the Brand filter above). Option values themselves come from the server
+    // (/products/spec-options), which only returns values with real active listings.
+    const PRODUCT_SPEC_FILTERS = {
+      cpu: [
+        { key: 'socket', label: 'Socket' },
+        { key: 'generation', label: 'เจนเนอเรชัน' },
+        { key: 'series', label: 'ซีรีส์' },
+      ],
+      motherboard: [
+        { key: 'socket', label: 'Socket' },
+        { key: 'chipset', label: 'Chipset' },
+        { key: 'generation', label: 'Gen ที่รองรับ' },
+        { key: 'form_factor', label: 'ขนาดบอร์ด (Form Factor)' },
+        { key: 'ram_type', label: 'ชนิด RAM' },
+      ],
+      ram: [
+        { key: 'type', label: 'ประเภท' },
+        { key: 'speed', label: 'บัส (Bus)' },
+        { key: 'capacity_gb', label: 'ความจุ (GB)' },
+      ],
+      gpu: [
+        { key: 'chip', label: 'ชิปเซ็ต' },
+        { key: 'series', label: 'ซีรีส์' },
+      ],
+      psu: [
+        { key: 'modularity', label: 'ประเภทสาย' },
+        { key: 'efficiency', label: 'มาตรฐาน 80 Plus' },
+      ],
+      storage: [
+        { key: 'interface', label: 'อินเทอร์เฟส' },
+        { key: 'capacity_gb', label: 'ความจุ (GB)' },
+      ],
+    };
 
     function conditionLabel(value) {
       return {
@@ -335,16 +392,58 @@
     }
 
     async function loadProductMetadata() {
-      const metadata = await API.get('/products/metadata');
+      const [metadata, specOptions] = await Promise.all([
+        API.get('/products/metadata'),
+        API.get('/products/spec-options')
+      ]);
       productCategories = metadata.categories || [];
       productBrands = metadata.brands || [];
       productParts = metadata.parts || [];
+      specFilterOptions = specOptions || {};
 
       document.getElementById('product-category').innerHTML = '<option value="">ทุกหมวดหมู่ (All)</option>' +
         productCategories.map(cat => `<option value="${cat.slug}">${escapeHtml(cat.name)}</option>`).join('');
 
       document.getElementById('product-brand').innerHTML = '<option value="">ทุกแบรนด์ (All Brands)</option>' +
         productBrands.map(brand => `<option value="${escapeHtml(brand)}">${escapeHtml(brand)}</option>`).join('');
+    }
+
+    function renderAdvancedFilters() {
+      const panel = document.getElementById('advanced-filter-panel');
+      const category = document.getElementById('product-category').value;
+      const fields = PRODUCT_SPEC_FILTERS[category];
+
+      if (!fields) {
+        panel.style.display = 'none';
+        panel.innerHTML = '';
+        return;
+      }
+
+      const options = specFilterOptions[category] || {};
+      const categoryName = productCategories.find(c => c.slug === category)?.name || '';
+
+      panel.innerHTML = `
+        <label class="filter-label advanced-filter-heading">ตัวกรองแบบละเอียด (${escapeHtml(categoryName)})</label>
+        <div class="filter-grid advanced-filter-grid">
+          ${fields.map(f => {
+            const values = options[f.key] || [];
+            return `
+              <div>
+                <label class="filter-label" for="spec-filter-${f.key}">${escapeHtml(f.label)}</label>
+                <select class="filter-select filter-select-block spec-filter-select" id="spec-filter-${f.key}">
+                  <option value="">ทั้งหมด</option>
+                  ${values.map(v => `<option value="${escapeHtml(String(v))}">${escapeHtml(String(v))}</option>`).join('')}
+                </select>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+      panel.style.display = 'block';
+
+      panel.querySelectorAll('.spec-filter-select').forEach(sel => {
+        sel.addEventListener('change', () => loadProducts());
+      });
     }
 
     async function loadProducts(page) {
@@ -370,6 +469,13 @@
       if (sort) params.set('sort', sort);
       if (hasWarranty) params.set('has_warranty', 'true');
       if (search) params.set('search', search);
+
+      const specFields = PRODUCT_SPEC_FILTERS[category] || [];
+      specFields.forEach(f => {
+        const el = document.getElementById(`spec-filter-${f.key}`);
+        if (el && el.value) params.set(`spec_${f.key}`, el.value);
+      });
+
       params.set('page', currentProductPage);
 
       if (params.toString()) url += '?' + params.toString();
@@ -423,7 +529,10 @@
                 </div>
                 <p class="text-muted product-desc-muted">${escapeHtml(product.description || '')}</p>
                 <div class="product-price-row">
-                  <div class="current-price">${formatPrice(product.price)}</div>
+                  <div class="price-with-original">
+                    ${Number(product.original_price) > Number(product.price) ? `<span class="original-price">${formatPrice(product.original_price)}</span>` : ''}
+                    <div class="current-price">${formatPrice(product.price)}</div>
+                  </div>
                   <span class="text-success stock-ready-label">พร้อมขาย</span>
                 </div>
                 <div class="seller-info-row">
@@ -452,7 +561,6 @@
                   </a>
                   <button class="btn btn-primary btn-sm add-to-cart-btn"
                           data-id="${product.id}"
-                          data-part-id="${product.part_id}"
                           data-name="${escapeHtml(product.brand || '')} ${escapeHtml(product.model || product.part_name || '')}"
                           data-price="${product.price}"
                           data-brand="${escapeHtml(product.brand || '')}"
@@ -477,7 +585,6 @@
             e.preventDefault();
             const product = {
               product_id: parseInt(btn.dataset.id),
-              part_id: parseInt(btn.dataset.partId),
               name: btn.dataset.name,
               price: parseFloat(btn.dataset.price),
               brand: btn.dataset.brand,
@@ -524,11 +631,13 @@
       document.getElementById('product-max-price').value = '';
       document.getElementById('product-sort').value = 'created_desc';
       document.getElementById('product-has-warranty').checked = false;
+      renderAdvancedFilters();
       loadProducts();
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
       await loadProductMetadata();
+      renderAdvancedFilters();
       await loadProducts();
 
       const categorySelect = document.getElementById('product-category');
@@ -557,6 +666,7 @@
           brandSelect.value = '';
         }
 
+        renderAdvancedFilters();
         loadProducts();
       });
 

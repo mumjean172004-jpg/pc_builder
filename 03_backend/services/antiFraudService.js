@@ -19,9 +19,13 @@ const CONDITION_PRICE_FLOOR = {
  * Score a marketplace listing for suspicious/fraud indicators.
  *
  * @param {Object} params
- * @param {number|null|undefined} params.catalogPrice - Reference MSRP price from the
- *   `parts` catalog (i.e. `part.price`). Falsy (0/null/undefined) skips the price-floor check,
- *   matching the original `if (part?.price)` guard.
+ * @param {number|null|undefined} params.catalogPrice - Reference price computed as the
+ *   average asking price of OTHER active, approved listings of the same brand+model
+ *   already on the marketplace (see `productController.js`'s `getCrossListingReferencePrice`).
+ *   Never sourced from the seller's own self-reported `original_price` — that field is
+ *   fully seller-controlled and made this check trivially bypassable when it was used
+ *   as the reference (found and fixed 2026-08-17). Falsy (0/null/undefined, e.g. this is
+ *   the first-ever listing of that brand+model) skips the price-floor check.
  * @param {string} params.condition - One of 'new' | 'used_90' | 'used_80' | 'used_70'.
  *   Unknown/missing conditions fall back to a 40% floor, matching the original
  *   `CONDITION_PRICE_FLOOR[condition] || 0.4`.

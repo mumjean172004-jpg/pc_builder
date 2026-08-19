@@ -14,7 +14,7 @@ Welcome to the Obsidian Knowledge Base for the **PC Builder Pro / Second-hand Ma
 * [[01_planning/Project_Plan]] - High-level project checklist, feature list, and development roadmap.
 
 ### 💾 Data & Database
-* [[07_document/Database_Schema]] - SQLite tables, field definitions, active indexes, and relationships.
+* [[07_document/Database_Schema]] - MySQL/MariaDB tables, field definitions, active indexes, and relationships.
 
 ### 🌐 Backend API Documentation
 * [[07_document/API_Documentation]] - Active endpoints list, request/response formats, security middleware.
@@ -25,6 +25,7 @@ Welcome to the Obsidian Knowledge Base for the **PC Builder Pro / Second-hand Ma
 ### ⚙️ Core Logic Guides
 * [[05_pc_builder/PC_Builder_Compatibility]] - Detailed rules governing hardware compatibility checks.
 * [[05_pc_builder/Marketplace_Listing_Checks]] - Anti-fraud listing check logic, pricing floors, and serial matches.
+* [[05_pc_builder/CPU_Socket_Chipset_Reference]] - Full Intel + AMD socket↔chipset mapping across every generation (mainstream + Workstation/HEDT). Reference only — current `sockets`/`chipsets` DB seed covers LGA1700/LGA1851/LGA1200/AM4/AM5 (LGA1200 added 2026-08-17); older sockets still need seeding before the "add new model" form can accept them.
 
 ### 🎨 Design System
 * [[08_design_system/UI_UX_Guidelines]] - Frontend UI/UX conventions (icons, colors, form components, verification steps), plus a feature-completion log and two silent-bug classes to watch for (§8-9). **Read before redesigning any page** — keeps different AI agent sessions visually consistent.
@@ -42,7 +43,7 @@ Welcome to the Obsidian Knowledge Base for the **PC Builder Pro / Second-hand Ma
 * [[07_document/Chapter5_Conclusion]] - บทที่ 5 สรุปผล ปัญหา อุปสรรค และข้อเสนอแนะ
 
 ### 📊 ไดอะแกรมและผังการทำงาน (Flowcharts & Diagrams)
-* [[flowcharts]] - ภาพผังการทำงานทั้งหมด (System Overview, Auth, Anti-Fraud, Compatibility, AutoBuilder, C2C Orders, Admin)
+* [[flowcharts]] - ภาพผังการทำงานทั้งหมด (System Overview, Auth, Anti-Fraud, Compatibility, C2C Orders, Admin) — หมายเหตุ: ผังเดิมมี "AutoBuilder" รวมอยู่ด้วย แต่ฟีเจอร์นั้นถูกลบออกจากระบบทั้งหมดแล้ว (Round 12, 2026-08-18) ตัวไฟล์ diagram ยังไม่ได้อัปเดตตาม (out of scope สำหรับรอบตรวจนี้)
 * [[project_overview_and_flowcharts.pdf]] - เอกสารสรุปภาพรวมและ Flowcharts ฉบับรวมสมบูรณ์ (PDF)
 
 ---

@@ -3,107 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ประกอบ PC — เลือกอะไหล่ | PC Builder Pro</title>
+  <title>ประกอบ PC — เลือกอะไหล่ | Second-hand Computer Marketplace System</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    /* === Mode selector tabs === */
-    .mode-selector-container {
-      max-width: 1600px;
-      margin: 1.5rem auto 0 auto;
-      padding: 0 2rem;
-    }
-    .tab-buttons {
-      display: flex;
-      gap: 1rem;
-      border-bottom: 2px solid var(--border);
-      padding-bottom: 0.5rem;
-    }
-    .tab-btn {
-      border-radius: var(--radius);
-      font-size: 0.95rem;
-      padding: 0.6rem 1.2rem;
-    }
-    .tab-btn.active {
-      background: var(--accent);
-      color: white;
-    }
-
-    /* === Auto Mode panel === */
-    #auto-builder-layout {
-      grid-template-columns: 1fr;
-      min-height: auto;
-    }
-    .auto-builder-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-      width: 100%;
-    }
-    .auto-builder-form {
-      max-width: 600px;
-      margin: 0 auto;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-    .auto-builder-form h2 {
-      text-align: center;
-      margin-bottom: 0.5rem;
-    }
-    .auto-builder-intro {
-      text-align: center;
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-      margin-bottom: 1.5rem;
-    }
-    .auto-field label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 600;
-    }
-    .auto-field select,
-    .auto-field input {
-      width: 100%;
-      padding: 0.75rem;
-      border-radius: var(--radius);
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      color: var(--text-primary);
-      font-size: 0.95rem;
-      height: unset;
-    }
-    .auto-field small {
-      color: var(--text-muted);
-      margin-top: 0.25rem;
-      display: block;
-    }
-    #auto-submit-btn {
-      width: 100%;
-      padding: 0.85rem;
-      font-size: 1rem;
-      border-radius: var(--radius);
-      margin-top: 1rem;
-    }
-    #auto-results-container {
-      border-top: 1px solid var(--border);
-      padding-top: 2.5rem;
-      margin-top: 1.5rem;
-    }
-    #auto-results-container h3 {
-      text-align: center;
-      font-size: 1.5rem;
-      margin-bottom: 2rem;
-    }
-    .auto-options-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-      gap: 1.5rem;
-    }
 
     /* === Parts panel search === */
     .search-input-wrap {
@@ -138,64 +40,40 @@
       gap: 8px;
     }
 
-    /* === Intelligence card (bottleneck/perf widget) === */
-    .intelligence-card {
-      background: rgba(18, 24, 38, 0.7);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+    /* === Category-specific filter row (Brand/Socket/Chipset/Series/...) === */
+    .category-filters-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 0.85rem;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
     }
-    .intelligence-card h4 {
-      font-size: 0.85rem;
-      text-transform: uppercase;
-      color: #94a3b8;
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-    }
-    .intelligence-card h4 span {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    #intel-bottleneck-score {
-      font-size: 0.75rem;
-      padding: 2px 8px;
-      border-radius: 10px;
-      background: rgba(59, 130, 246, 0.2);
-      color: #60a5fa;
-    }
-    #intel-bottleneck-label {
-      font-weight: 600;
-      font-size: 0.85rem;
-      color: #f1f5f9;
-      margin-bottom: 0.25rem;
-    }
-    #intel-bottleneck-advice {
-      font-size: 0.78rem;
-      color: #94a3b8;
-      line-height: 1.3;
-      margin-bottom: 0.65rem;
-    }
-    .intel-fps-grid {
-      background: rgba(0, 0, 0, 0.25);
-      padding: 0.6rem;
-      border-radius: 8px;
+    .category-filters-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 4px;
-      text-align: center;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem 1.25rem;
     }
-    .intel-fps-item-label {
-      font-size: 0.7rem;
-      color: #94a3b8;
+    .category-filter-group label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
     }
-    .intel-fps-item-value {
-      font-weight: 700;
-      font-size: 0.9rem;
+    .category-filter-group .filter-select {
+      width: 100%;
+    }
+    .filter-reset-link {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 0.8rem;
+      cursor: pointer;
+      margin-top: 0.85rem;
+      padding: 0;
+      display: block;
+      margin-left: auto;
+      text-decoration: underline;
     }
 
     /* === Cross-match / marketplace panel === */
@@ -362,7 +240,7 @@
           <line x1="8" y1="21" x2="16" y2="21"></line>
           <line x1="12" y1="17" x2="12" y2="21"></line>
         </svg>
-        ประกอบ PC <span>Pro</span>
+        <span class="navbar-logo-text">Second-hand Computer Marketplace <span>System</span></span>
       </a>
       <button class="mobile-menu-toggle" id="mobile-menu-btn" aria-label="Toggle menu">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -372,76 +250,18 @@
         </svg>
       </button>
       <ul class="navbar-links">
-        <li><a href="/index.html">หน้าแรก</a></li>
-        <li><a href="/builder.html" class="active">ประกอบ PC</a></li>
-
+        <li><a href="/index.html">Home</a></li>
         <li><a href="/products.html">Marketplace</a></li>
-        <li><a href="/sell-product.html">Sell</a></li>
+        <li><a href="/builder.html" class="active">PC Builder</a></li>
+        <li><a href="/sell-product.html">Sell Product</a></li>
+        <li><a href="/inbox.html">Messages</a></li>
       </ul>
       <div class="navbar-auth" id="navbar-auth">
-        <a href="/login.html" class="btn btn-ghost btn-sm">เข้าสู่ระบบ</a>
-        <a href="/login.html?register" class="btn btn-primary btn-sm">สมัครสมาชิก</a>
+        <a href="/login.html" class="btn btn-ghost btn-sm">Login</a>
+        <a href="/login.html?register" class="btn btn-primary btn-sm">Register</a>
       </div>
     </div>
   </nav>
-
-  <!-- ตัวเลือกโหมดจัดสเปค -->
-  <div class="mode-selector-container">
-    <div class="tab-buttons">
-      <button class="btn tab-btn active" id="mode-manual-btn">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-        </svg>
-        จัดสเปคเอง (Manual Mode)
-      </button>
-      <button class="btn tab-btn btn-ghost" id="mode-auto-btn">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-        </svg>
-        จัดสเปคอัจฉริยะ (Auto Mode)
-      </button>
-    </div>
-  </div>
-
-  <!-- ส่วนของโหมด Auto -->
-  <div class="builder-layout" id="auto-builder-layout" style="display: none;">
-    <div class="auto-builder-card">
-
-      <div class="auto-builder-form">
-        <h2>ค้นหาสเปคที่ดีที่สุดสำหรับคุณ</h2>
-        <p class="auto-builder-intro">ระบบจะจัดสัดส่วนงบ เลือกของที่คุ้มประสิทธิภาพสูงสุดในระบบ และตรวจสอบคอขวดระหว่าง CPU และการ์ดจอให้อัตโนมัติ</p>
-
-        <div class="auto-field">
-          <label>ลักษณะการใช้งาน / วัตถุประสงค์</label>
-          <select id="auto-usecase" class="filter-select">
-            <option value="gaming">เล่นเกม (Gaming) / กราฟิก</option>
-            <option value="editing">ตัดต่อวิดีโอ / กราฟิก (Video Editing)</option>
-            <option value="general">ทำงานทั่วไป / เรียนออนไลน์ (General Work)</option>
-            <option value="ai">ทำงานด้าน AI / Machine Learning (AI-ML)</option>
-            <option value="streaming">สตรีมมิ่ง / จัดรายการ (Streaming)</option>
-          </select>
-        </div>
-
-        <div class="auto-field">
-          <label>งบประมาณรวม (บาท)</label>
-          <input type="number" id="auto-budget" class="search-input" placeholder="ตัวอย่าง: 30000" min="12000" step="1000">
-          <small>* งบแนะนำเริ่มต้นทั่วไป 12,000 บาท ขึ้นไป และสำหรับเล่นเกมเริ่มที่ 18,000 บาท</small>
-        </div>
-
-        <button class="btn btn-primary" id="auto-submit-btn">เริ่มคำนวณและจัดสเปค</button>
-      </div>
-
-      <!-- ผลลัพธ์ 3 ชุดสเปค -->
-      <div id="auto-results-container" style="display: none;">
-        <h3>เปรียบเทียบ 3 ชุดสเปคที่ดีที่สุดในงบประมาณของคุณ</h3>
-
-        <div class="auto-options-grid" id="auto-options-grid">
-          <!-- ชุดสเปคการ์ดจะถูกใส่ที่นี่ -->
-        </div>
-      </div>
-
-    </div>
-  </div>
 
   <!-- เค้าโครงหน้าประกอบ PC -->
   <div class="builder-layout" id="manual-builder-layout">
@@ -465,15 +285,19 @@
           </svg>
           <input type="text" class="search-input" id="parts-search" placeholder="ค้นหาอะไหล่...">
         </div>
-        <select class="filter-select" id="brand-filter">
-          <option value="">ทุกยี่ห้อ</option>
-        </select>
         <select class="filter-select" id="sort-filter">
           <option value="name">เรียงตาม: ชื่อ</option>
           <option value="price-asc">ราคา: ต่ำ → สูง</option>
           <option value="price-desc">ราคา: สูง → ต่ำ</option>
         </select>
       </div>
+
+      <!-- ตัวกรองเฉพาะหมวดหมู่ (ยี่ห้อ/Socket/Chipset/ซีรีส์/ฯลฯ) — สร้างแบบไดนามิกใน builder.js ตาม CATEGORY_FILTERS -->
+      <div class="category-filters-card" id="category-filters-card" style="display: none;">
+        <div class="category-filters-grid" id="category-filters-grid"></div>
+        <button type="button" class="filter-reset-link" id="filter-reset-btn">ล้างตัวกรอง (Reset to default)</button>
+      </div>
+
       <div class="parts-list" id="parts-list">
         <div class="empty-state">
           <div class="empty-state-icon">
@@ -525,37 +349,6 @@
         <p class="text-muted" style="font-size: 0.85rem;">เพิ่มอะไหล่เพื่อตรวจสอบความเข้ากันได้</p>
       </div>
 
-      <!-- วิดเจ็ตประเมินคอขวดและประสิทธิภาพเกม (Bottleneck & Gaming Performance) -->
-      <div class="card mb-2 intelligence-card" id="intelligence-card">
-        <h4>
-          <span>
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-            </svg>
-            ประสิทธิภาพและคอขวด
-          </span>
-          <span id="intel-bottleneck-score">-</span>
-        </h4>
-        <p id="intel-bottleneck-label">ยังไม่ได้เลือก CPU / การ์ดจอ</p>
-        <p id="intel-bottleneck-advice">เลือกชิ้นส่วน CPU และ GPU เพื่อประเมินความสมดุลของระบบ</p>
-
-        <div class="intel-fps-grid">
-          <div>
-            <div class="intel-fps-item-label">CS2 / Valorant</div>
-            <div id="fps-esports" class="intel-fps-item-value" style="color: #34d399;">- FPS</div>
-          </div>
-          <div>
-            <div class="intel-fps-item-label">Cyberpunk 1080p</div>
-            <div id="fps-aaa1080" class="intel-fps-item-value" style="color: #60a5fa;">- FPS</div>
-          </div>
-          <div>
-            <div class="intel-fps-item-label">Cyberpunk 1440p</div>
-            <div id="fps-aaa1440" class="intel-fps-item-value" style="color: #a78bfa;">- FPS</div>
-          </div>
-        </div>
-      </div>
-
-
 
       <!-- ปุ่มกดเปรียบเทียบราคามือสองในตลาด -->
       <button class="btn btn-outline" id="cross-match-btn">
@@ -574,7 +367,7 @@
             <circle cx="19" cy="21" r="1"></circle>
             <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
           </svg>
-          สินค้ามือสองในระบบ
+          พร้อมสั่งซื้อ
         </h4>
         <div id="marketplace-parts-status">
         </div>

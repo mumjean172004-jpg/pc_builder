@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบควบคุมแอดมิน | PC Builder Pro</title>
+  <title>ระบบควบคุมแอดมิน | Second-hand Computer Marketplace System</title>
   <link rel="stylesheet" href="/css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -39,8 +39,9 @@
     }
 
     .admin-logo {
-      font-size: 1.3rem;
+      font-size: 1rem;
       font-weight: bold;
+      line-height: 1.3;
       margin-bottom: 2rem;
       display: flex;
       align-items: center;
@@ -465,7 +466,7 @@
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M20 13c0 5-3.5 7.5-7.5 8.9a1 1 0 0 1-.9 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.79 17 5 19 5a1 1 0 0 1 1 1z"></path>
       </svg>
-      PC Builder Pro Admin
+      Second-hand Computer Marketplace System Admin
     </div>
     <ul class="sidebar-menu">
       <li class="menu-item active" id="tab-dashboard" onclick="switchTab('dashboard')">
@@ -507,7 +508,7 @@
           <polyline points="3.29 7 12 12 20.71 7"></polyline>
           <path d="m7.5 4.27 9 5.15"></path>
         </svg>
-        คลังอะไหล่มาตรฐาน
+        สินค้าในตลาดทั้งหมด
       </li>
       <li class="menu-item menu-item-logout" onclick="handleLogout()">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -714,42 +715,52 @@
       </div>
     </section>
 
-    <!-- SECTION 5: PARTS CATALOG TAB -->
+    <!-- SECTION 5: ALL MARKETPLACE PRODUCTS TAB (repurposed 2026-08-17 from the
+         removed standalone `parts` reference-catalog CRUD — see productController.js
+         and adminController.getAllProductsAdmin) -->
     <section id="section-parts" style="display: none;">
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <h3 class="section-heading" style="margin-top: 0; margin-bottom: 0;">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path>
-            <path d="M12 22V12"></path>
-            <polyline points="3.29 7 12 12 20.71 7"></polyline>
-            <path d="m7.5 4.27 9 5.15"></path>
-          </svg>
-          ฐานข้อมูลอะไหล่มาตรฐานกลาง (Reference Catalog)
-        </h3>
-        <button class="btn btn-primary btn-sm" onclick="openAddPartModal()">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M5 12h14"></path>
-            <path d="M12 5v14"></path>
-          </svg>
-          เพิ่มชิ้นส่วนใหม่
-        </button>
+      <h3 class="section-heading" style="margin-top: 0;">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path>
+          <path d="M12 22V12"></path>
+          <polyline points="3.29 7 12 12 20.71 7"></polyline>
+          <path d="m7.5 4.27 9 5.15"></path>
+        </svg>
+        สินค้าในตลาดทั้งหมด
+      </h3>
+      <p class="text-muted" style="font-size: 0.85rem;">รายการสินค้าจริงที่สมาชิกลงขายในตลาด (ล่าสุด 200 รายการ) — ใช้ตรวจสอบ/ค้นหาภาพรวมได้ทั้งหมด แยกจากแท็บ "สินค้าที่ถูกปักธง" ซึ่งกรองเฉพาะรายการน่าสงสัย</p>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;">
+        <input type="text" class="form-input" id="all-products-search" placeholder="ค้นหายี่ห้อ/รุ่น/ซีเรียลนัมเบอร์" style="max-width: 260px;">
+        <select class="form-input" id="all-products-status" style="max-width: 180px;">
+          <option value="">ทุกสถานะ</option>
+          <option value="active">กำลังขาย</option>
+          <option value="sold">ขายแล้ว</option>
+          <option value="paused">พักชั่วคราว</option>
+        </select>
+        <select class="form-input" id="all-products-review-status" style="max-width: 180px;">
+          <option value="">ทุกสถานะตรวจสอบ</option>
+          <option value="pending_review">รอตรวจสอบ</option>
+          <option value="approved">ผ่านแล้ว</option>
+          <option value="rejected">ถูกปฏิเสธ</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="loadAllProducts()">ค้นหา</button>
       </div>
-      <p class="text-muted" style="font-size: 0.85rem;">รายการอะไหล่มาตรฐาน (CPU, GPU ฯลฯ) ใช้เป็นราคาอ้างอิง (MSRP) สำหรับระบบตรวจจับสินค้ามือสองราคาต่ำผิดปกติ — แยกจากประกาศขายของสมาชิกในตลาดมือสอง</p>
       <div class="table-container">
         <table>
           <thead>
             <tr>
               <th>ID</th>
-              <th>ยี่ห้อ</th>
-              <th>รุ่น / ชื่ออุปกรณ์</th>
+              <th>ผู้ขาย</th>
+              <th>สินค้า</th>
               <th>หมวดหมู่</th>
-              <th>ราคา MSRP</th>
+              <th>ราคา</th>
               <th>สถานะ</th>
-              <th>การจัดการ</th>
+              <th>ตรวจสอบ</th>
+              <th>จัดการ</th>
             </tr>
           </thead>
-          <tbody id="parts-table-body">
-            <tr><td colspan="7" class="table-msg">กำลังโหลดฐานข้อมูลอะไหล่...</td></tr>
+          <tbody id="all-products-table-body">
+            <tr><td colspan="8" class="table-msg">กำลังโหลดรายการสินค้า...</td></tr>
           </tbody>
         </table>
       </div>
@@ -818,59 +829,6 @@
   </div>
 
   <!-- MODAL: ADD NEW CATALOG PART -->
-  <div class="modal-overlay" id="add-part-modal">
-    <div class="modal-card" style="max-width: 520px;">
-      <button class="modal-close" onclick="closeAddPartModal()">&times;</button>
-      <h3 class="section-heading" style="margin-top: 0;" id="part-modal-title">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path>
-          <path d="M12 22V12"></path>
-          <polyline points="3.29 7 12 12 20.71 7"></polyline>
-          <path d="m7.5 4.27 9 5.15"></path>
-        </svg>
-        <span id="part-modal-title-text">เพิ่มชิ้นส่วนมาตรฐานใหม่เข้าแคตตาล็อก</span>
-      </h3>
-      <p class="text-muted" style="font-size: 0.85rem; margin-top: -8px;">ข้อมูลนี้จะถูกใช้เป็นราคาอ้างอิง (MSRP) สำหรับตรวจจับสินค้ามือสองที่ตั้งราคาต่ำผิดปกติ</p>
-
-      <input type="hidden" id="part-edit-id" value="">
-      <div class="form-group">
-        <label for="part-name">ชื่ออุปกรณ์ *</label>
-        <input type="text" class="form-input" id="part-name" placeholder="เช่น Intel Core i5-13400F">
-      </div>
-      <div class="form-group">
-        <label for="part-category">หมวดหมู่ *</label>
-        <select class="form-input" id="part-category">
-          <option value="">-- เลือกหมวดหมู่ --</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="part-brand">ยี่ห้อ *</label>
-        <input type="text" class="form-input" id="part-brand" placeholder="เช่น Intel, AMD, NVIDIA">
-      </div>
-      <div class="form-group">
-        <label for="part-model">รุ่น (ถ้ามี)</label>
-        <input type="text" class="form-input" id="part-model" placeholder="เช่น i5-13400F">
-      </div>
-      <div class="form-group">
-        <label for="part-price">ราคา MSRP (บาท) *</label>
-        <input type="number" class="form-input" id="part-price" min="1" step="1" placeholder="ระบุราคาอ้างอิงเป็นตัวเลข">
-      </div>
-      <div class="form-group" id="part-active-group" style="display: none;">
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-          <input type="checkbox" id="part-is-active" style="width: 16px; height: 16px;">
-          เปิดใช้งานชิ้นส่วนนี้ (แสดงในระบบ)
-        </label>
-      </div>
-      <div id="add-part-error" class="form-error"></div>
-      <button class="btn btn-primary" id="add-part-submit-btn" style="width: 100%; justify-content: center; margin-top: 10px;" onclick="submitPartForm()">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M20 6 9 17l-5-5"></path>
-        </svg>
-        <span id="part-modal-submit-text">บันทึกเข้าแคตตาล็อก</span>
-      </button>
-    </div>
-  </div>
-
   <!-- SCRIPT APP LOGIC -->
   <script src="/js/app.js"></script>
   <script>
@@ -974,9 +932,9 @@
         descEl.textContent = 'แอดมินประเมิน สลิปไม่ถูกต้อง หรือสั่งระงับยกเลิกออเดอร์ที่มีปัญหา';
         fetchDisputes();
       } else if (tabName === 'parts') {
-        titleTextEl.textContent = 'คลังอะไหล่มาตรฐาน (Parts Catalog)';
-        descEl.textContent = 'จัดการฐานข้อมูลอะไหล่มาตรฐานกลาง ใช้เป็นราคาอ้างอิง MSRP และป้องกันสินค้ามือสองตั้งราคาต่ำผิดปกติ';
-        fetchParts();
+        titleTextEl.textContent = 'สินค้าในตลาดทั้งหมด';
+        descEl.textContent = 'ภาพรวมสินค้าจริงที่สมาชิกลงขายในตลาดมือสอง ค้นหา/ตรวจสอบได้ทั้งหมด';
+        loadAllProducts();
       }
     }
 
@@ -1115,7 +1073,7 @@
           return `
             <tr>
               <td>${p.id}</td>
-              <td><strong>${escapeHtml(p.part_name || 'อะไหล่กำหนดเอง')}</strong></td>
+              <td><strong>${escapeHtml(`${p.brand || ''} ${p.model || ''}`.trim() || 'ไม่ระบุ')}</strong></td>
               <td>${escapeHtml(p.seller_name)}</td>
               <td>฿${Number(p.price).toLocaleString()}</td>
               <td><span class="badge ${scoreBadge}">${p.suspicious_score} / 100</span></td>
@@ -1271,181 +1229,101 @@
       }
     }
 
-    // 5. Fetch Parts Catalog (shared reference catalog, public endpoint)
-    let allParts = []; // cached from the last fetchParts() call, used to pre-fill the edit modal without a second request
+    // 5. Fetch all marketplace products (repurposed 2026-08-17 from the removed
+    // parts-catalog CRUD — read-only, uses the seller's real listings directly).
+    const PRODUCT_STATUS_LABEL = { active: 'กำลังขาย', sold: 'ขายแล้ว', paused: 'พักชั่วคราว' };
+    const REVIEW_STATUS_LABEL = { approved: 'ผ่านแล้ว', pending_review: 'รอตรวจสอบ', rejected: 'ถูกปฏิเสธ' };
 
-    async function fetchParts() {
-      const body = document.getElementById('parts-table-body');
-      body.innerHTML = `<tr><td colspan="7" class="table-msg">กำลังโหลดฐานข้อมูลอะไหล่...</td></tr>`;
+    async function loadAllProducts() {
+      const body = document.getElementById('all-products-table-body');
+      body.innerHTML = `<tr><td colspan="8" class="table-msg">กำลังโหลดรายการสินค้า...</td></tr>`;
+
+      const search = document.getElementById('all-products-search').value.trim();
+      const status = document.getElementById('all-products-status').value;
+      const reviewStatus = document.getElementById('all-products-review-status').value;
+      const qs = new URLSearchParams();
+      if (search) qs.set('search', search);
+      if (status) qs.set('status', status);
+      if (reviewStatus) qs.set('review_status', reviewStatus);
 
       try {
-        const response = await fetch('/api/parts');
-        const parts = await response.json();
-        if (!response.ok) throw new Error(parts.error || 'โหลดข้อมูลล้มเหลว');
-        allParts = parts;
+        const response = await fetch(`/api/admin/products?${qs.toString()}`, {
+          headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
+        });
+        const products = await response.json();
+        if (!response.ok) throw new Error(products.error || 'โหลดข้อมูลล้มเหลว');
 
-        if (parts.length === 0) {
-          body.innerHTML = `<tr><td colspan="7" class="table-msg" style="color: var(--text-muted);">ยังไม่มีอะไหล่ในฐานข้อมูลแคตตาล็อก</td></tr>`;
+        if (products.length === 0) {
+          body.innerHTML = `<tr><td colspan="8" class="table-msg" style="color: var(--text-muted);">ไม่พบสินค้าตามเงื่อนไขที่ค้นหา</td></tr>`;
           return;
         }
 
-        body.innerHTML = parts.map(p => {
-          const statusBadge = p.is_active ? 'badge-active' : 'badge-suspended';
-          const statusText = p.is_active ? 'ใช้งาน' : 'ปิดใช้งาน';
-
+        body.innerHTML = products.map(p => {
+          const statusBadge = p.status === 'active' ? 'badge-active' : (p.status === 'sold' ? 'badge-suspended' : 'badge-flagged');
+          const reviewBadge = p.review_status === 'approved' ? 'badge-active' : (p.review_status === 'rejected' ? 'badge-suspended' : 'badge-flagged');
+          const isPending = p.review_status === 'pending_review';
           return `
             <tr>
               <td>${p.id}</td>
-              <td><strong>${escapeHtml(p.brand)}</strong></td>
-              <td>${escapeHtml(p.model || p.name)}</td>
+              <td>${escapeHtml(p.seller_name)}</td>
+              <td><strong>${escapeHtml(`${p.brand || ''} ${p.model || ''}`.trim() || 'ไม่ระบุ')}</strong></td>
               <td>${escapeHtml(p.category_name)}</td>
               <td>฿${Number(p.price).toLocaleString()}</td>
-              <td><span class="badge ${statusBadge}">${statusText}</span></td>
+              <td><span class="badge ${statusBadge}">${PRODUCT_STATUS_LABEL[p.status] || p.status}</span></td>
+              <td><span class="badge ${reviewBadge}">${REVIEW_STATUS_LABEL[p.review_status] || p.review_status}</span></td>
               <td>
                 <div class="row-actions">
-                  <button class="btn btn-sm btn-outline btn-icon-sm action-info" onclick="openEditPartModal(${p.id})"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg> แก้ไข</button>
-                  <button class="btn btn-sm btn-outline btn-icon-sm action-danger" onclick="deletePart(${p.id})"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> ลบ</button>
+                  ${isPending ? `
+                    <button class="btn btn-sm btn-outline btn-icon-sm action-success" onclick="reviewListingFromAllProducts(${p.id}, 'approved')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg> อนุมัติ</button>
+                    <button class="btn btn-sm btn-outline btn-icon-sm action-danger" onclick="reviewListingFromAllProducts(${p.id}, 'rejected')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg> ปฏิเสธ</button>
+                  ` : ''}
+                  <button class="btn btn-sm btn-outline btn-icon-sm action-danger" onclick="deleteProductFromAllProducts(${p.id})"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> ลบ</button>
                 </div>
               </td>
             </tr>
           `;
         }).join('');
       } catch (err) {
-        body.innerHTML = `<tr><td colspan="7" class="table-msg error">โหลดล้มเหลว: ${escapeHtml(err.message)}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="8" class="table-msg error">โหลดล้มเหลว: ${escapeHtml(err.message)}</td></tr>`;
       }
     }
 
-    // Add/Edit Part Modal Control — the same modal + form is reused for both;
-    // #part-edit-id (hidden) is empty for "add" mode, or holds the part id for "edit" mode.
-    async function loadPartCategoryOptions(selectedId) {
-      const categorySelect = document.getElementById('part-category');
-      categorySelect.innerHTML = `<option value="">กำลังโหลดหมวดหมู่...</option>`;
+    async function reviewListingFromAllProducts(id, status) {
+      const text = status === 'approved' ? 'อนุมัติผ่านเป็นปกติ' : 'ระงับและลบการลงโฆษณา';
+      if (!confirm(`ยืนยันการ ${text} สินค้านี้ใช่หรือไม่?`)) return;
+
       try {
-        const response = await fetch('/api/parts/categories');
-        const categories = await response.json();
-        if (!response.ok) throw new Error(categories.error || 'โหลดหมวดหมู่ล้มเหลว');
-
-        categorySelect.innerHTML = `<option value="">-- เลือกหมวดหมู่ --</option>` +
-          categories.map(c => `<option value="${c.id}" ${selectedId && Number(selectedId) === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
-      } catch (err) {
-        categorySelect.innerHTML = `<option value="">โหลดหมวดหมู่ล้มเหลว</option>`;
-      }
-    }
-
-    async function openAddPartModal() {
-      document.getElementById('add-part-error').textContent = '';
-      clearFieldErrors(['part-name', 'part-category', 'part-brand', 'part-price']);
-      document.getElementById('part-edit-id').value = '';
-      document.getElementById('part-name').value = '';
-      document.getElementById('part-brand').value = '';
-      document.getElementById('part-model').value = '';
-      document.getElementById('part-price').value = '';
-      document.getElementById('part-active-group').style.display = 'none';
-      document.getElementById('part-modal-title-text').textContent = 'เพิ่มชิ้นส่วนมาตรฐานใหม่เข้าแคตตาล็อก';
-      document.getElementById('part-modal-submit-text').textContent = 'บันทึกเข้าแคตตาล็อก';
-
-      await loadPartCategoryOptions(null);
-      document.getElementById('add-part-modal').style.display = 'flex';
-    }
-
-    async function openEditPartModal(id) {
-      const part = allParts.find(p => p.id === id);
-      if (!part) { Toast.error('ไม่พบข้อมูลชิ้นส่วนนี้ กรุณารีเฟรชตาราง'); return; }
-
-      document.getElementById('add-part-error').textContent = '';
-      clearFieldErrors(['part-name', 'part-category', 'part-brand', 'part-price']);
-      document.getElementById('part-edit-id').value = part.id;
-      document.getElementById('part-name').value = part.name || '';
-      document.getElementById('part-brand').value = part.brand || '';
-      document.getElementById('part-model').value = part.model || '';
-      document.getElementById('part-price').value = part.price;
-      document.getElementById('part-is-active').checked = !!part.is_active;
-      document.getElementById('part-active-group').style.display = 'block';
-      document.getElementById('part-modal-title-text').textContent = `แก้ไขชิ้นส่วน: ${part.brand} ${part.model || part.name}`;
-      document.getElementById('part-modal-submit-text').textContent = 'บันทึกการแก้ไข';
-
-      await loadPartCategoryOptions(part.category_id);
-      document.getElementById('add-part-modal').style.display = 'flex';
-    }
-
-    function closeAddPartModal() {
-      document.getElementById('add-part-modal').style.display = 'none';
-    }
-
-    async function submitPartForm() {
-      const errorEl = document.getElementById('add-part-error');
-      errorEl.textContent = '';
-      clearFieldErrors(['part-name', 'part-category', 'part-brand', 'part-price']);
-
-      const editId = document.getElementById('part-edit-id').value;
-      const isEdit = !!editId;
-      const name = document.getElementById('part-name').value.trim();
-      const categoryId = document.getElementById('part-category').value;
-      const brand = document.getElementById('part-brand').value.trim();
-      const model = document.getElementById('part-model').value.trim();
-      const price = Number(document.getElementById('part-price').value);
-
-      let hasError = false;
-      if (!name) { setFieldError('part-name', true); hasError = true; }
-      if (!categoryId) { setFieldError('part-category', true); hasError = true; }
-      if (!brand) { setFieldError('part-brand', true); hasError = true; }
-      if (!price || price <= 0) { setFieldError('part-price', true); hasError = true; }
-
-      if (hasError) {
-        errorEl.textContent = 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน (ชื่อ, หมวดหมู่, ยี่ห้อ, ราคา)';
-        return;
-      }
-
-      const body = {
-        name,
-        category_id: Number(categoryId),
-        brand,
-        model: model || undefined,
-        price
-      };
-      if (isEdit) {
-        body.is_active = document.getElementById('part-is-active').checked;
-      }
-
-      const submitBtn = document.getElementById('add-part-submit-btn');
-      setBtnLoading(submitBtn, true);
-      try {
-        const response = await fetch(`/api/admin/parts${isEdit ? '/' + editId : ''}`, {
-          method: isEdit ? 'PUT' : 'POST',
+        const response = await fetch(`/api/admin/products/${id}/review`, {
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${Auth.getToken()}`
           },
-          body: JSON.stringify(body)
+          body: JSON.stringify({ review_status: status })
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error);
 
-        Toast.success(data.message || (isEdit ? 'แก้ไขข้อมูลชิ้นส่วนสำเร็จ!' : 'เพิ่มชิ้นส่วนมาตรฐานเข้าสู่ระบบแคตตาล็อกสำเร็จ!'));
-        closeAddPartModal();
-        fetchParts();
+        Toast.success('คัดกรองสินค้าสำเร็จ!');
+        loadAllProducts();
       } catch (err) {
-        errorEl.textContent = err.message;
-      } finally {
-        setBtnLoading(submitBtn, false);
+        Toast.error(err.message);
       }
     }
 
-    async function deletePart(id) {
-      const part = allParts.find(p => p.id === id);
-      const label = part ? `${part.brand} ${part.model || part.name}` : `#${id}`;
-      if (!confirm(`ยืนยันลบ "${label}" ออกจากระบบแคตตาล็อกถาวร?\n\n(หากมีประกาศขายหรือชุดจัดสเปคที่อ้างอิงชิ้นส่วนนี้อยู่ ระบบจะไม่อนุญาตให้ลบ)`)) return;
+    async function deleteProductFromAllProducts(id) {
+      if (!confirm('ยืนยันการลบประกาศสินค้านี้ออกจากระบบถาวรใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้')) return;
 
       try {
-        const response = await fetch(`/api/admin/parts/${id}`, {
+        const response = await fetch(`/api/admin/products/${id}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error);
 
-        Toast.success(data.message || 'ลบชิ้นส่วนสำเร็จ');
-        fetchParts();
+        Toast.success('ลบประกาศสินค้าเรียบร้อยแล้ว');
+        loadAllProducts();
       } catch (err) {
         Toast.error(err.message);
       }

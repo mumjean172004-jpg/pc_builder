@@ -6,7 +6,7 @@ const { isValidRating, computeAverageRating } = require('../services/reviewServi
 async function refreshSellerRating(sellerId) {
   const result = await pool.query('SELECT rating FROM reviews WHERE seller_id = ?', [sellerId]);
   const avg = computeAverageRating((result.rows || []).map(r => r.rating));
-  await pool.query('UPDATE users SET seller_rating = ? WHERE id = ?', [avg, sellerId]);
+  await pool.query('UPDATE seller_profiles SET rating = ? WHERE user_id = ?', [avg, sellerId]);
   return avg;
 }
 
@@ -33,9 +33,8 @@ exports.createBooking = async (req, res) => {
 
     // Fetch product and seller information
     const queryResult = await pool.query(`
-      SELECT p.id as product_id, p.seller_id, p.price, p.stock_quantity, p.status, pr.brand, pr.model, pr.name as part_name
+      SELECT p.id as product_id, p.seller_id, p.price, p.stock_quantity, p.status, p.brand, p.model
       FROM products p
-      LEFT JOIN parts pr ON p.part_id = pr.id
       WHERE p.id IN (${placeholders})
     `, productIds);
 
@@ -48,7 +47,7 @@ exports.createBooking = async (req, res) => {
     // Verify all products are active
     const inactiveProduct = products.find(p => p.status !== 'active');
     if (inactiveProduct) {
-      return res.status(400).json({ error: `สินค้า ${inactiveProduct.brand || ''} ${inactiveProduct.model || inactiveProduct.part_name || ''} ถูกขายหรือระงับการขายแล้ว` });
+      return res.status(400).json({ error: `สินค้า ${inactiveProduct.brand || ''} ${inactiveProduct.model || ''} ถูกขายหรือระงับการขายแล้ว` });
     }
 
     // Block buying own products to prevent review/rating pumping
@@ -130,7 +129,7 @@ exports.createBooking = async (req, res) => {
         }
       }
 
-      const itemsListText = sellerProducts.map(p => `- ${p.brand} ${p.model || p.part_name} (฿${p.price.toLocaleString()})`).join('\n');
+      const itemsListText = sellerProducts.map(p => `- ${p.brand} ${p.model} (฿${p.price.toLocaleString()})`).join('\n');
       const systemMessage = `[ระบบ] ใบสั่งจอง #BO-${orderId} ถูกเปิดขึ้นแล้ว!\n\n${shippingText}\n\nรายการสินค้า:\n${itemsListText}\n\nราคารวมทั้งหมด: ฿${totalPrice.toLocaleString()}\n\nกรุณาแจ้งช่องทางการโอนเงินและการจัดส่ง/นัดรับเพิ่มเติมในช่องแชทนี้`;
 
       await pool.query(`
@@ -161,7 +160,7 @@ exports.createBooking = async (req, res) => {
 exports.updateBookingStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, courier_name, tracking_number } = req.body;
+    const { status, courier_name, tracking_number, proof_of_packing_url } = req.body;
     const userId = req.userId;
 
     const validStatuses = ['pending', 'waiting_verification', 'paid', 'shipped', 'completed', 'cancelled'];
@@ -198,6 +197,10 @@ exports.updateBookingStatus = async (req, res) => {
       }
     }
 
+    if (status === 'shipped' && order.status !== 'paid') {
+      return res.status(400).json({ error: 'ต้องยืนยันการชำระเงินก่อนจึงจะสามารถระบุการจัดส่งได้' });
+    }
+
     if (status === 'completed') {
       if (!isBuyer) {
         return res.status(400).json({ error: 'มีเพียงผู้ซื้อเท่านั้นที่จะกดยืนยันสำเร็จการรับสินค้าได้' });
@@ -208,10 +211,12 @@ exports.updateBookingStatus = async (req, res) => {
     }
 
     // Update status and shipping info
-    if (courier_name || tracking_number) {
+    if (courier_name || tracking_number || proof_of_packing_url) {
       await pool.query(
-        'UPDATE orders SET status = ?, courier_name = COALESCE(?, courier_name), tracking_number = COALESCE(?, tracking_number) WHERE id = ?',
-        [status, courier_name || null, tracking_number || null, id]
+        `UPDATE orders SET status = ?, courier_name = COALESCE(?, courier_name),
+         tracking_number = COALESCE(?, tracking_number),
+         proof_of_packing_url = COALESCE(?, proof_of_packing_url) WHERE id = ?`,
+        [status, courier_name || null, tracking_number || null, proof_of_packing_url || null, id]
       );
     } else if (status === 'pending' && order.status === 'waiting_verification') {
       await pool.query('UPDATE orders SET status = ?, payment_slip_url = NULL WHERE id = ?', [status, id]);
@@ -280,7 +285,10 @@ exports.updateBookingStatus = async (req, res) => {
         io.to(`room_${roomId}`).emit('status_updated', {
           orderId: parseInt(id),
           status,
-          payment_slip_url: status === 'pending' ? null : order.payment_slip_url
+          payment_slip_url: status === 'pending' ? null : order.payment_slip_url,
+          courier_name: courier_name || order.courier_name,
+          tracking_number: tracking_number || order.tracking_number,
+          proof_of_packing_url: proof_of_packing_url || order.proof_of_packing_url
         });
       } catch (err) {
         console.error('Socket update status broadcast error:', err.message);
@@ -336,20 +344,25 @@ exports.getRoomMessages = async (req, res) => {
 
     // Verify room exists and user is member
     const roomResult = await pool.query(`
-      SELECT 
-        cr.buyer_id, 
-        cr.seller_id, 
-        cr.order_id, 
-        o.payment_slip_url, 
+      SELECT
+        cr.buyer_id,
+        cr.seller_id,
+        cr.order_id,
+        o.payment_slip_url,
         o.status as order_status,
         o.total_price as order_price,
-        su.shop_name as seller_shop_name,
+        o.courier_name,
+        o.tracking_number,
+        o.proof_of_packing_url,
+        sp.shop_name as seller_shop_name,
         su.username as seller_username,
-        su.seller_bank_account,
-        su.seller_phone
+        sp.bank_account_number as seller_bank_account,
+        sp.is_verified as is_seller_verified,
+        COALESCE(sp.contact_phone, su.phone) as seller_phone
       FROM chat_rooms cr
       LEFT JOIN orders o ON cr.order_id = o.id
       INNER JOIN users su ON cr.seller_id = su.id
+      LEFT JOIN seller_profiles sp ON sp.user_id = su.id
       WHERE cr.id = ?
     `, [roomId]);
 
@@ -381,9 +394,13 @@ exports.getRoomMessages = async (req, res) => {
       payment_slip_url: room.payment_slip_url,
       order_status: room.order_status,
       order_price: room.order_price,
+      courier_name: room.courier_name,
+      tracking_number: room.tracking_number,
+      proof_of_packing_url: room.proof_of_packing_url,
       seller_shop_name: room.seller_shop_name || room.seller_username,
       seller_bank_account: room.seller_bank_account,
       seller_phone: room.seller_phone,
+      is_seller_verified: room.is_seller_verified || 0,
       messages: messagesResult.rows
     });
 
@@ -464,9 +481,11 @@ exports.uploadPaymentSlip = async (req, res) => {
     }
 
     const orderResult = await pool.query(`
-      SELECT o.*, u.seller_bank_account, u.seller_bank_name, u.seller_bank_account_name, u.shop_name, u.username as seller_username
+      SELECT o.*, sp.bank_account_number as seller_bank_account, sp.bank_name as seller_bank_name,
+             sp.bank_account_name as seller_bank_account_name, sp.shop_name, u.username as seller_username
       FROM orders o
       JOIN users u ON o.seller_id = u.id
+      LEFT JOIN seller_profiles sp ON sp.user_id = u.id
       WHERE o.id = ?
     `, [id]);
 
@@ -503,10 +522,14 @@ exports.uploadPaymentSlip = async (req, res) => {
 
     const verifyData = verification.data;
 
-    // Update status to paid and record verification metadata
+    // Record slip + automated verification metadata, but leave the actual payment
+    // confirmation to the seller — status goes to 'waiting_verification', not 'paid'.
+    // The automated check above (real SlipOK API, or the always-succeeds simulator when
+    // no API key is configured) is a helpful pre-check for the seller's manual review,
+    // not a substitute for it.
     await pool.query(`
-      UPDATE orders SET 
-        status = 'paid',
+      UPDATE orders SET
+        status = 'waiting_verification',
         payment_slip_url = ?,
         slip_verified_at = CURRENT_TIMESTAMP,
         slip_trans_ref = ?,
@@ -518,12 +541,12 @@ exports.uploadPaymentSlip = async (req, res) => {
     const roomResult = await pool.query('SELECT id FROM chat_rooms WHERE order_id = ?', [id]);
     if (roomResult.rows?.length) {
       const roomId = roomResult.rows[0].id;
-      const systemMsg = `✅ [ระบบ] ตรวจสอบสลิปการโอนเงินสำเร็จเรียบร้อย!\n` +
-        `• รหัสอ้างอิงธนาคาร (Ref): ${verifyData.transRef}\n` +
-        `• ยอดเงินที่ชำระ: ฿${verifyData.amount.toLocaleString()}\n` +
+      const systemMsg = `📨 [ระบบ] ผู้ซื้อได้แนบสลิปการโอนเงินแล้ว รอผู้ขายตรวจสอบและยืนยัน\n` +
+        `• รหัสอ้างอิงธนาคาร (Ref) จากการตรวจสอบอัตโนมัติ: ${verifyData.transRef}\n` +
+        `• ยอดเงินที่ตรวจพบ: ฿${verifyData.amount.toLocaleString()}\n` +
         `• บัญชีปลายทาง: ${verifyData.receiverAccount} (${order.seller_bank_name || 'ธนาคารผู้ขาย'})\n` +
-        `• สถานะอัปเดต: ชำระเงินเรียบร้อยแล้ว (รอผู้ขายจัดเตรียมและส่งพัสดุ)`;
-      
+        `• สถานะอัปเดต: รอผู้ขายตรวจสอบสลิปและกดยืนยันรับเงิน`;
+
       const insertMsgResult = await pool.query(`
         INSERT INTO chat_messages (room_id, sender_id, message_type, message)
         VALUES (?, NULL, 'system', ?)
@@ -546,7 +569,7 @@ exports.uploadPaymentSlip = async (req, res) => {
 
         io.to(`room_${roomId}`).emit('status_updated', {
           orderId: parseInt(id),
-          status: 'paid',
+          status: 'waiting_verification',
           payment_slip_url: fileUrl,
           slip_verified_at: new Date().toISOString(),
           slip_trans_ref: verifyData.transRef,
@@ -558,8 +581,8 @@ exports.uploadPaymentSlip = async (req, res) => {
     }
 
     res.json({
-      message: 'ตรวจสอบและยืนยันสลิปการโอนเงินสำเร็จเรียบร้อย',
-      status: 'paid',
+      message: 'ส่งสลิปเรียบร้อยแล้ว กำลังรอผู้ขายตรวจสอบและยืนยันการรับเงิน',
+      status: 'waiting_verification',
       payment_slip_url: fileUrl,
       verification: verifyData
     });
@@ -586,6 +609,9 @@ exports.shipOrderWithProof = async (req, res) => {
     const order = orderResult.rows[0];
     if (order.seller_id !== userId) {
       return res.status(403).json({ error: 'มีเพียงผู้ขายเท่านั้นที่จะอัปเดตการจัดส่งได้' });
+    }
+    if (order.status !== 'paid') {
+      return res.status(400).json({ error: 'ต้องยืนยันการชำระเงินก่อนจึงจะสามารถระบุการจัดส่งได้' });
     }
 
     await pool.query(`
@@ -727,15 +753,17 @@ exports.exportLegalEvidence = async (req, res) => {
     const userId = req.userId;
 
     const orderResult = await pool.query(`
-      SELECT 
+      SELECT
         o.*,
         bu.username as buyer_username, bu.email as buyer_email, bu.phone as buyer_phone,
         su.username as seller_username, su.email as seller_email, su.phone as seller_phone,
-        su.shop_name, su.seller_full_name, su.seller_id_card, su.seller_bank_name,
-        su.seller_bank_account, su.seller_bank_account_name, su.is_seller_verified
+        ssp.shop_name, ssp.full_name as seller_full_name, ssp.id_card_number as seller_id_card,
+        ssp.bank_name as seller_bank_name, ssp.bank_account_number as seller_bank_account,
+        ssp.bank_account_name as seller_bank_account_name, ssp.is_verified as is_seller_verified
       FROM orders o
       JOIN users bu ON o.buyer_id = bu.id
       JOIN users su ON o.seller_id = su.id
+      LEFT JOIN seller_profiles ssp ON ssp.user_id = su.id
       WHERE o.id = ?
     `, [id]);
 
@@ -749,10 +777,9 @@ exports.exportLegalEvidence = async (req, res) => {
     // Fetch items with serial numbers
     const itemsResult = await pool.query(`
       SELECT oi.*, p.serial_number, p.condition, p.proof_image_url, p.sn_image_url, p.is_prebuilt_set,
-             pr.brand, pr.model, pr.name as part_name, pr.specs
+             p.brand, p.model
       FROM order_items oi
       JOIN products p ON oi.product_id = p.id
-      LEFT JOIN parts pr ON p.part_id = pr.id
       WHERE oi.order_id = ?
     `, [id]);
 

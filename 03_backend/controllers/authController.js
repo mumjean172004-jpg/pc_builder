@@ -3,6 +3,42 @@ const pool = require('../config/database');
 const { generateToken } = require('../utils/jwt');
 const { sendServerError } = require('../utils/errorHandler');
 
+// Seller/KYC fields live in `seller_profiles` (1:1 via user_id), not on `users`
+// directly — this helper joins them back and aliases to the exact field names
+// every existing caller already expects, so nothing downstream (frontend included)
+// needs to change for this split.
+async function fetchProfileWithSellerData(userId) {
+  const result = await pool.query(
+    `SELECT u.id, u.username, u.email, u.avatar_url, u.phone, u.google_id, u.facebook_id, u.active_role,
+            sp.shop_name, sp.shop_avatar_url as seller_avatar_url, sp.address_province as seller_address_province,
+            sp.address_district as seller_address_district, sp.contact_phone as seller_phone,
+            sp.id_card_number as seller_id_card, sp.full_name as seller_full_name,
+            sp.bank_name as seller_bank_name, sp.bank_account_number as seller_bank_account,
+            sp.bank_account_name as seller_bank_account_name,
+            sp.is_verified as is_seller_verified, sp.rating as seller_rating, sp.sales_count, sp.has_badge as has_seller_badge,
+            u.is_phone_verified, u.is_email_verified, u.created_at
+     FROM users u
+     LEFT JOIN seller_profiles sp ON sp.user_id = u.id
+     WHERE u.id = ?`,
+    [userId]
+  );
+  return result.rows?.[0];
+}
+
+// Upserts the seller_profiles row for a user — every field is COALESCEd against the
+// existing value when the incoming value is null/undefined, matching the partial-
+// update semantics the old per-column `COALESCE(?, users.col)` UPDATEs already had.
+async function upsertSellerProfile(userId, fields) {
+  const cols = ['user_id', ...Object.keys(fields)];
+  const vals = [userId, ...Object.values(fields).map((v) => (v === undefined ? null : v))];
+  const updateAssignments = Object.keys(fields).map((c) => `${c} = COALESCE(VALUES(${c}), ${c})`).join(', ');
+  await pool.query(
+    `INSERT INTO seller_profiles (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})
+     ON DUPLICATE KEY UPDATE ${updateAssignments}`,
+    vals
+  );
+}
+
 // 1. Sign up normal flow
 exports.register = async (req, res) => {
   try {
@@ -257,21 +293,11 @@ exports.logout = async (req, res) => {
 // 4. Get Profile (Combined Buyer/Seller info)
 exports.getProfile = async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT id, username, email, avatar_url, phone, google_id, facebook_id, active_role,
-              shop_name, seller_avatar_url, seller_address_province, seller_address_district, seller_phone,
-              id_card_number as seller_id_card, seller_full_name, bank_name as seller_bank_name, bank_account_number as seller_bank_account, bank_account_name as seller_bank_account_name,
-              is_seller_verified, seller_rating, sales_count, has_seller_badge,
-              is_phone_verified, is_email_verified, created_at 
-       FROM users WHERE id = ?`,
-      [req.userId]
-    );
+    const user = await fetchProfileWithSellerData(req.userId);
 
-    if (!result.rows || result.rows.length === 0) {
+    if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-
-    const user = result.rows[0];
 
     const buildStats = await pool.query(
       `SELECT
@@ -296,11 +322,10 @@ exports.getProfile = async (req, res) => {
     const buyerOrdersEnriched = [];
     for (const order of buyerOrders.rows || []) {
       const items = await pool.query(
-        `SELECT oi.*, pr.brand, pr.model, pr.name as part_name, p.category_id, c.slug as category_slug
+        `SELECT oi.*, p.brand, p.model, p.category_id, c.slug as category_slug
          FROM order_items oi
          JOIN products p ON oi.product_id = p.id
          JOIN categories c ON p.category_id = c.id
-         LEFT JOIN parts pr ON p.part_id = pr.id
          WHERE oi.order_id = ?`,
         [order.id]
       );
@@ -320,11 +345,10 @@ exports.getProfile = async (req, res) => {
     const sellerOrdersEnriched = [];
     for (const order of sellerOrders.rows || []) {
       const items = await pool.query(
-        `SELECT oi.*, pr.brand, pr.model, pr.name as part_name, p.category_id, c.slug as category_slug
+        `SELECT oi.*, p.brand, p.model, p.category_id, c.slug as category_slug
          FROM order_items oi
          JOIN products p ON oi.product_id = p.id
          JOIN categories c ON p.category_id = c.id
-         LEFT JOIN parts pr ON p.part_id = pr.id
          WHERE oi.order_id = ?`,
         [order.id]
       );
@@ -579,12 +603,12 @@ exports.switchRole = async (req, res) => {
     }
 
     if (role === 'seller') {
-      const userRes = await pool.query(
-        'SELECT shop_name, bank_account_number, is_seller_verified FROM users WHERE id = ?',
+      const profileRes = await pool.query(
+        'SELECT shop_name, bank_account_number, is_verified FROM seller_profiles WHERE user_id = ?',
         [req.userId]
       );
-      const user = userRes.rows?.[0];
-      const isRegistered = user && (user.is_seller_verified === 1 || (user.shop_name && user.bank_account_number));
+      const profile = profileRes.rows?.[0];
+      const isRegistered = profile && (profile.is_verified === 1 || (profile.shop_name && profile.bank_account_number));
       if (!isRegistered) {
         return res.status(403).json({
           error: 'คุณยังไม่ได้ลงทะเบียนเป็นผู้ขาย กรุณากรอกข้อมูลร้านค้าและเลขบัญชีธนาคารเพื่อเริ่มต้นขายสินค้า',
@@ -625,55 +649,28 @@ exports.registerSeller = async (req, res) => {
 
     const fullName = seller_full_name || seller_bank_account_name || shop_name;
     const bankAccountName = seller_bank_account_name || seller_full_name || shop_name;
+    const bankName = seller_bank_name || 'ธนาคารกสิกรไทย (KBANK)';
 
-    await pool.query(
-      `UPDATE users SET
-        shop_name = ?,
-        seller_phone = ?,
-        bank_name = ?,
-        bank_account_number = ?,
-        bank_account_name = ?,
-        seller_bank_name = ?,
-        seller_bank_account = ?,
-        seller_bank_account_name = ?,
-        seller_full_name = ?,
-        seller_address_province = ?,
-        seller_address_district = ?,
-        id_card_number = COALESCE(?, id_card_number),
-        seller_avatar_url = COALESCE(?, seller_avatar_url),
-        kyc_status = 'pending',
-        active_role = 'seller'
-       WHERE id = ?`,
-      [
-        shop_name,
-        seller_phone,
-        seller_bank_name || 'ธนาคารกสิกรไทย (KBANK)',
-        seller_bank_account,
-        bankAccountName,
-        seller_bank_name || 'ธนาคารกสิกรไทย (KBANK)',
-        seller_bank_account,
-        bankAccountName,
-        fullName,
-        seller_address_province,
-        seller_address_district || null,
-        seller_id_card || null,
-        seller_avatar_url || null,
-        userId
-      ]
-    );
+    await upsertSellerProfile(userId, {
+      shop_name,
+      contact_phone: seller_phone,
+      bank_name: bankName,
+      bank_account_number: seller_bank_account,
+      bank_account_name: bankAccountName,
+      full_name: fullName,
+      address_province: seller_address_province,
+      address_district: seller_address_district || null,
+      id_card_number: seller_id_card || null,
+      shop_avatar_url: seller_avatar_url || null,
+      kyc_status: 'pending',
+    });
+    await pool.query(`UPDATE users SET active_role = 'seller' WHERE id = ?`, [userId]);
 
-    const result = await pool.query(
-      `SELECT id, username, email, phone, avatar_url, active_role,
-              shop_name, seller_avatar_url, seller_address_province, seller_address_district, seller_phone,
-              seller_full_name, bank_name as seller_bank_name, bank_account_number as seller_bank_account, bank_account_name as seller_bank_account_name,
-              id_card_number as seller_id_card, is_seller_verified, has_seller_badge, seller_rating, sales_count
-       FROM users WHERE id = ?`,
-      [userId]
-    );
+    const user = await fetchProfileWithSellerData(userId);
 
     res.status(200).json({
       message: 'ลงทะเบียนเป็นผู้ขายและยืนยันตัวตนสำเร็จ!',
-      user: result.rows[0]
+      user
     });
   } catch (error) {
     sendServerError(res, error);
@@ -697,34 +694,20 @@ exports.updateSellerProfile = async (req, res) => {
     } = req.body;
     const userId = req.userId;
 
-    await pool.query(
-      `UPDATE users SET 
-        shop_name = COALESCE(?, shop_name), 
-        seller_avatar_url = COALESCE(?, seller_avatar_url),
-        seller_address_province = COALESCE(?, seller_address_province),
-        seller_address_district = COALESCE(?, seller_address_district),
-        seller_phone = COALESCE(?, seller_phone),
-        seller_bank_name = COALESCE(?, seller_bank_name),
-        seller_bank_account = COALESCE(?, seller_bank_account),
-        seller_bank_account_name = COALESCE(?, seller_bank_account_name),
-        seller_full_name = COALESCE(?, seller_full_name)
-       WHERE id = ?`,
-      [
-        shop_name || null, 
-        seller_avatar_url || null, 
-        seller_address_province || null, 
-        seller_address_district || null, 
-        seller_phone || null, 
-        seller_bank_name || null,
-        seller_bank_account || null, 
-        seller_bank_account_name || null,
-        seller_full_name || null,
-        userId
-      ]
-    );
+    await upsertSellerProfile(userId, {
+      shop_name: shop_name || null,
+      shop_avatar_url: seller_avatar_url || null,
+      address_province: seller_address_province || null,
+      address_district: seller_address_district || null,
+      contact_phone: seller_phone || null,
+      bank_name: seller_bank_name || null,
+      bank_account_number: seller_bank_account || null,
+      bank_account_name: seller_bank_account_name || null,
+      full_name: seller_full_name || null,
+    });
 
-    const result = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
-    res.json({ message: 'Seller profile updated successfully', user: result.rows[0] });
+    const user = await fetchProfileWithSellerData(userId);
+    res.json({ message: 'Seller profile updated successfully', user });
   } catch (error) {
     sendServerError(res, error);
   }
@@ -743,28 +726,23 @@ exports.verifySellerIdentity = async (req, res) => {
     const officialFullName = full_name || bank_account_name;
     const officialAccountName = bank_account_name || full_name;
 
-    // Update seller identity fields and set to pending
+    await upsertSellerProfile(userId, {
+      id_card_number: id_card,
+      full_name: officialFullName || null,
+      bank_name: bank_name || null,
+      bank_account_number: bank_account,
+      bank_account_name: officialAccountName || null,
+      contact_phone: phone,
+      kyc_status: 'pending',
+      kyc_document_url: kyc_document_url || null,
+    });
     await pool.query(
-      `UPDATE users SET
-        id_card_number = ?,
-        seller_full_name = COALESCE(?, seller_full_name),
-        bank_name = COALESCE(?, bank_name),
-        bank_account_number = ?,
-        bank_account_name = COALESCE(?, bank_account_name),
-        seller_bank_name = COALESCE(?, seller_bank_name),
-        seller_bank_account = ?,
-        seller_bank_account_name = COALESCE(?, seller_bank_account_name),
-        seller_phone = ?,
-        kyc_status = 'pending',
-        kyc_document_url = COALESCE(?, kyc_document_url),
-        is_phone_verified = 1,
-        phone = COALESCE(phone, ?)
-       WHERE id = ?`,
-      [id_card, officialFullName || null, bank_name || null, bank_account, officialAccountName || null, bank_name || null, bank_account, officialAccountName || null, phone, kyc_document_url, phone, userId]
+      `UPDATE users SET is_phone_verified = 1, phone = COALESCE(phone, ?) WHERE id = ?`,
+      [phone, userId]
     );
 
-    const result = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
-    res.json({ message: 'ส่งข้อมูลยืนยันตัวตนสำเร็จ กรุณารอผู้ดูแลระบบตรวจสอบเอกสาร!', user: result.rows[0] });
+    const user = await fetchProfileWithSellerData(userId);
+    res.json({ message: 'ส่งข้อมูลยืนยันตัวตนสำเร็จ กรุณารอผู้ดูแลระบบตรวจสอบเอกสาร!', user });
   } catch (error) {
     sendServerError(res, error);
   }
@@ -882,13 +860,12 @@ exports.deleteBuyerAddress = async (req, res) => {
 exports.getWishlist = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT w.id as wishlist_id, p.*, c.name as category_name, c.slug as category_slug, 
-              parts.name as part_name, parts.brand, parts.model, u.username as seller_name
+      `SELECT w.id as wishlist_id, p.*, c.name as category_name, c.slug as category_slug,
+              u.username as seller_name
        FROM wishlists w
        JOIN products p ON w.product_id = p.id
        JOIN categories c ON p.category_id = c.id
        JOIN users u ON p.seller_id = u.id
-       LEFT JOIN parts ON p.part_id = parts.id
        WHERE w.user_id = ?`,
       [req.userId]
     );

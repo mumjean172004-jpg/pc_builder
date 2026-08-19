@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>รายละเอียดสินค้า | PC Builder Pro</title>
+  <title>รายละเอียดสินค้า | Second-hand Computer Marketplace System</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
     .detail-grid {
@@ -340,7 +340,7 @@
           <line x1="8" y1="21" x2="16" y2="21"></line>
           <line x1="12" y1="17" x2="12" y2="21"></line>
         </svg>
-        ประกอบ PC <span>Pro</span>
+        <span class="navbar-logo-text">Second-hand Computer Marketplace <span>System</span></span>
       </a>
       <button class="mobile-menu-toggle" id="mobile-menu-btn" aria-label="Toggle menu">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -350,12 +350,12 @@
         </svg>
       </button>
       <ul class="navbar-links">
-        <li><a href="/index.html">หน้าแรก</a></li>
+        <li><a href="/index.html">Home</a></li>
         <li><a href="/products.html" class="active">Marketplace</a></li>
-        <li><a href="/builder.html">ประกอบ PC</a></li>
+        <li><a href="/builder.html">PC Builder</a></li>
 
-        <li><a href="/sell-product.html">ลงขายสินค้า</a></li>
-        <li><a href="/inbox.html">ข้อความเจรจา</a></li>
+        <li><a href="/sell-product.html">Sell Product</a></li>
+        <li><a href="/inbox.html">Messages</a></li>
       </ul>
       <div class="navbar-auth" id="navbar-auth"></div>
     </div>
@@ -483,7 +483,7 @@
       try {
         const product = await API.get(`/products/${productId}`);
         activeProduct = product;
-        document.title = `${product.brand || 'คอมเซ็ต'} ${product.model || product.part_name || ''} | PC Builder Pro`;
+        document.title = `${product.brand || 'คอมเซ็ต'} ${product.model || product.part_name || ''} | Second-hand Computer Marketplace System`;
 
         let prebuiltSpecs = null;
         if (product.is_prebuilt_set && product.prebuilt_specs) {
@@ -592,22 +592,18 @@
             <div class="product-info-col">
               <div>
                 <span class="product-badge">
-                  ${product.is_prebuilt_set ? `
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                      <line x1="8" y1="21" x2="16" y2="21"></line>
-                      <line x1="12" y1="17" x2="12" y2="21"></line>
-                    </svg>
-                    Prebuilt PC Set
-                  ` : escapeHtml(product.category_name || 'Component')}
+                  ${escapeHtml(product.category_name || 'Hardware')}
                 </span>
                 <h1 class="product-title">
-                  ${escapeHtml(product.brand || '')} ${escapeHtml(product.model || product.part_name || 'ชุดคอมพิวเตอร์')}
+                  ${escapeHtml(product.brand || '')} ${escapeHtml(product.model || '')}
                 </h1>
-                <h2 class="product-price">${formatPrice(product.price)}</h2>
+                <div class="detail-price-row">
+                  ${Number(product.original_price) > Number(product.price) ? `<span class="original-price">${formatPrice(product.original_price)}</span>` : ''}
+                  <h2 class="product-price">${formatPrice(product.price)}</h2>
+                </div>
               </div>
 
-              <!-- รายละเอียดสเปกย่อย หรือ สเปกคอมเซ็ต -->
+              <!-- รายละเอียดสเปกย่อย -->
               <div class="info-card">
                 <h4 class="section-card-title">
                   <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -618,27 +614,21 @@
                     <path d="M8 11h.01"></path>
                     <path d="M8 16h.01"></path>
                   </svg>
-                  ข้อมูลสเปกสินค้า
+                  ข้อมูลสเปกและสภาพสินค้า
                 </h4>
 
-                ${prebuiltSpecs ? `
-                  <table class="specs-table">
-                    <tr><td>ซีพียู (CPU):</td><td>${escapeHtml(prebuiltSpecs.cpu || '-')}</td></tr>
-                    <tr><td>การ์ดจอ (GPU):</td><td>${escapeHtml(prebuiltSpecs.gpu || '-')}</td></tr>
-                    <tr><td>เมนบอร์ด (MB):</td><td>${escapeHtml(prebuiltSpecs.motherboard || '-')}</td></tr>
-                    <tr><td>แรม (RAM):</td><td>${escapeHtml(prebuiltSpecs.ram || '-')}</td></tr>
-                    <tr><td>ความจุ (SSD):</td><td>${escapeHtml(prebuiltSpecs.storage || '-')}</td></tr>
-                    <tr><td>เพาเวอร์ (PSU):</td><td>${escapeHtml(prebuiltSpecs.psu || '-')}</td></tr>
-                    <tr><td>เคส/ระบายความร้อน:</td><td>${escapeHtml(prebuiltSpecs.case || '-')}</td></tr>
-                  </table>
-                ` : `
-                  <table class="specs-table">
-                    <tr><td>สภาพสินค้า:</td><td><strong class="text-warning">${product.condition === 'new' ? 'มือหนึ่ง (New)' : 'มือสอง ' + (product.condition === 'used_90' ? '90%+' : '80%+')}</strong></td></tr>
-                    <tr><td>ประกันคงเหลือ:</td><td>${product.remaining_warranty_months || 0} เดือน</td></tr>
-                    <tr><td>Serial Number:</td><td><strong class="mono-highlight">${escapeHtml(product.serial_number || '-')}</strong></td></tr>
-                    <tr><td>สต็อกคงเหลือ:</td><td>พร้อมขาย ${product.stock_quantity || 1} ชิ้น</td></tr>
-                  </table>
-                `}
+                <table class="specs-table">
+                  <tr><td>สภาพสินค้า:</td><td><strong class="text-warning">${product.condition === 'new' ? 'มือหนึ่ง (New)' : 'มือสอง ' + (product.condition === 'used_90' ? '90%+' : '80%+')}</strong></td></tr>
+                  <tr><td>ประกันคงเหลือ:</td><td>${product.remaining_warranty_months || 0} เดือน</td></tr>
+                  <tr><td>Serial Number:</td><td><strong class="mono-highlight">${escapeHtml(product.serial_number || '-')}</strong></td></tr>
+                  <tr><td>รหัสสต็อก (SKU):</td><td><code>${escapeHtml(product.sku || '-')}</code></td></tr>
+                  <tr><td>สต็อกคงเหลือ:</td><td>พร้อมขาย ${product.stock_quantity || 1} ชิ้น</td></tr>
+                  ${product.specs && Object.keys(product.specs).length > 0 ? Object.entries(product.specs).map(([k, v]) => {
+                    if (v === null || v === undefined || v === '') return '';
+                    const labelMap = { socket: 'ซ็อกเก็ต (Socket)', chipset: 'ชิปเซ็ต (Chipset)', generation: 'เจนเนอเรชัน', cores: 'จำนวน Core', threads: 'จำนวน Thread', ram_type: 'ชนิด RAM', capacity_gb: 'ความจุ', speed: 'บัสความเร็ว', vram_gb: 'VRAM (GB)', vram_type: 'ชนิด VRAM', wattage: 'กำลังไฟ (Wattage)', form_factor: 'ขนาดบอร์ด/เคส' };
+                    return `<tr><td>${labelMap[k] || k}:</td><td><strong>${escapeHtml(String(v))}</strong></td></tr>`;
+                  }).join('') : ''}
+                </table>
               </div>
 
               <!-- คำอธิบายเพิ่มเติม -->
@@ -751,7 +741,6 @@
         document.getElementById('detail-add-cart-btn')?.addEventListener('click', () => {
           Cart.addItem({
             product_id: product.id,
-            part_id: product.part_id,
             name: `${product.brand || ''} ${product.model || product.part_name || ''}`,
             price: product.price,
             brand: product.brand,

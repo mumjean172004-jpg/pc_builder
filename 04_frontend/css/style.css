@@ -1,5 +1,5 @@
 /* ============================================
-   PC Builder Pro — Main Stylesheet
+   Second-hand Computer Marketplace System — Main Stylesheet
    Dark gaming theme inspired by PCPartPicker
    ============================================ */
 
@@ -188,6 +188,146 @@ body {
   padding-left: 2.6rem;
 }
 
+/* === Compound warranty duration (years/months/days) === */
+.warranty-duration-inputs {
+  display: flex;
+  gap: 0.6rem;
+}
+.warranty-duration-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: center;
+}
+.warranty-duration-field .form-input {
+  width: 100%;
+  text-align: center;
+}
+.warranty-duration-field .field-suffix {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.warranty-preview {
+  margin-top: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(18, 184, 134, 0.08);
+  border: 1px solid rgba(18, 184, 134, 0.3);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  color: var(--success);
+}
+.dark-mode .warranty-preview {
+  background: rgba(46, 204, 113, 0.08);
+  border-color: rgba(46, 204, 113, 0.3);
+}
+.warranty-preview:empty {
+  display: none;
+}
+
+/* === Sell-product page: Store Catalog table === */
+.my-listings-count {
+  margin-left: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  vertical-align: middle;
+}
+.catalog-table-wrap {
+  overflow-x: auto;
+}
+.catalog-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.catalog-table th {
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.catalog-table td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.catalog-table tbody tr:hover {
+  background: var(--bg-card-hover);
+}
+.catalog-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.catalog-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+.catalog-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.catalog-thumb .icon {
+  width: 18px;
+  height: 18px;
+}
+.catalog-name {
+  font-weight: 600;
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.catalog-sku {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+.catalog-price {
+  font-weight: 700;
+  color: var(--highlight);
+  white-space: nowrap;
+}
+.catalog-status-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: flex-start;
+}
+.status-badge {
+  font-size: 0.68rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.catalog-actions {
+  display: flex;
+  gap: 0.35rem;
+}
+.catalog-actions .btn {
+  font-size: 0.72rem;
+  padding: 0.35rem 0.6rem;
+  white-space: nowrap;
+}
+
 /* === Form Validation State === */
 .form-input.has-error {
   border-color: var(--danger);
@@ -259,16 +399,27 @@ img {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 64px;
+  min-height: 64px;
+  padding: 8px 0;
+  gap: 1rem;
 }
 
 .navbar-logo {
-  font-size: 1.4rem;
+  font-size: clamp(0.75rem, 1.1vw, 1rem);
   font-weight: 700;
   color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+  flex-shrink: 1;
+  max-width: 280px;
+}
+.navbar-logo .icon {
+  flex-shrink: 0;
+}
+.navbar-logo-text {
+  line-height: 1.25;
 }
 
 .navbar-logo span {
@@ -280,6 +431,7 @@ img {
   align-items: center;
   gap: 1.5rem;
   list-style: none;
+  flex-shrink: 0;
 }
 
 .navbar-links a {
@@ -300,6 +452,7 @@ img {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-shrink: 0;
 }
 
 /* === Buttons === */
@@ -1345,9 +1498,31 @@ img {
 }
 
 /* === Marketplace Listings === */
+
+/* Shop identity line — replaces the old KYC/bank-account sidebar card; this page
+   only needs to say *who* is listing, bank/verification detail lives on profile.html */
+.seller-identity-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.1rem;
+  margin-bottom: 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+.seller-identity-strip strong {
+  color: var(--text-primary);
+}
+.seller-identity-strip .kyc-verified-badge {
+  color: var(--success);
+}
+
 .listing-form-layout {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: 460px 1fr;
   gap: 2rem;
   align-items: start;
 }
@@ -1357,6 +1532,15 @@ img {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
+}
+
+.panel-title {
+  font-size: 1.05rem;
+  margin-bottom: 0.35rem;
+}
+.panel-subtitle {
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
 }
 
 .form-grid {
@@ -1371,9 +1555,12 @@ img {
   object-fit: cover;
 }
 
-.listing-review-panel {
-  position: sticky;
-  top: 80px;
+.listing-catalog-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  min-width: 0;
 }
 
 /* === Pagination === */
@@ -1453,10 +1640,6 @@ img {
 
   .listing-form-layout {
     grid-template-columns: 1fr;
-  }
-
-  .listing-review-panel {
-    position: static;
   }
 
   .stats-bar {
@@ -1755,6 +1938,24 @@ img {
   color: var(--highlight);
 }
 
+.price-with-original {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.detail-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+}
+
+.original-price {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
 /* Trust Banner */
 .trust-banner {
   background: linear-gradient(90deg, #111e38 0%, #1a1a2e 100%);
@@ -1846,6 +2047,78 @@ img {
 
 .mobile-menu-toggle {
   display: none;
+}
+
+/* The site name is long enough that it doesn't comfortably share a row with the
+   full nav-links list below ~1100px — switch to the hamburger menu earlier than
+   the site's general 768px mobile breakpoint (which is unrelated page content,
+   left untouched) specifically for the navbar row. Mirrors the equivalent rules
+   in the 768px mobile block below so the same toggle JS (app.js, "mobile-menu-active"
+   class) works identically in both ranges. */
+@media (max-width: 1100px) and (min-width: 769px) {
+  .navbar-inner {
+    flex-wrap: wrap;
+    padding: 0 1rem;
+  }
+  .mobile-menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    margin-left: auto;
+  }
+  .navbar-links {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 10px;
+    background: rgba(18, 24, 38, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius);
+    padding: 10px 0;
+  }
+  .navbar-links.mobile-menu-active {
+    display: flex;
+  }
+  .navbar-links li {
+    width: 100%;
+  }
+  .navbar-links a {
+    display: block;
+    padding: 12px 20px;
+    border-radius: 0;
+    color: #cbd5e1;
+  }
+  .navbar-links a:hover,
+  .navbar-links a.active {
+    color: #f8fafc;
+  }
+  .navbar-auth {
+    display: none;
+    width: 100%;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    background: var(--bg-card);
+    padding: 15px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  .navbar-auth.mobile-menu-active {
+    display: flex;
+  }
+  .navbar-auth .btn {
+    flex: 1 1 auto;
+    text-align: center;
+    font-size: 0.9rem;
+    padding: 8px 12px;
+  }
 }
 
 /* === Mobile Responsive Overrides === */

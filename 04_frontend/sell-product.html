@@ -3,192 +3,335 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ลงประกาศขายสินค้า | PC Builder Pro</title>
+  <title>ฟอร์มลงขายสินค้า | Second-hand Computer Marketplace System</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    /* === Listing mode tabs === */
-    .listing-mode-tabs {
+    /* === Custom Design Tokens for Product Listing Form === */
+    .listing-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    /* Form (narrow, fixed) + My Listings (wide, prominent) side by side on desktop */
+    .listing-page-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    @media (min-width: 1080px) {
+      .listing-page-grid {
+        grid-template-columns: minmax(0, 460px) 1fr;
+      }
+    }
+
+    .form-header-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem 2rem;
       margin-bottom: 1.5rem;
-    }
-    /* === Prebuilt spec card === */
-    .specs-card {
-      background: var(--bg-tertiary);
-      padding: 1.2rem;
-      border-radius: var(--radius);
-      margin-bottom: 1.2rem;
-    }
-    .specs-card-title {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 1rem;
-      margin-bottom: 0.75rem;
-      color: var(--highlight);
+      box-shadow: var(--shadow);
     }
 
-    /* === Safety / proof-of-possession card === */
-    .safety-card {
-      background: rgba(18, 184, 134, 0.05);
-      border: 1px solid rgba(18, 184, 134, 0.2);
-      padding: 1.2rem;
-      border-radius: var(--radius);
-      margin: 1.2rem 0;
-    }
-    .dark-mode .safety-card {
-      background: rgba(46, 204, 113, 0.05);
-      border-color: rgba(46, 204, 113, 0.2);
-    }
-    .safety-card-title {
+    .form-header-title {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 1rem;
-      margin-bottom: 0.5rem;
-      color: var(--success);
+      gap: 10px;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.35rem;
     }
-    .safety-card-desc {
-      font-size: 0.82rem;
+
+    .form-header-title svg {
+      width: 24px;
+      height: 24px;
+      color: var(--accent);
+    }
+
+    .form-header-subtitle {
+      font-size: 0.88rem;
       color: var(--text-secondary);
-      margin-bottom: 1rem;
+      margin: 0;
     }
 
-    /* === Field labels / hints === */
-    .field-label-icon {
-      display: inline-flex;
+    .listing-main-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      box-shadow: var(--shadow);
+    }
+
+    /* === Section Headings with SVG Icons === */
+    .form-section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 1.5rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .form-section-title:first-of-type {
+      margin-top: 0;
+    }
+    .form-section-title svg {
+      width: 20px;
+      height: 20px;
+      color: var(--accent);
+    }
+
+    /* === Cascading Specs Card (Highlighted box) === */
+    .cascading-specs-box {
+      background: rgba(34, 139, 230, 0.04);
+      border: 1px solid rgba(34, 139, 230, 0.28);
+      border-radius: var(--radius);
+      padding: 1.35rem;
+      margin: 1.2rem 0;
+      transition: var(--transition);
+    }
+    .dark-mode .cascading-specs-box {
+      background: rgba(15, 52, 96, 0.25);
+      border-color: rgba(51, 154, 240, 0.35);
+    }
+
+    .cascading-box-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.98rem;
+      font-weight: 600;
+      color: var(--accent-light, #339af0);
+      margin-bottom: 1.1rem;
+    }
+    .cascading-box-header svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .cascade-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.1rem;
+    }
+    @media (min-width: 680px) {
+      .cascade-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .cascade-step-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.4rem;
+    }
+    .cascade-step-label svg {
+      width: 16px;
+      height: 16px;
+      color: var(--text-secondary);
+    }
+
+    /* === 2-column form grids === */
+    .form-row-2col {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.1rem;
+      margin-bottom: 1.1rem;
+    }
+    @media (min-width: 680px) {
+      .form-row-2col {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .form-group-custom {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .form-group-custom label {
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
       align-items: center;
       gap: 6px;
     }
-    .field-hint {
-      font-size: 0.75rem;
+    .form-group-custom label svg {
+      width: 15px;
+      height: 15px;
+      color: var(--text-secondary);
+    }
+
+    /* === Upload Drop Area === */
+    .drop-upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 2rem 1rem;
+      text-align: center;
+      background: var(--bg-tertiary);
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
+    .drop-upload-zone:hover, .drop-upload-zone.drag-over {
+      border-color: var(--accent);
+      background: rgba(34, 139, 230, 0.05);
+    }
+    .drop-upload-icon {
+      width: 44px;
+      height: 44px;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+    .drop-upload-text {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+    .drop-upload-hint {
+      font-size: 0.76rem;
       color: var(--text-muted);
-      margin-top: 3px;
-    }
-    .compat-desc {
-      font-size: 0.85rem;
-    }
-
-    /* === Buttons === */
-    .btn-full { width: 100%; }
-    .upload-preview-wrap { margin-top: 8px; }
-
-    /* === Upload preview thumbnails (proof / SN) === */
-    .upload-preview-thumb {
-      width: 100px;
-      height: 100px;
-      object-fit: cover;
-      border-radius: 6px;
-      border: 2px solid var(--success);
-    }
-    .upload-preview-thumb.thumb-highlight {
-      border-color: var(--highlight);
-    }
-    .upload-preview-caption {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 0.75rem;
-      color: var(--success);
       margin-top: 4px;
     }
-    .upload-preview-caption.caption-highlight {
-      color: var(--highlight);
-    }
-    .upload-preview-caption .icon {
-      width: 14px;
-      height: 14px;
-    }
 
-    /* === Gallery photo previews === */
-    .photo-previews-container {
+    /* === Photo Previews === */
+    .photo-previews-grid {
       display: flex;
-      gap: 10px;
       flex-wrap: wrap;
-      margin-top: 10px;
+      gap: 10px;
+      margin-top: 12px;
     }
-    .photo-preview-item {
+    .photo-thumb-box {
       position: relative;
-      width: 85px;
-      height: 85px;
-      border: 1px solid var(--border);
+      width: 80px;
+      height: 80px;
       border-radius: var(--radius);
+      border: 1px solid var(--border);
       overflow: hidden;
-      background: var(--bg-card);
+      background: var(--bg-primary);
     }
-    .photo-preview-item img {
+    .photo-thumb-box img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
-    .photo-preview-remove {
+    .photo-thumb-remove {
       position: absolute;
-      top: 4px;
-      right: 4px;
-      background: rgba(250, 82, 82, 0.9);
+      top: 3px;
+      right: 3px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(231, 76, 60, 0.9);
       color: #fff;
       border: none;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.8rem;
       cursor: pointer;
-      line-height: 1;
-    }
-    .dark-mode .photo-preview-remove {
-      background: rgba(231, 76, 60, 0.9);
+      font-size: 0.75rem;
+      padding: 0;
     }
 
-    /* === Seller KYC card === */
-    .kyc-card {
-      margin: 1rem 0;
-      padding: 1rem;
+    /* === Submit Button === */
+    .btn-submit-listing {
+      background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 0.9rem 1.8rem;
+      font-size: 1rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+      margin-top: 1.5rem;
+    }
+    .btn-submit-listing:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(79, 70, 229, 0.45);
+      filter: brightness(1.06);
+    }
+    .btn-submit-listing:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-submit-listing svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* === Seller Badge Strip === */
+    .seller-strip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.75rem 1rem;
       background: var(--bg-tertiary);
       border-radius: var(--radius);
+      margin-bottom: 1.2rem;
       font-size: 0.85rem;
+      color: var(--text-secondary);
     }
-    .kyc-shop-line {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: 700;
+    .seller-strip svg {
+      width: 16px;
+      height: 16px;
+      color: var(--success);
+    }
+    .seller-strip strong {
       color: var(--text-primary);
     }
-    .kyc-verified-badge {
-      width: 15px;
-      height: 15px;
-      color: var(--success);
+
+    /* === My Listings Table === */
+    .my-listings-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem 1.75rem;
+      box-shadow: var(--shadow);
     }
-    .kyc-bank {
+    .listings-table-wrap {
+      overflow-x: auto;
+    }
+    .listings-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    .listings-table th, .listings-table td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+      white-space: nowrap;
+    }
+    .listings-table th {
+      background: var(--bg-tertiary);
       color: var(--text-secondary);
-      margin-top: 4px;
-    }
-    .kyc-secure-note {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.75rem;
-      color: var(--success);
-      margin-top: 6px;
-    }
-    .kyc-secure-note .icon {
-      width: 14px;
-      height: 14px;
+      font-weight: 600;
     }
 
-    /* === Mobile bottom nav icons === */
-    .bottom-nav-icon {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .bottom-nav-icon .icon {
-      width: 20px;
-      height: 20px;
+    /* === Storage/PSU cascade helper text === */
+    .cascade-hint {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 4px;
     }
   </style>
 </head>
@@ -202,7 +345,7 @@
           <line x1="8" y1="21" x2="16" y2="21"></line>
           <line x1="12" y1="17" x2="12" y2="21"></line>
         </svg>
-        ประกอบ PC <span>Pro</span>
+        <span class="navbar-logo-text">Second-hand Computer Marketplace <span>System</span></span>
       </a>
       <button class="mobile-menu-toggle" id="mobile-menu-btn" aria-label="Toggle menu">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -212,436 +355,273 @@
         </svg>
       </button>
       <ul class="navbar-links">
-        <li><a href="/index.html">หน้าแรก</a></li>
+        <li><a href="/index.html">Home</a></li>
         <li><a href="/products.html">Marketplace</a></li>
-        <li><a href="/builder.html">ประกอบ PC</a></li>
-
-        <li><a href="/sell-product.html" class="active">ลงขายสินค้า</a></li>
-        <li><a href="/inbox.html">ข้อความเจรจา</a></li>
+        <li><a href="/builder.html">PC Builder</a></li>
+        <li><a href="/sell-product.html" class="active">Sell Product</a></li>
+        <li><a href="/inbox.html">Messages</a></li>
       </ul>
       <div class="navbar-auth" id="navbar-auth"></div>
     </div>
   </nav>
 
-  <section class="section container">
-    <div class="listing-form-layout">
-      <main class="listing-form-panel">
-        <div class="section-header">
-          <div>
-            <h1 class="section-title field-label-icon">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path>
-                <path d="M12 22V12"></path>
-                <polyline points="3.29 7 12 12 20.71 7"></polyline>
-                <path d="m7.5 4.27 9 5.15"></path>
-              </svg>
-              ลงประกาศขายสินค้า & คอมเซ็ต
-            </h1>
-            <p class="text-muted">ลงประกาศขายอุปกรณ์คอมพิวเตอร์และคอมเซ็ตสำเร็จรูป พร้อมระบบยืนยันตัวตนและความปลอดภัย</p>
-          </div>
-        </div>
-
-        <!-- เลือกประเภทการลงขาย -->
-        <div class="listing-mode-tabs">
-          <button type="button" id="tab-single" class="btn btn-primary" onclick="switchListingMode('single')">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path>
-              <path d="M12 22V12"></path>
-              <polyline points="3.29 7 12 12 20.71 7"></polyline>
-              <path d="m7.5 4.27 9 5.15"></path>
-            </svg>
-            ลงขายอะไหล่เดี่ยว
-          </button>
-          <button type="button" id="tab-prebuilt" class="btn btn-outline" onclick="switchListingMode('prebuilt')">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-              <line x1="8" y1="21" x2="16" y2="21"></line>
-              <line x1="12" y1="17" x2="12" y2="21"></line>
-            </svg>
-            ลงขายคอมเซ็ตประกอบสำเร็จรูป
-          </button>
-        </div>
-
-        <form id="listing-form">
-          <!-- Section 1: Single Part Fields -->
-          <div id="single-part-fields">
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="listing-category">หมวดหมู่อะไหล่ <span class="text-danger">*</span></label>
-                <select class="form-input" id="listing-category"></select>
-              </div>
-              <div class="form-group">
-                <label for="listing-part">ยี่ห้อ / รุ่นสินค้าจากแคตตาล็อก <span class="text-danger">*</span></label>
-                <select class="form-input" id="listing-part"></select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Section 2: Prebuilt PC Fields -->
-          <div id="prebuilt-fields" class="hidden">
-            <div class="card specs-card">
-              <h3 class="specs-card-title">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"></path>
-                </svg>
-                ระบุสเปกคอมพิวเตอร์ครบชุด
-              </h3>
-              <div class="form-grid">
-                <div class="form-group">
-                  <label>ซีพียู (CPU)</label>
-                  <div class="form-input-group">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <path d="M12 20v2"></path><path d="M12 2v2"></path><path d="M17 20v2"></path><path d="M17 2v2"></path>
-                      <path d="M2 12h2"></path><path d="M2 17h2"></path><path d="M2 7h2"></path>
-                      <path d="M20 12h2"></path><path d="M20 17h2"></path><path d="M20 7h2"></path>
-                      <path d="M7 20v2"></path><path d="M7 2v2"></path>
-                      <rect x="4" y="4" width="16" height="16" rx="2"></rect>
-                      <rect x="8" y="8" width="8" height="8" rx="1"></rect>
-                    </svg>
-                    <input type="text" class="form-input" id="prebuilt-cpu" placeholder="เช่น Intel Core i5-13400F / Ryzen 5 7600">
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>การ์ดจอ (GPU)</label>
-                  <div class="form-input-group">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <path d="M15.914 4a1.5 1.5 0 0 0-2.474-1.561l-9 9A1.5 1.5 0 0 0 5.5 14h4.002a.5.5 0 0 1 .471.666L8.086 20a1.5 1.5 0 0 0 2.475 1.56l9-9A1.5 1.5 0 0 0 18.5 10h-3.997a.5.5 0 0 1-.472-.667z"></path>
-                    </svg>
-                    <input type="text" class="form-input" id="prebuilt-gpu" placeholder="เช่น RTX 4060 8GB / RX 7600">
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>เมนบอร์ด (Motherboard)</label>
-                  <div class="form-input-group">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <rect width="18" height="18" x="3" y="3" rx="2"></rect>
-                      <path d="M11 9h4a2 2 0 0 0 2-2V3"></path>
-                      <circle cx="9" cy="9" r="2"></circle>
-                      <path d="M7 21v-4a2 2 0 0 1 2-2h4"></path>
-                      <circle cx="15" cy="15" r="2"></circle>
-                    </svg>
-                    <input type="text" class="form-input" id="prebuilt-mb" placeholder="เช่น B760M DDR4 / B650">
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>แรม (RAM)</label>
-                  <div class="form-input-group">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <path d="M12 12v-2"></path><path d="M12 18v-2"></path><path d="M16 12v-2"></path><path d="M16 18v-2"></path>
-                      <path d="M2 11h1.5"></path><path d="M20 18v-2"></path><path d="M20.5 11H22"></path>
-                      <path d="M4 18v-2"></path><path d="M8 12v-2"></path><path d="M8 18v-2"></path>
-                      <rect x="2" y="6" width="20" height="10" rx="2"></rect>
-                    </svg>
-                    <input type="text" class="form-input" id="prebuilt-ram" placeholder="เช่น 16GB (8x2) DDR4 3200MHz">
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>ความจุ (SSD/Storage)</label>
-                  <div class="form-input-group">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <path d="M10 16h.01"></path>
-                      <path d="M2.212 11.577a2 2 0 0 0-.212.896V18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5.527a2 2 0 0 0-.212-.896L18.55 5.11A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
-                      <path d="M21.946 12.013H2.054"></path>
-                      <path d="M6 16h.01"></path>
-                    </svg>
-                    <input type="text" class="form-input" id="prebuilt-storage" placeholder="เช่น M.2 NVMe 500GB / 1TB">
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>พาวเวอร์ซัพพลาย (PSU)</label>
-                  <div class="form-input-group">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <path d="M12 22v-5"></path><path d="M15 8V2"></path>
-                      <path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z"></path>
-                      <path d="M9 8V2"></path>
-                    </svg>
-                    <input type="text" class="form-input" id="prebuilt-psu" placeholder="เช่น 650W 80+ Bronze">
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>เคสและชุดระบายความร้อน</label>
-                  <div class="form-input-group">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
-                      <path d="m3.3 7 8.7 5 8.7-5"></path>
-                      <path d="M12 22V12"></path>
-                    </svg>
-                    <input type="text" class="form-input" id="prebuilt-case" placeholder="เช่น เคสฝาข้างใส พัดลม RGB 4 ตัว">
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>ชื่อชุดคอมเซ็ต / หัวข้อประกาศ</label>
-                  <div class="form-input-group">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <path d="M12 4v16"></path>
-                      <path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"></path>
-                      <path d="M9 20h6"></path>
-                    </svg>
-                    <input type="text" class="form-input" id="prebuilt-title" placeholder="เช่น คอมเล่นเกมงบประหยัด เล่นได้ทุกเกม">
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Section 3: General Details -->
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="listing-condition">สภาพสินค้า <span class="text-danger">*</span></label>
-              <select class="form-input" id="listing-condition" required>
-                <option value="new">มือหนึ่ง (New / Sealed)</option>
-                <option value="used_90" selected>มือสอง สภาพ 90%+ (สวยมาก)</option>
-                <option value="used_80">มือสอง สภาพ 80%+ (ใช้งานปกติ)</option>
-                <option value="used_70">มือสอง สภาพ 70% (มีริ้วรอยตามการใช้งาน)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="listing-warranty">ระยะเวลาประกันคงเหลือ (เดือน)</label>
-              <div class="form-input-group">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path>
-                  <path d="m9 12 2 2 4-4"></path>
-                </svg>
-                <input type="number" class="form-input" id="listing-warranty" min="0" step="1" value="0" required>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="listing-price">ราคาขายสุทธิ (บาท) <span class="text-danger">*</span></label>
-              <div class="form-input-group">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"></path>
-                  <circle cx="7.5" cy="7.5" r=".5" fill="currentColor"></circle>
-                </svg>
-                <input type="number" class="form-input" id="listing-price" min="1" step="1" placeholder="ระบุราคาเป็นตัวเลข" required>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="listing-serial">หมายเลขซีเรียลนัมเบอร์ (Serial Number / SN) <span class="text-danger">*</span></label>
-              <div class="form-input-group">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <line x1="4" y1="9" x2="20" y2="9"></line>
-                  <line x1="4" y1="15" x2="20" y2="15"></line>
-                  <line x1="10" y1="3" x2="8" y2="21"></line>
-                  <line x1="16" y1="3" x2="14" y2="21"></line>
-                </svg>
-                <input type="text" class="form-input" id="listing-serial" placeholder="เช่น SN123456789 หรือรหัสเครื่อง" required>
-              </div>
-              <div class="field-hint">ระบบจะตรวจสอบการลงขายซ้ำเพื่อป้องกันมิจฉาชีพ</div>
-            </div>
-          </div>
-
-          <!-- Section 4: Proof of Possession & SN Upload (Safety Mandate) -->
-          <div class="card safety-card">
-            <h3 class="safety-card-title">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path>
-              </svg>
-              มาตรการความปลอดภัยและหลักฐานการครอบครอง (Proof of Possession)
-            </h3>
-            <p class="safety-card-desc">
-              เพื่อสร้างความน่าเชื่อถือและป้องกันมิจฉาชีพนำรูปผู้อื่นมาแอบอ้าง กรุณาแนบภาพถ่ายสินค้าคู่กับป้ายกระดาษเขียนชื่อร้าน/วันที่
-            </p>
-
-            <div class="form-grid">
-              <div class="form-group">
-                <label class="field-label-icon">
-                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"></path>
-                    <circle cx="12" cy="13" r="3"></circle>
-                  </svg>
-                  รูปถ่ายสินค้าคู่ป้ายชื่อร้าน/กระดาษเขียนชื่อ <span class="text-danger">*</span>
-                </label>
-                <input type="file" id="proof-image-file" accept="image/*" class="hidden">
-                <button type="button" class="btn btn-outline btn-sm btn-full" id="upload-proof-btn">
-                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                  </svg>
-                  อัปโหลดรูปถ่ายคู่ป้ายชื่อ
-                </button>
-                <div id="proof-preview-wrap" class="upload-preview-wrap"></div>
-                <input type="hidden" id="proof-image-url">
-              </div>
-
-              <div class="form-group">
-                <label class="field-label-icon">
-                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <line x1="4" y1="9" x2="20" y2="9"></line>
-                    <line x1="4" y1="15" x2="20" y2="15"></line>
-                    <line x1="10" y1="3" x2="8" y2="21"></line>
-                    <line x1="16" y1="3" x2="14" y2="21"></line>
-                  </svg>
-                  รูปถ่ายสติกเกอร์ Serial Number (SN) ชัดเจน
-                </label>
-                <input type="file" id="sn-image-file" accept="image/*" class="hidden">
-                <button type="button" class="btn btn-outline btn-sm btn-full" id="upload-sn-btn">
-                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                  </svg>
-                  อัปโหลดรูปสติกเกอร์ SN
-                </button>
-                <div id="sn-preview-wrap" class="upload-preview-wrap"></div>
-                <input type="hidden" id="sn-image-url">
-              </div>
-            </div>
-          </div>
-
-          <!-- Section 5: Gallery Photos -->
-          <div class="form-group">
-            <label class="field-label-icon">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
-                <circle cx="9" cy="9" r="2"></circle>
-                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
-              </svg>
-              รูปภาพสินค้าเพิ่มเติม (มุมอื่นๆ)
-            </label>
-            <input type="file" id="listing-photo-file" accept="image/*" multiple class="hidden">
-            <button type="button" class="btn btn-outline btn-full" id="listing-photo-upload-btn">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="17 8 12 3 7 8"></polyline>
-                <line x1="12" y1="3" x2="12" y2="15"></line>
-              </svg>
-              เลือกและอัปโหลดไฟล์ภาพสินค้า
-            </button>
-            <div id="photo-previews-container" class="photo-previews-container"></div>
-            <textarea id="listing-photos" class="hidden"></textarea>
-          </div>
-
-          <div class="form-group">
-            <label for="listing-description" class="field-label-icon">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M21 5H3"></path>
-                <path d="M15 12H3"></path>
-                <path d="M17 19H3"></path>
-              </svg>
-              รายละเอียดสินค้าเพิ่มเติม / สภาพ / อุปกรณ์ที่ได้รับ
-            </label>
-            <textarea class="form-input" id="listing-description" rows="3" placeholder="ระบุรายละเอียดเพิ่มเติม เช่น มีกล่องครบ ใช้งานมือเดียว ไม่เคยผ่านการขุด หรือสถานที่นัดรับมือ"></textarea>
-          </div>
-
-          <div id="listing-error" class="form-error mb-2"></div>
-          <button type="submit" class="btn btn-primary btn-lg btn-full" id="listing-submit-btn">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            ลงประกาศขายสินค้า
-          </button>
-        </form>
-      </main>
-
-      <aside class="builder-summary listing-review-panel">
-        <h3 class="field-label-icon">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path>
-          </svg>
-          ข้อมูลผู้ขาย & ความปลอดภัย
-        </h3>
-        <div id="seller-kyc-card" class="kyc-card">
-          <div class="kyc-shop-line">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5"></path>
-              <path d="M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244"></path>
-              <path d="M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05"></path>
-            </svg>
-            <span id="seller-shop-display">กำลังโหลดร้านค้า...</span>
-            <svg class="icon kyc-verified-badge hidden" id="seller-verified-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="m9 12 2 2 4-4"></path>
-            </svg>
-          </div>
-          <div class="kyc-bank" id="seller-bank-display">บัญชีรับเงิน: —</div>
-          <div class="kyc-secure-note">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-            </svg>
-            ผู้ซื้อจะโอนเงินตรงเข้าบัญชีนี้และตรวจสอบสลิปผ่านระบบ Slip Verification
-          </div>
-        </div>
-
-        <div class="summary-part">
-          <span class="summary-part-label">ราคาอ้างอิงตลาด</span>
-          <span id="reference-price">-</span>
-        </div>
-        <div class="summary-part">
-          <span class="summary-part-label">ข้อกำหนดรูปภาพ</span>
-          <span id="photo-rule">อย่างน้อย 3 รูป</span>
-        </div>
-        <div class="compat-panel" id="listing-review-hint">
-          <h4 class="compat-ok-title field-label-icon">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="m9 12 2 2 4-4"></path>
-            </svg>
-            พร้อมลงประกาศ
-          </h4>
-          <p class="text-muted compat-desc">ระบบจะตรวจสอบความถูกต้องของ Serial Number และราคาเพื่ออนุมัติทันที</p>
-        </div>
-      </aside>
+  <div class="listing-container">
+    <!-- Header Section -->
+    <div class="form-header-card">
+      <div class="form-header-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="16"></line>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+        </svg>
+        ฟอร์มลงขายสินค้าใหม่ (Product Listing Form)
+      </div>
+      <p class="form-header-subtitle">เลือกลำดับสเปกเพื่อผูกข้อมูลเข้ากับระบบจัดสเปกคอมพิวเตอร์อัตโนมัติ</p>
     </div>
-  </section>
 
-  <!-- Mobile Bottom Navigation Bar -->
-  <nav class="mobile-bottom-nav">
-    <a href="/index.html" class="bottom-nav-item">
-      <div class="bottom-nav-icon">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+    <div class="listing-page-grid">
+    <!-- Main Listing Form -->
+    <div class="listing-main-card">
+      <!-- Seller Status Strip -->
+      <div class="seller-strip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
         </svg>
+        <span>ลงขายในนามร้านค้า:</span>
+        <strong id="seller-name-display">กำลังโหลด...</strong>
       </div>
-      <span>หน้าแรก</span>
-    </a>
-    <a href="/products.html" class="bottom-nav-item">
-      <div class="bottom-nav-icon">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="8" cy="21" r="1"></circle>
-          <circle cx="19" cy="21" r="1"></circle>
-          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+
+      <form id="product-listing-form">
+        <!-- 1. หมวดหมู่อุปกรณ์ -->
+        <div class="form-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+          1. หมวดหมู่อุปกรณ์ (Category):
+        </div>
+
+        <div class="form-group-custom" style="margin-bottom: 1.2rem;">
+          <select class="form-input" id="listing-category" required>
+            <option value="">-- กรุณาเลือกหมวดหมู่อุปกรณ์ --</option>
+          </select>
+        </div>
+
+        <!-- 2. ตัวเลือกการคัดกรองลำดับขั้น (Cascading Specs) -->
+        <div class="cascading-specs-box" id="cascading-box">
+          <div class="cascading-box-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="6" y1="3" x2="6" y2="15"></line>
+              <circle cx="18" cy="6" r="3"></circle>
+              <circle cx="6" cy="18" r="3"></circle>
+              <path d="M18 9a9 9 0 0 1-9 9"></path>
+            </svg>
+            ตัวเลือกการคัดกรองลำดับขั้น (Cascading Specs):
+          </div>
+
+          <div class="cascade-grid" id="cascade-fields-container">
+            <!-- Dynamically populated per category -->
+          </div>
+        </div>
+
+        <!-- 3. รายละเอียดการลงขายสินค้า -->
+        <div class="form-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          3. รายละเอียดการลงขายสินค้า
+        </div>
+
+        <div class="form-group-custom" style="margin-bottom: 1.1rem;">
+          <label for="product-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
+            หัวข้อประกาศขายสินค้า (Product Title): <span class="text-danger">*</span>
+          </label>
+          <input type="text" class="form-input" id="product-title" placeholder="เช่น ซีพียู Intel Core i7-13700K ประกันศูนย์ 3 ปี (สินค้ามือ 1)" required>
+        </div>
+
+        <div class="form-row-2col">
+          <div class="form-group-custom">
+            <label for="product-condition">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              สภาพสินค้า (Condition): <span class="text-danger">*</span>
+            </label>
+            <select class="form-input" id="product-condition" required>
+              <option value="new">มือ 1 (สินค้าใหม่แกะกล่อง)</option>
+              <option value="used_90" selected>มือสอง สภาพ 90%+ (สวยมาก)</option>
+              <option value="used_80">มือสอง สภาพ 80%+ (ใช้งานปกติ)</option>
+              <option value="used_70">มือสอง สภาพ 70% (มีริ้วรอยตามการใช้งาน)</option>
+            </select>
+          </div>
+          <div class="form-group-custom">
+            <label for="product-price">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              ราคาขาย (฿): <span class="text-danger">*</span>
+            </label>
+            <input type="number" class="form-input" id="product-price" placeholder="เช่น 14900" min="1" required>
+          </div>
+        </div>
+
+        <div class="form-row-2col">
+          <div class="form-group-custom">
+            <label for="product-stock">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              จำนวนสต็อกพร้อมขาย (ชิ้น): <span class="text-danger">*</span>
+            </label>
+            <input type="number" class="form-input" id="product-stock" value="1" min="1" required>
+          </div>
+          <div class="form-group-custom">
+            <label for="product-serial">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M6 16h.01M10 16h.01M14 16h.01M18 16h.01"/></svg>
+              Serial Number (S/N):
+            </label>
+            <input type="text" class="form-input" id="product-serial" placeholder="เช่น SN-CPU-INTEL-889921 (ไม่บังคับ)">
+          </div>
+        </div>
+
+        <!-- ระยะเวลาประกัน (Compound: type + years/months/days) -->
+        <div class="form-group-custom" style="margin-bottom: 1.1rem;">
+          <label for="product-warranty-type">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            ระยะเวลาประกัน (Warranty):
+          </label>
+          <select class="form-input" id="product-warranty-type">
+            <option value="no_warranty" selected>ไม่มีประกัน</option>
+            <option value="seller_warranty">ประกันร้านค้า (Seller Warranty)</option>
+            <option value="manufacturer_warranty">ประกันศูนย์ (Official Warranty)</option>
+            <option value="lifetime">ตลอดอายุการใช้งาน (Lifetime)</option>
+          </select>
+
+          <div class="warranty-duration-inputs" id="warranty-duration-inputs" style="margin-top: 0.75rem; display: none;">
+            <div class="warranty-duration-field">
+              <select class="form-input" id="product-warranty-years"></select>
+              <span class="field-suffix">ปี</span>
+            </div>
+            <div class="warranty-duration-field">
+              <select class="form-input" id="product-warranty-months"></select>
+              <span class="field-suffix">เดือน</span>
+            </div>
+            <div class="warranty-duration-field">
+              <select class="form-input" id="product-warranty-days"></select>
+              <span class="field-suffix">วัน</span>
+            </div>
+          </div>
+
+          <div class="warranty-preview" id="warranty-preview"></div>
+        </div>
+
+        <div class="form-group-custom" style="margin-bottom: 1.1rem;">
+          <label>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            ช่องทางการรับสินค้า:
+          </label>
+          <div style="display: flex; gap: 15px; margin-top: 8px;">
+            <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+              <input type="checkbox" id="allow-express" checked> จัดส่งพัสดุด่วน
+            </label>
+            <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+              <input type="checkbox" id="allow-pickup" checked> นัดรับมือ
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group-custom" style="margin-bottom: 1.2rem;">
+          <label for="product-desc">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            คำอธิบายรายละเอียดเพิ่มเติม:
+          </label>
+          <textarea class="form-input" id="product-desc" rows="3" placeholder="ระบุสภาพ อุปกรณ์ที่แถม กล่อง หรือรายละเอียดอื่นๆ..."></textarea>
+        </div>
+
+        <!-- 4. อัปโหลดรูปภาพสินค้า -->
+        <div class="form-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          อัปโหลดรูปภาพสินค้า (Gallery Images):
+        </div>
+
+        <div class="drop-upload-zone" id="photo-drop-zone">
+          <input type="file" id="photo-file-input" multiple accept="image/*" style="display: none;">
+          <svg class="drop-upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          <p class="drop-upload-text">ลากไฟล์รูปภาพมาวาง หรือ คลิกเพื่อเลือกรูปภาพ (JPG/PNG)</p>
+          <span class="drop-upload-hint">สามารถเลือกรูปถ่ายสินค้าได้สูงสุด 10 รูป</span>
+        </div>
+
+        <div class="photo-previews-grid" id="photo-previews"></div>
+
+        <!-- Error / Status Notice -->
+        <div id="form-status-msg" style="margin-top: 1rem;"></div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn-submit-listing" id="submit-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+          บันทึกและลงขายสินค้า (Submit Listing)
+        </button>
+      </form>
+    </div>
+
+    <!-- My Listings Section -->
+    <div class="my-listings-section">
+      <div class="form-header-title" style="font-size: 1.15rem;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
         </svg>
+        รายการประกาศขายของฉัน (My Listings)
       </div>
-      <span>ตลาด</span>
-    </a>
-    <a href="/builder.html" class="bottom-nav-item">
-      <div class="bottom-nav-icon">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"></path>
-        </svg>
+
+      <div id="my-listings-container" style="margin-top: 1rem;">
+        <p class="text-muted">กำลังโหลดรายการประกาศขาย...</p>
       </div>
-      <span>จัดสเปก</span>
-    </a>
-    <a href="/inbox.html" class="bottom-nav-item">
-      <div class="bottom-nav-icon">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"></path>
-        </svg>
-      </div>
-      <span>ข้อความ</span>
-    </a>
-    <a href="/profile.html" class="bottom-nav-item">
-      <div class="bottom-nav-icon">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M20 21a8 8 0 0 0-16 0"></path>
-          <circle cx="12" cy="8" r="5"></circle>
-        </svg>
-      </div>
-      <span>โปรไฟล์</span>
-    </a>
-  </nav>
+    </div>
+    </div>
+  </div>
 
   <script src="/js/app.js"></script>
   <script>
-    let metadata = { categories: [], parts: [] };
-    let uploadedUrls = [];
-    let currentMode = 'single'; // 'single' or 'prebuilt'
-    let currentProfile = null;
+    let meta = {
+      categories: [],
+      sockets: [],
+      chipsets: [],
+      cpu_generations: [],
+      cpu_models: [],
+      cpu_series: [],
+      vga_series: [],
+      gpu_chips: [],
+      form_factors: [],
+      ram_types: [],
+      brands: [],
+      psu_modular: [],
+      psu_efficiency: [],
+      chipset_generations: [],
+      parts: []
+    };
 
-    // === UI Helpers: button loading state + field validation state ===
+    const WARRANTY_TYPE_LABELS = {
+      no_warranty: 'ไม่มีประกัน',
+      seller_warranty: 'ประกันร้านค้า',
+      manufacturer_warranty: 'ประกันศูนย์',
+      lifetime: 'ตลอดอายุการใช้งาน',
+    };
+
+    let uploadedPhotos = [];
+
     function setBtnLoading(btn, loading) {
       if (!btn) return;
       if (loading) {
@@ -654,284 +634,1014 @@
       }
     }
 
-    function setFieldError(id, hasError) {
-      const el = document.getElementById(id);
-      if (el) el.classList.toggle('has-error', hasError);
-    }
+    document.addEventListener('DOMContentLoaded', async () => {
+      Auth.updateUI();
+      checkAuthAndLoad();
+    });
 
-    function clearFieldErrors(ids) {
-      ids.forEach(id => setFieldError(id, false));
-    }
-
-    function switchListingMode(mode) {
-      currentMode = mode;
-      const tabSingle = document.getElementById('tab-single');
-      const tabPrebuilt = document.getElementById('tab-prebuilt');
-      const singleFields = document.getElementById('single-part-fields');
-      const prebuiltFields = document.getElementById('prebuilt-fields');
-
-      if (mode === 'single') {
-        tabSingle.className = 'btn btn-primary';
-        tabPrebuilt.className = 'btn btn-outline';
-        singleFields.classList.remove('hidden');
-        prebuiltFields.classList.add('hidden');
+    async function checkAuthAndLoad() {
+      const user = getCurrentUser();
+      const sellerDisplay = document.getElementById('seller-name-display');
+      if (user) {
+        sellerDisplay.textContent = user.shop_name || user.username;
+        await loadMyListings();
       } else {
-        tabSingle.className = 'btn btn-outline';
-        tabPrebuilt.className = 'btn btn-primary';
-        singleFields.classList.add('hidden');
-        prebuiltFields.classList.remove('hidden');
+        sellerDisplay.textContent = 'โปรดเข้าสู่ระบบผู้ขายก่อนบันทึกสินค้า';
       }
-      renderReviewHint();
+
+      await loadMetadata();
+      setupUploadEvents();
+      setupWarrantyPicker();
     }
 
-    function selectedPart() {
-      if (currentMode === 'prebuilt') return null;
-      const id = Number(document.getElementById('listing-part').value);
-      return metadata.parts.find(part => part.id === id);
+    /* === Compound Warranty Picker (type + years/months/days) === */
+    function buildWarrantyPreviewText(type, years, months, days) {
+      if (type === 'no_warranty') return '';
+      if (type === 'lifetime') return `${WARRANTY_TYPE_LABELS.lifetime} (Lifetime)`;
+      const totalDays = years * 365 + months * 30 + days;
+      const parts = [];
+      if (years > 0) parts.push(`${years} ปี`);
+      if (months > 0) parts.push(`${months} เดือน`);
+      if (days > 0) parts.push(`${days} วัน`);
+      const durationText = parts.length ? parts.join(' ') : '0 วัน';
+      return `${WARRANTY_TYPE_LABELS[type]} ${durationText} (คำนวณรวมประมาณ ${totalDays.toLocaleString()} วัน)`;
     }
 
-    function renderModels() {
-      const category = document.getElementById('listing-category').value;
-      const partSelect = document.getElementById('listing-part');
-      const parts = metadata.parts.filter(part => part.category_slug === category);
-      partSelect.innerHTML = parts.map(part =>
-        `<option value="${part.id}">${escapeHtml(part.brand)} - ${escapeHtml(part.model || part.name)} (฿${Number(part.price).toLocaleString()})</option>`
-      ).join('');
-      renderReviewHint();
+    function getWarrantyFormValues() {
+      return {
+        type: document.getElementById('product-warranty-type').value,
+        years: Number(document.getElementById('product-warranty-years').value) || 0,
+        months: Number(document.getElementById('product-warranty-months').value) || 0,
+        days: Number(document.getElementById('product-warranty-days').value) || 0,
+      };
     }
 
-    function renderReviewHint() {
-      const part = selectedPart();
-      const condition = document.getElementById('listing-condition').value;
-      const price = Number(document.getElementById('listing-price').value || 0);
-      const proofUrl = document.getElementById('proof-image-url').value;
-      const panel = document.getElementById('listing-review-hint');
-
-      document.getElementById('reference-price').textContent = part ? formatPrice(part.price) : (currentMode === 'prebuilt' ? 'ตามสเปกครบชุด' : '-');
-      document.getElementById('photo-rule').textContent = 'รูปถ่ายคู่ป้ายชื่อ + อะไหล่';
-
-      if (!proofUrl) {
-        panel.innerHTML = '<h4 class="compat-warn-title field-label-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>แนะนำแนบรูปคู่ป้ายชื่อ</h4><div class="compat-item warning">การแนบรูปคู่ป้ายชื่อร้านจะช่วยให้ประกาศของคุณได้รับป้าย Verified และขายออกได้เร็วกว่า</div>';
-        return;
-      }
-
-      panel.innerHTML = '<h4 class="compat-ok-title field-label-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>ข้อมูลครบถ้วน</h4><p class="text-muted compat-desc">ระบบพร้อมส่งประกาศขึ้น Marketplace ทันที</p>';
+    function updateWarrantyUI() {
+      const { type, years, months, days } = getWarrantyFormValues();
+      const durationInputs = document.getElementById('warranty-duration-inputs');
+      const preview = document.getElementById('warranty-preview');
+      const showDurationFields = type !== 'no_warranty' && type !== 'lifetime';
+      durationInputs.style.display = showDurationFields ? 'flex' : 'none';
+      preview.textContent = buildWarrantyPreviewText(type, years, months, days);
     }
 
-    async function submitListing(event) {
-      event.preventDefault();
-      const error = document.getElementById('listing-error');
-      error.textContent = '';
-      clearFieldErrors(['listing-serial', 'listing-price']);
+    function setupWarrantyPicker() {
+      const yearsEl = document.getElementById('product-warranty-years');
+      const monthsEl = document.getElementById('product-warranty-months');
+      const daysEl = document.getElementById('product-warranty-days');
 
-      if (!Auth.isLoggedIn()) {
-        window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname);
-        return;
-      }
+      yearsEl.innerHTML = Array.from({ length: 11 }, (_, i) => `<option value="${i}">${i}</option>`).join('');
+      monthsEl.innerHTML = Array.from({ length: 12 }, (_, i) => `<option value="${i}">${i}</option>`).join('');
+      daysEl.innerHTML = Array.from({ length: 31 }, (_, i) => `<option value="${i}">${i}</option>`).join('');
 
-      const serial = document.getElementById('listing-serial').value.trim();
-      const price = Number(document.getElementById('listing-price').value);
+      ['product-warranty-type', 'product-warranty-years', 'product-warranty-months', 'product-warranty-days']
+        .forEach(id => document.getElementById(id).addEventListener('change', updateWarrantyUI));
 
-      if (!serial) {
-        error.textContent = 'กรุณาระบุ Serial Number ของอุปกรณ์';
-        setFieldError('listing-serial', true);
-        return;
-      }
+      updateWarrantyUI();
+    }
 
-      if (!price || price <= 0) {
-        error.textContent = 'กรุณาระบุราคาขายที่ถูกต้อง';
-        setFieldError('listing-price', true);
-        return;
-      }
-
-      const submitBtn = document.getElementById('listing-submit-btn');
-      setBtnLoading(submitBtn, true);
+    async function loadMetadata() {
       try {
-        let payload = {
-          condition: document.getElementById('listing-condition').value,
-          remaining_warranty_months: Number(document.getElementById('listing-warranty').value),
-          price: price,
-          stock_quantity: 1,
-          serial_number: serial,
-          proof_image_url: document.getElementById('proof-image-url').value || null,
-          sn_image_url: document.getElementById('sn-image-url').value || null,
-          photos: uploadedUrls,
-          description: document.getElementById('listing-description').value.trim()
-        };
-
-        if (currentMode === 'single') {
-          payload.category = document.getElementById('listing-category').value;
-          payload.part_id = Number(document.getElementById('listing-part').value);
-          payload.is_prebuilt_set = 0;
-        } else {
-          payload.category = 'full-pc';
-          payload.is_prebuilt_set = 1;
-          const prebuiltSpecs = {
-            cpu: document.getElementById('prebuilt-cpu').value.trim(),
-            gpu: document.getElementById('prebuilt-gpu').value.trim(),
-            motherboard: document.getElementById('prebuilt-mb').value.trim(),
-            ram: document.getElementById('prebuilt-ram').value.trim(),
-            storage: document.getElementById('prebuilt-storage').value.trim(),
-            psu: document.getElementById('prebuilt-psu').value.trim(),
-            case: document.getElementById('prebuilt-case').value.trim()
-          };
-          payload.prebuilt_specs = prebuiltSpecs;
-          const prebuiltTitle = document.getElementById('prebuilt-title').value.trim();
-          payload.description = prebuiltTitle ? `${prebuiltTitle}\n${payload.description}` : payload.description;
-        }
-
-        const result = await API.post('/products', payload);
-
-        if (result.product.review_status === 'pending_review') {
-          Toast.warning(result.message);
-        } else {
-          Toast.success(result.message);
-        }
-        window.location.href = '/products.html';
+        const res = await API.get('/products/meta/listing');
+        meta = res;
+        populateCategories();
       } catch (err) {
-        error.textContent = err.message;
-        setBtnLoading(submitBtn, false);
+        console.error('Failed to load listing metadata:', err);
+        Toast.error('ไม่สามารถโหลดข้อมูลสเปกได้');
       }
     }
 
-    function renderPreviews() {
-      const container = document.getElementById('photo-previews-container');
-      container.innerHTML = uploadedUrls.map((url, index) => `
-        <div class="photo-preview-item">
-          <img src="${url}">
-          <button type="button" class="photo-preview-remove" onclick="deletePhoto(${index})">&times;</button>
-        </div>
-      `).join('');
+    function populateCategories() {
+      const catSelect = document.getElementById('listing-category');
+      catSelect.innerHTML = '<option value="">-- กรุณาเลือกหมวดหมู่อุปกรณ์ --</option>' +
+        meta.categories.map(c => `<option value="${c.slug}">${c.name}</option>`).join('');
 
-      document.getElementById('listing-photos').value = uploadedUrls.join('\n');
-      renderReviewHint();
+      catSelect.addEventListener('change', onCategoryChange);
+
+      // Default select CPU if available
+      if (meta.categories.some(c => c.slug === 'cpu')) {
+        catSelect.value = 'cpu';
+        onCategoryChange();
+      }
     }
 
-    window.deletePhoto = function(index) {
-      uploadedUrls.splice(index, 1);
-      renderPreviews();
+    function onCategoryChange() {
+      const category = document.getElementById('listing-category').value;
+      const container = document.getElementById('cascade-fields-container');
+      container.innerHTML = '';
+
+      if (!category) return;
+
+      if (category === 'cpu') {
+        renderCpuCascade(container);
+      } else if (category === 'motherboard') {
+        renderMotherboardCascade(container);
+      } else if (category === 'gpu') {
+        renderGpuCascade(container);
+      } else if (category === 'ram') {
+        renderRamCascade(container);
+      } else if (category === 'storage') {
+        renderStorageCascade(container);
+      } else if (category === 'psu') {
+        renderPsuCascade(container);
+      } else {
+        renderGenericCascade(category, container);
+      }
+    }
+
+    /* === CPU Cascading: Brand -> Socket -> Generation -> Model === */
+    function renderCpuCascade(container) {
+      container.innerHTML = `
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+            2.1 เลือกแบรนด์ (Brand):
+          </label>
+          <select class="form-input" id="cpu-brand">
+            <option value="">-- เลือกแบรนด์ --</option>
+            <option value="Intel" selected>Intel</option>
+            <option value="AMD">AMD</option>
+          </select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+            2.2 เลือกซ็อกเก็ต (Socket):
+          </label>
+          <select class="form-input" id="cpu-socket">
+            <option value="">-- กรุณาเลือกซ็อกเก็ตก่อน --</option>
+          </select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            2.3 เลือกเจเนอเรชัน (Generation / Architecture):
+          </label>
+          <select class="form-input" id="cpu-gen">
+            <option value="">-- กรุณาเลือกซ็อกเก็ตก่อน --</option>
+          </select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            2.4 เลือกรุ่น CPU (Name CPU / Model):
+          </label>
+          <select class="form-input" id="cpu-model">
+            <option value="">-- กรุณาเลือกเจเนอเรชันก่อน --</option>
+          </select>
+        </div>
+      `;
+
+      const brandEl = document.getElementById('cpu-brand');
+      const socketEl = document.getElementById('cpu-socket');
+      const genEl = document.getElementById('cpu-gen');
+      const modelEl = document.getElementById('cpu-model');
+
+      function updateSockets() {
+        const brand = brandEl.value;
+        const filtered = meta.sockets.filter(s => !brand || s.brand === brand);
+        socketEl.innerHTML = '<option value="">-- เลือกซ็อกเก็ต --</option>' +
+          filtered.map(s => `<option value="${s.name}" data-id="${s.id}">${s.name}</option>`).join('');
+        
+        // Auto select first socket
+        if (filtered.length > 0) {
+          socketEl.value = filtered[0].name;
+        }
+        updateGens();
+      }
+
+      function updateGens() {
+        const socketName = socketEl.value;
+        const socketObj = meta.sockets.find(s => s.name === socketName);
+        const socketId = socketObj ? socketObj.id : null;
+
+        const filtered = meta.cpu_generations.filter(g => !socketId || g.socket_id === socketId);
+        genEl.innerHTML = '<option value="">-- เลือกเจเนอเรชัน --</option>' +
+          filtered.map(g => `<option value="${g.name}" data-id="${g.id}">${g.name}</option>`).join('');
+
+        if (filtered.length > 0) {
+          genEl.value = filtered[0].name;
+        }
+        updateModels();
+      }
+
+      function updateModels() {
+        const genName = genEl.value;
+        const genObj = meta.cpu_generations.find(g => g.name === genName);
+        const genId = genObj ? genObj.id : null;
+
+        const filtered = meta.cpu_models.filter(m => !genId || m.generation_id === genId);
+        modelEl.innerHTML = '<option value="">-- เลือกรุ่น CPU --</option>' +
+          filtered.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
+
+        if (filtered.length > 0) {
+          modelEl.value = filtered[0].name;
+          onModelSelected(brandEl.value, modelEl.value);
+        }
+      }
+
+      brandEl.addEventListener('change', updateSockets);
+      socketEl.addEventListener('change', updateGens);
+      genEl.addEventListener('change', updateModels);
+      modelEl.addEventListener('change', () => onModelSelected(brandEl.value, modelEl.value));
+
+      updateSockets();
+    }
+
+    /* === Motherboard Cascading: Brand -> Socket -> Chipset -> Model === */
+    function ramTypeForSocket(socketName) {
+      const ddr5Sockets = ['AM5', 'LGA1700', 'LGA1851'];
+      const ddr3Sockets = ['LGA1155', 'LGA1151 (v1)', 'LGA1150'];
+      const ddr2Sockets = ['LGA775'];
+      if (ddr5Sockets.includes(socketName)) return 'DDR5';
+      if (ddr3Sockets.includes(socketName)) return 'DDR3';
+      if (ddr2Sockets.includes(socketName)) return 'DDR2';
+      return 'DDR4';
+    }
+
+    function renderMotherboardCascade(container) {
+      container.innerHTML = `
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/></svg>
+            2.1 เลือกแบรนด์ (Brand):
+          </label>
+          <select class="form-input" id="mb-brand">
+            <option value="ASUS" selected>ASUS</option>
+            <option value="MSI">MSI</option>
+            <option value="GIGABYTE">GIGABYTE</option>
+            <option value="ASRock">ASRock</option>
+          </select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+            2.2 เลือกซ็อกเก็ต (Socket):
+          </label>
+          <select class="form-input" id="mb-socket">
+            ${meta.sockets.map(s => `<option value="${s.name}" data-id="${s.id}">${s.name} (${s.brand})</option>`).join('')}
+          </select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg>
+            2.3 เลือกชิปเซ็ต (Chipset):
+          </label>
+          <select class="form-input" id="mb-chipset">
+            <option value="">-- เลือกชิปเซ็ต --</option>
+          </select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            2.4 Gen ที่ใช้ได้ (Compatible Generation):
+          </label>
+          <select class="form-input" id="mb-gen">
+            <option value="">-- ไม่มีข้อมูล Gen สำหรับชิปเซ็ตนี้ --</option>
+          </select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/></svg>
+            2.5 ระบุ/เลือกรุ่นเมนบอร์ด (Model):
+          </label>
+          <input type="text" class="form-input" id="mb-model" placeholder="เช่น ROG STRIX B760-F GAMING WIFI" required>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            2.6 ขนาดบอร์ด (Form Factor):
+          </label>
+          <select class="form-input" id="mb-form-factor">
+            ${meta.form_factors.map(f => `<option value="${f.name}" ${f.name === 'ATX' ? 'selected' : ''}>${f.name}</option>`).join('')}
+          </select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/></svg>
+            2.7 ชนิด RAM ที่รองรับ (RAM Type):
+          </label>
+          <select class="form-input" id="mb-ram-type">
+            ${meta.ram_types.map(r => `<option value="${r.name}">${r.name}</option>`).join('')}
+          </select>
+        </div>
+      `;
+
+      const socketEl = document.getElementById('mb-socket');
+      const chipsetEl = document.getElementById('mb-chipset');
+      const genEl = document.getElementById('mb-gen');
+      const brandEl = document.getElementById('mb-brand');
+      const modelEl = document.getElementById('mb-model');
+      const ramTypeEl = document.getElementById('mb-ram-type');
+
+      function updateChipsets() {
+        const socketName = socketEl.value;
+        const socketObj = meta.sockets.find(s => s.name === socketName);
+        const socketId = socketObj ? socketObj.id : null;
+
+        const filtered = meta.chipsets.filter(c => !socketId || c.socket_id === socketId);
+        chipsetEl.innerHTML = filtered.length
+          ? filtered.map(c => `<option value="${c.name}" data-id="${c.id}">${c.name}</option>`).join('')
+          : '<option value="">-- ไม่มีชิปเซ็ตสำหรับซ็อกเก็ตนี้ --</option>';
+
+        if (filtered.length > 0) {
+          chipsetEl.value = filtered[0].name;
+        }
+
+        const ddrDefault = ramTypeForSocket(socketName);
+        if (Array.from(ramTypeEl.options).some(o => o.value === ddrDefault)) {
+          ramTypeEl.value = ddrDefault;
+        }
+
+        updateGens();
+      }
+
+      function updateGens() {
+        const chipsetOption = chipsetEl.options[chipsetEl.selectedIndex];
+        const chipsetId = chipsetOption ? Number(chipsetOption.dataset.id) : null;
+
+        const genIds = chipsetId
+          ? meta.chipset_generations.filter(cg => cg.chipset_id === chipsetId).map(cg => cg.generation_id)
+          : [];
+        const filtered = meta.cpu_generations.filter(g => genIds.includes(g.id));
+        genEl.innerHTML = filtered.length
+          ? filtered.map(g => `<option value="${g.name}">${g.name}</option>`).join('')
+          : '<option value="">-- ไม่มีข้อมูล Gen สำหรับชิปเซ็ตนี้ --</option>';
+
+        if (filtered.length > 0) {
+          genEl.value = filtered[0].name;
+        }
+        updateMbTitle();
+      }
+
+      function updateMbTitle() {
+        const brand = brandEl.value;
+        const model = modelEl.value.trim() || `${chipsetEl.value} Gaming`;
+        onModelSelected(brand, model);
+      }
+
+      socketEl.addEventListener('change', updateChipsets);
+      chipsetEl.addEventListener('change', updateGens);
+      genEl.addEventListener('change', updateMbTitle);
+      brandEl.addEventListener('change', updateMbTitle);
+      modelEl.addEventListener('input', updateMbTitle);
+
+      updateChipsets();
+    }
+
+    /* === GPU Cascading: Brand -> Series -> Chip -> Model === */
+    function renderGpuCascade(container) {
+      container.innerHTML = `
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/></svg>
+            2.1 เลือกแบรนด์ (Brand):
+          </label>
+          <input type="text" class="form-input" id="gpu-brand" list="gpu-brand-list" value="ASUS" placeholder="เช่น ASUS, MSI, ZOTAC">
+          <datalist id="gpu-brand-list">
+            ${meta.brands.map(name => `<option value="${escapeHtml(name)}">`).join('')}
+          </datalist>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            2.2 เลือกซีรีส์ (GPU Series):
+          </label>
+          <select class="form-input" id="gpu-series">
+            ${meta.vga_series.map(v => `<option value="${v.name}" data-id="${v.id}">${v.name}</option>`).join('')}
+          </select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            2.3 เลือกชิปการ์ดจอ (GPU Chipset):
+          </label>
+          <select class="form-input" id="gpu-chip">
+            <option value="">-- เลือกชิปการ์ดจอ --</option>
+          </select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/></svg>
+            2.4 ระบุ/เลือกรุ่นการ์ดจอ (Model):
+          </label>
+          <input type="text" class="form-input" id="gpu-model" placeholder="เช่น TUF Gaming RTX 4070 Ti SUPER 16GB" required>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+            2.5 หน่วยความจำ VRAM (GB):
+          </label>
+          <input type="number" class="form-input" id="gpu-vram" placeholder="เช่น 16" min="1">
+        </div>
+      `;
+
+      const seriesEl = document.getElementById('gpu-series');
+      const chipEl = document.getElementById('gpu-chip');
+      const brandEl = document.getElementById('gpu-brand');
+      const modelEl = document.getElementById('gpu-model');
+
+      function updateGpuChips() {
+        const seriesName = seriesEl.value;
+        const seriesObj = meta.vga_series.find(s => s.name === seriesName);
+        const seriesId = seriesObj ? seriesObj.id : null;
+
+        const filtered = meta.gpu_chips.filter(c => !seriesId || c.series_id === seriesId);
+        chipEl.innerHTML = filtered.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+
+        if (filtered.length > 0) {
+          chipEl.value = filtered[0].name;
+        }
+        updateGpuTitle();
+      }
+
+      function updateGpuTitle() {
+        const brand = brandEl.value;
+        const model = modelEl.value.trim() || `${chipEl.value}`;
+        onModelSelected(brand, model);
+      }
+
+      seriesEl.addEventListener('change', updateGpuChips);
+      chipEl.addEventListener('change', updateGpuTitle);
+      brandEl.addEventListener('change', updateGpuTitle);
+      modelEl.addEventListener('input', updateGpuTitle);
+
+      updateGpuChips();
+    }
+
+    /* === RAM Cascading: Brand -> Type -> Speed/Capacity -> Model === */
+    const RAM_BUS_BY_TYPE = {
+      DDR5: [4800, 5200, 5600, 6000, 6400, 6800, 7200, 8000],
+      DDR4: [2133, 2400, 2666, 3000, 3200, 3600, 4000, 4400, 4800, 5333],
+      DDR3: [1066, 1333, 1600, 1866, 2133],
     };
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      if (!Auth.isLoggedIn()) {
-        window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname);
-        return;
+    function renderRamCascade(container) {
+      container.innerHTML = `
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/></svg>
+            2.1 เลือกแบรนด์ (Brand):
+          </label>
+          <select class="form-input" id="ram-brand">
+            <option value="Corsair" selected>Corsair</option>
+            <option value="Kingston">Kingston</option>
+            <option value="G.SKILL">G.SKILL</option>
+            <option value="Crucial">Crucial</option>
+            <option value="Thermaltake">Thermaltake</option>
+          </select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/></svg>
+            2.2 ชนิด RAM (RAM Type):
+          </label>
+          <select class="form-input" id="ram-type">
+            <option value="DDR5" selected>DDR5</option>
+            <option value="DDR4">DDR4</option>
+            <option value="DDR3">DDR3</option>
+          </select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            2.3 บัส/ความเร็ว (Bus / Speed):
+          </label>
+          <select class="form-input" id="ram-bus"></select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+            2.4 ความจุรวม (Capacity):
+          </label>
+          <select class="form-input" id="ram-capacity">
+            <option value="16">16GB (8x2)</option>
+            <option value="32" selected>32GB (16x2)</option>
+            <option value="64">64GB (32x2)</option>
+          </select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/></svg>
+            2.5 ระบุรุ่นแรม (Model):
+          </label>
+          <input type="text" class="form-input" id="ram-model" placeholder="เช่น Vengeance RGB 32GB DDR5 6000MHz" required>
+        </div>
+      `;
+
+      const brandEl = document.getElementById('ram-brand');
+      const typeEl = document.getElementById('ram-type');
+      const busEl = document.getElementById('ram-bus');
+      const capEl = document.getElementById('ram-capacity');
+      const modelEl = document.getElementById('ram-model');
+
+      function updateBusOptions() {
+        const options = RAM_BUS_BY_TYPE[typeEl.value] || [];
+        busEl.innerHTML = options.map(mts => `<option value="${mts}">${mts.toLocaleString()} MT/s</option>`).join('');
+        updateRamTitle();
       }
 
-      try {
-        const profile = await API.get('/auth/profile');
-        if (profile) {
-          Auth.setUser(profile);
-          currentProfile = profile;
-          document.getElementById('seller-shop-display').textContent = profile.shop_name || profile.username;
-          document.getElementById('seller-verified-badge').classList.toggle('hidden', !profile.is_seller_verified);
-          document.getElementById('seller-bank-display').textContent = `ธนาคาร: ${profile.seller_bank_name || 'ธนาคารไทย'} • ${profile.seller_bank_account || 'ยังไม่ระบุ'}`;
-        }
-        const isSellerRegistered = profile && (profile.is_seller_verified === 1 || (profile.shop_name && profile.seller_bank_account));
-        if (!isSellerRegistered) {
-          alert('คุณยังไม่ได้ลงทะเบียนเปิดร้านค้าเป็นผู้ขาย กรุณาลงทะเบียนเป็นผู้ขายก่อนลงประกาศขายสินค้า');
-          window.location.href = '/profile.html?openSellerReg=true';
-          return;
-        }
-      } catch (err) {
-        console.error('Profile check error:', err);
+      function updateRamTitle() {
+        const brand = brandEl.value;
+        const model = modelEl.value.trim() || `${typeEl.value} ${capEl.value}GB`;
+        onModelSelected(brand, model);
       }
 
-      metadata = await API.get('/products/metadata');
-      const validCategories = metadata.categories.filter(c => c.slug !== 'full-pc');
-      document.getElementById('listing-category').innerHTML = validCategories.map(cat =>
-        `<option value="${cat.slug}">${escapeHtml(cat.name)}</option>`
-      ).join('');
-      renderModels();
+      brandEl.addEventListener('change', updateRamTitle);
+      typeEl.addEventListener('change', updateBusOptions);
+      busEl.addEventListener('change', updateRamTitle);
+      capEl.addEventListener('change', updateRamTitle);
+      modelEl.addEventListener('input', updateRamTitle);
 
-      // Proof Upload Setup
-      document.getElementById('upload-proof-btn').addEventListener('click', () => {
-        document.getElementById('proof-image-file').click();
+      updateBusOptions();
+    }
+
+    /* === Storage Cascading: Brand -> Type -> Interface -> Capacity -> Read Speed === */
+    const STORAGE_INTERFACES = {
+      ssd: [
+        { value: 'SATA III (2.5")', speed: '500-600 MB/s' },
+        { value: 'M.2 NVMe (PCIe Gen 3)', speed: '3,000-3,500 MB/s' },
+        { value: 'M.2 NVMe (PCIe Gen 4)', speed: '7,000-7,500 MB/s' },
+        { value: 'M.2 NVMe (PCIe Gen 5)', speed: '10,000-14,000 MB/s' },
+      ],
+      hdd: [
+        { value: 'SATA (3.5")', speed: '150-220 MB/s' },
+      ],
+    };
+    const STORAGE_CAPACITIES_GB = [128, 250, 256, 500, 512, 1000, 2000, 4000];
+
+    function renderStorageCascade(container) {
+      container.innerHTML = `
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/></svg>
+            2.1 เลือกแบรนด์ (Brand):
+          </label>
+          <input type="text" class="form-input" id="storage-brand" list="storage-brand-list" placeholder="เช่น Samsung, WD, Seagate">
+          <datalist id="storage-brand-list">
+            ${meta.brands.map(name => `<option value="${escapeHtml(name)}">`).join('')}
+          </datalist>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/></svg>
+            2.2 ประเภท (Type):
+          </label>
+          <select class="form-input" id="storage-type">
+            <option value="ssd" selected>SSD</option>
+            <option value="hdd">HDD</option>
+          </select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+            2.3 อินเทอร์เฟส (Interface):
+          </label>
+          <select class="form-input" id="storage-interface"></select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            2.4 ความจุ (Capacity):
+          </label>
+          <select class="form-input" id="storage-capacity">
+            ${STORAGE_CAPACITIES_GB.map(gb => `<option value="${gb}" ${gb === 1000 ? 'selected' : ''}>${gb >= 1000 ? (gb / 1000) + ' TB' : gb + ' GB'}</option>`).join('')}
+          </select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            2.5 ความเร็วอ่าน (Read Speed):
+          </label>
+          <input type="text" class="form-input" id="storage-read-speed" placeholder="เช่น 7,000-7,500 MB/s">
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/></svg>
+            2.6 รุ่นสินค้า (Model):
+          </label>
+          <input type="text" class="form-input" id="storage-model" placeholder="เช่น 990 PRO 1TB" required>
+        </div>
+      `;
+
+      const typeEl = document.getElementById('storage-type');
+      const interfaceEl = document.getElementById('storage-interface');
+      const readSpeedEl = document.getElementById('storage-read-speed');
+      const brandEl = document.getElementById('storage-brand');
+      const modelEl = document.getElementById('storage-model');
+
+      function updateInterfaces() {
+        const options = STORAGE_INTERFACES[typeEl.value] || [];
+        interfaceEl.innerHTML = options.map(o => `<option value="${o.value}">${o.value}</option>`).join('');
+        updateReadSpeedSuggestion();
+      }
+
+      function updateReadSpeedSuggestion() {
+        const options = STORAGE_INTERFACES[typeEl.value] || [];
+        const match = options.find(o => o.value === interfaceEl.value);
+        readSpeedEl.value = match ? match.speed : '';
+      }
+
+      function updateTitle() {
+        onModelSelected(brandEl.value.trim(), modelEl.value.trim());
+      }
+
+      typeEl.addEventListener('change', updateInterfaces);
+      interfaceEl.addEventListener('change', updateReadSpeedSuggestion);
+      brandEl.addEventListener('input', updateTitle);
+      modelEl.addEventListener('input', updateTitle);
+
+      updateInterfaces();
+    }
+
+    /* === PSU Cascading: Brand -> Wattage -> Efficiency (80 PLUS) -> Modularity === */
+    const PSU_WATTAGES = [550, 650, 750, 850, 1000, 1200, 1300, 1600];
+
+    function renderPsuCascade(container) {
+      container.innerHTML = `
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/></svg>
+            2.1 เลือกแบรนด์ (Brand):
+          </label>
+          <input type="text" class="form-input" id="psu-brand" list="psu-brand-list" placeholder="เช่น Corsair, Seasonic, be quiet!">
+          <datalist id="psu-brand-list">
+            ${meta.brands.map(name => `<option value="${escapeHtml(name)}">`).join('')}
+          </datalist>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            2.2 กำลังไฟ (Wattage):
+          </label>
+          <select class="form-input" id="psu-wattage">
+            ${PSU_WATTAGES.map(w => `<option value="${w}" ${w === 750 ? 'selected' : ''}>${w}W</option>`).join('')}
+          </select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+            2.3 มาตรฐาน 80 PLUS (Efficiency):
+          </label>
+          <select class="form-input" id="psu-efficiency">
+            ${meta.psu_efficiency.map(e => `<option value="${e.name}">${e.name}</option>`).join('')}
+          </select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/></svg>
+            2.4 ประเภทสายไฟ (Modularity):
+          </label>
+          <select class="form-input" id="psu-modularity">
+            ${meta.psu_modular.map(m => `<option value="${m.name}">${m.name}</option>`).join('')}
+          </select>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/></svg>
+            2.5 รุ่นสินค้า (Model):
+          </label>
+          <input type="text" class="form-input" id="psu-model" placeholder="เช่น RM850e" required>
+        </div>
+      `;
+
+      const brandEl = document.getElementById('psu-brand');
+      const modelEl = document.getElementById('psu-model');
+
+      function updateTitle() {
+        onModelSelected(brandEl.value.trim(), modelEl.value.trim());
+      }
+
+      brandEl.addEventListener('input', updateTitle);
+      modelEl.addEventListener('input', updateTitle);
+    }
+
+    /* === Generic Cascade fallback (currently: Monitor, or any future/unhandled category) === */
+    function renderGenericCascade(category, container) {
+      container.innerHTML = `
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/></svg>
+            2.1 แบรนด์ (Brand):
+          </label>
+          <input type="text" class="form-input" id="generic-brand" placeholder="เช่น Samsung, Corsair, Lian Li" required>
+        </div>
+
+        <div class="form-group-custom">
+          <label class="cascade-step-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/></svg>
+            2.2 รุ่นสินค้า (Model):
+          </label>
+          <input type="text" class="form-input" id="generic-model" placeholder="ระบุชื่อรุ่นสินค้า" required>
+        </div>
+      `;
+
+      const brandEl = document.getElementById('generic-brand');
+      const modelEl = document.getElementById('generic-model');
+
+      function updateGenericTitle() {
+        const brand = brandEl.value.trim();
+        const model = modelEl.value.trim();
+        if (brand || model) {
+          onModelSelected(brand, model);
+        }
+      }
+
+      brandEl.addEventListener('input', updateGenericTitle);
+      modelEl.addEventListener('input', updateGenericTitle);
+    }
+
+    /* === Auto-Fill Product Title === */
+    function onModelSelected(brand, model) {
+      if (!model) return;
+      const titleInput = document.getElementById('product-title');
+      const { type, years, months, days } = getWarrantyFormValues();
+      const condition = document.getElementById('product-condition').value;
+
+      const condText = condition === 'new' ? '(สินค้ามือ 1)' : '(สภาพสวย ใช้งานปกติ)';
+      const warrantyText = type !== 'no_warranty' ? buildWarrantyPreviewText(type, years, months, days).split(' (')[0] : '';
+
+      titleInput.value = `${brand} ${model} ${warrantyText} ${condText}`.replace(/\s+/g, ' ').trim();
+    }
+
+    /* === Photo Upload Handlers === */
+    function setupUploadEvents() {
+      const dropZone = document.getElementById('photo-drop-zone');
+      const fileInput = document.getElementById('photo-file-input');
+
+      dropZone.addEventListener('click', () => fileInput.click());
+
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
       });
-      document.getElementById('proof-image-file').addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const formData = new FormData();
-        formData.append('image', file);
-        try {
-          const res = await fetch('/api/upload', { method: 'POST', body: formData });
-          const data = await res.json();
-          document.getElementById('proof-image-url').value = data.url;
-          document.getElementById('proof-preview-wrap').innerHTML = `
-            <img src="${data.url}" class="upload-preview-thumb">
-            <div class="upload-preview-caption"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>แนบภาพคู่ป้ายชื่อแล้ว</div>
-          `;
-          renderReviewHint();
-        } catch (err) {
-          alert('อัปโหลดภาพไม่สำเร็จ: ' + err.message);
+
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        if (e.dataTransfer.files.length) {
+          handleFiles(e.dataTransfer.files);
         }
       });
 
-      // SN Upload Setup
-      document.getElementById('upload-sn-btn').addEventListener('click', () => {
-        document.getElementById('sn-image-file').click();
-      });
-      document.getElementById('sn-image-file').addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const formData = new FormData();
-        formData.append('image', file);
-        try {
-          const res = await fetch('/api/upload', { method: 'POST', body: formData });
-          const data = await res.json();
-          document.getElementById('sn-image-url').value = data.url;
-          document.getElementById('sn-preview-wrap').innerHTML = `
-            <img src="${data.url}" class="upload-preview-thumb thumb-highlight">
-            <div class="upload-preview-caption caption-highlight"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>แนบภาพ SN แล้ว</div>
-          `;
-        } catch (err) {
-          alert('อัปโหลดภาพไม่สำเร็จ: ' + err.message);
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) {
+          handleFiles(fileInput.files);
         }
       });
+    }
 
-      // Gallery Photos Upload
-      document.getElementById('listing-photo-upload-btn').addEventListener('click', () => {
-        document.getElementById('listing-photo-file').click();
-      });
+    async function handleFiles(files) {
+      for (const file of Array.from(files)) {
+        if (uploadedPhotos.length >= 10) {
+          Toast.warning('อัปโหลดรูปภาพได้สูงสุด 10 รูป');
+          break;
+        }
+        if (!file.type.startsWith('image/')) continue;
 
-      document.getElementById('listing-photo-file').addEventListener('change', async (e) => {
-        const files = e.target.files;
-        if (!files.length) return;
-
-        const error = document.getElementById('listing-error');
-        error.textContent = '';
-        document.getElementById('listing-photo-upload-btn').disabled = true;
-        document.getElementById('listing-photo-upload-btn').innerHTML = '<span class="spinner"></span> กำลังอัปโหลดรูปภาพ...';
-
-        for (const file of files) {
+        try {
           const formData = new FormData();
           formData.append('image', file);
 
-          try {
-            const response = await fetch('/api/upload', {
-              method: 'POST',
-              body: formData
-            });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Upload failed');
-            uploadedUrls.push(data.url);
-          } catch (err) {
-            error.textContent = 'ไม่สามารถอัปโหลดบางไฟล์ได้: ' + err.message;
+          const res = await API.upload('/upload', formData);
+          if (res.url) {
+            uploadedPhotos.push(res.url);
+            renderPhotoPreviews();
           }
+        } catch (err) {
+          console.error('Upload failed:', err);
+          Toast.error('อัปโหลดรูปภาพล้มเหลว: ' + err.message);
+        }
+      }
+    }
+
+    function renderPhotoPreviews() {
+      const container = document.getElementById('photo-previews');
+      container.innerHTML = uploadedPhotos.map((url, idx) => `
+        <div class="photo-thumb-box">
+          <img src="${escapeHtml(url)}" alt="Product Photo ${idx + 1}">
+          <button type="button" class="photo-thumb-remove" onclick="removePhoto(${idx})" title="ลบรูป">✕</button>
+        </div>
+      `).join('');
+    }
+
+    function removePhoto(index) {
+      uploadedPhotos.splice(index, 1);
+      renderPhotoPreviews();
+    }
+
+    /* === Form Submission === */
+    document.getElementById('product-listing-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById('submit-btn');
+      setBtnLoading(submitBtn, true);
+
+      try {
+        const category = document.getElementById('listing-category').value;
+        if (!category) throw new Error('กรุณาเลือกหมวดหมู่อุปกรณ์');
+
+        let brand = '';
+        let model = '';
+        let specs = {};
+
+        if (category === 'cpu') {
+          brand = document.getElementById('cpu-brand').value;
+          model = document.getElementById('cpu-model').value;
+          specs = {
+            socket: document.getElementById('cpu-socket').value,
+            generation: document.getElementById('cpu-gen').value
+          };
+        } else if (category === 'motherboard') {
+          brand = document.getElementById('mb-brand').value;
+          model = document.getElementById('mb-model').value.trim();
+          specs = {
+            socket: document.getElementById('mb-socket').value,
+            chipset: document.getElementById('mb-chipset').value,
+            generation: document.getElementById('mb-gen').value || null,
+            form_factor: document.getElementById('mb-form-factor').value,
+            ram_type: document.getElementById('mb-ram-type').value
+          };
+        } else if (category === 'gpu') {
+          brand = document.getElementById('gpu-brand').value;
+          model = document.getElementById('gpu-model').value.trim();
+          specs = {
+            series: document.getElementById('gpu-series').value,
+            chip: document.getElementById('gpu-chip').value
+          };
+        } else if (category === 'ram') {
+          brand = document.getElementById('ram-brand').value;
+          model = document.getElementById('ram-model').value.trim();
+          specs = {
+            type: document.getElementById('ram-type').value,
+            capacity_gb: Number(document.getElementById('ram-capacity').value),
+            speed: Number(document.getElementById('ram-bus').value)
+          };
+        } else if (category === 'storage') {
+          brand = document.getElementById('storage-brand').value.trim();
+          model = document.getElementById('storage-model').value.trim();
+          specs = {
+            interface: document.getElementById('storage-interface').value,
+            capacity_gb: Number(document.getElementById('storage-capacity').value),
+            read_speed: document.getElementById('storage-read-speed').value.trim() || null
+          };
+        } else if (category === 'psu') {
+          brand = document.getElementById('psu-brand').value.trim();
+          model = document.getElementById('psu-model').value.trim();
+          specs = {
+            wattage: Number(document.getElementById('psu-wattage').value),
+            efficiency: document.getElementById('psu-efficiency').value,
+            modularity: document.getElementById('psu-modularity').value
+          };
+        } else {
+          brand = document.getElementById('generic-brand').value.trim();
+          model = document.getElementById('generic-model').value.trim();
         }
 
-        document.getElementById('listing-photo-upload-btn').disabled = false;
-        document.getElementById('listing-photo-upload-btn').innerHTML = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> เลือกและอัปโหลดไฟล์ภาพสินค้า';
-        e.target.value = '';
-        renderPreviews();
-      });
+        if (category === 'gpu') {
+          const vram = Number(document.getElementById('gpu-vram').value);
+          if (vram) specs.vram_gb = vram;
+        }
 
-      ['listing-category', 'listing-part', 'listing-condition', 'listing-price'].forEach(id => {
-        document.getElementById(id).addEventListener('input', id === 'listing-category' ? renderModels : renderReviewHint);
-        document.getElementById(id).addEventListener('change', id === 'listing-category' ? renderModels : renderReviewHint);
-      });
-      document.getElementById('listing-form').addEventListener('submit', submitListing);
+        if (!brand || !model) {
+          throw new Error('กรุณาระบุแบรนด์และรุ่นสินค้าให้ครบถ้วน');
+        }
+
+        const warranty = getWarrantyFormValues();
+
+        const payload = {
+          category,
+          brand,
+          model,
+          specs,
+          description: document.getElementById('product-title').value.trim() + '\n' + document.getElementById('product-desc').value.trim(),
+          condition: document.getElementById('product-condition').value,
+          price: Number(document.getElementById('product-price').value),
+          stock_quantity: Number(document.getElementById('product-stock').value) || 1,
+          warranty_type: warranty.type,
+          warranty_years: warranty.years,
+          warranty_months: warranty.months,
+          warranty_days: warranty.days,
+          serial_number: document.getElementById('product-serial').value.trim() || null,
+          allow_express: document.getElementById('allow-express').checked ? 1 : 0,
+          allow_hand_pickup: document.getElementById('allow-pickup').checked ? 1 : 0,
+          photos: uploadedPhotos.length ? uploadedPhotos : ['https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=600&auto=format&fit=crop'],
+          proof_image_url: uploadedPhotos[0] || null
+        };
+
+        const result = await API.post('/products', payload);
+        Toast.success(result.message || 'ลงประกาศขายสินค้าสำเร็จ!');
+
+        // Reset form
+        document.getElementById('product-listing-form').reset();
+        uploadedPhotos = [];
+        renderPhotoPreviews();
+        onCategoryChange();
+
+        await loadMyListings();
+      } catch (err) {
+        Toast.error(err.message);
+      } finally {
+        setBtnLoading(submitBtn, false);
+      }
     });
+
+    /* === Load My Active Listings === */
+    async function loadMyListings() {
+      const container = document.getElementById('my-listings-container');
+      try {
+        const listings = await API.get('/products/my/listings');
+        if (!listings || listings.length === 0) {
+          container.innerHTML = '<p class="text-muted">คุณยังไม่มีรายการประกาศขายในขณะนี้</p>';
+          return;
+        }
+
+        container.innerHTML = `
+          <div class="listings-table-wrap">
+          <table class="listings-table">
+            <thead>
+              <tr>
+                <th>รูป</th>
+                <th>สินค้า</th>
+                <th>หมวดหมู่</th>
+                <th>ราคาขาย</th>
+                <th>S/N</th>
+                <th>สถานะ</th>
+                <th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${listings.map(item => `
+                <tr>
+                  <td>
+                    <img src="${item.photos?.[0] || 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=600&auto=format&fit=crop'}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 4px;">
+                  </td>
+                  <td>
+                    <strong>${escapeHtml(item.brand || '')} ${escapeHtml(item.model || '')}</strong>
+                    <br><small class="text-muted">${escapeHtml(item.sku || '-')}</small>
+                  </td>
+                  <td>${escapeHtml(item.category_name || '-')}</td>
+                  <td><strong class="text-primary">${formatPrice(item.price)}</strong></td>
+                  <td><code>${escapeHtml(item.serial_number || '-')}</code></td>
+                  <td>
+                    <span class="badge ${item.status === 'active' ? 'badge-success' : 'badge-warning'}">
+                      ${item.status === 'active' ? 'พร้อมขาย' : item.status}
+                    </span>
+                  </td>
+                  <td>
+                    <button class="btn btn-outline btn-sm" onclick="deleteListing(${item.id})">ลบ</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          </div>
+        `;
+      } catch (err) {
+        container.innerHTML = '<p class="text-danger">ไม่สามารถโหลดรายการสินค้าได้</p>';
+      }
+    }
+
+    async function deleteListing(id) {
+      if (!confirm('คุณต้องการลบประกาศขายสินค้านี้ใช่หรือไม่?')) return;
+      try {
+        await API.delete(`/products/${id}`);
+        Toast.success('ลบประกาศขายเรียบร้อยแล้ว');
+        loadMyListings();
+      } catch (err) {
+        Toast.error(err.message);
+      }
+    }
   </script>
 </body>
 </html>

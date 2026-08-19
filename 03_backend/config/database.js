@@ -78,17 +78,11 @@ async function ensureSchemaColumns() {
     { table: 'orders', column: 'is_risk_accepted', type: 'TINYINT DEFAULT 0' },
     { table: 'orders', column: 'risk_accepted_at', type: 'DATETIME DEFAULT NULL' },
 
-    // users columns
+    // users columns (seller/KYC fields live in `seller_profiles` as of Round 3 —
+    // do NOT add them back here, or every server boot resurrects the dropped
+    // duplicate columns)
     { table: 'users', column: 'google_id', type: 'VARCHAR(255) DEFAULT NULL' },
     { table: 'users', column: 'facebook_id', type: 'VARCHAR(255) DEFAULT NULL' },
-    { table: 'users', column: 'seller_full_name', type: 'VARCHAR(255) DEFAULT NULL' },
-    { table: 'users', column: 'seller_bank_name', type: 'VARCHAR(100) DEFAULT NULL' },
-    { table: 'users', column: 'seller_bank_account', type: 'VARCHAR(100) DEFAULT NULL' },
-    { table: 'users', column: 'seller_phone', type: 'VARCHAR(50) DEFAULT NULL' },
-    { table: 'users', column: 'seller_verification_status', type: 'VARCHAR(50) DEFAULT "none"' },
-    { table: 'users', column: 'seller_verification_proof_url', type: 'TEXT DEFAULT NULL' },
-    { table: 'users', column: 'seller_reputation_score', type: 'INT DEFAULT 100' },
-    { table: 'users', column: 'seller_verified_at', type: 'DATETIME DEFAULT NULL' },
     { table: 'users', column: 'is_email_verified', type: 'TINYINT DEFAULT 0' },
     { table: 'users', column: 'is_phone_verified', type: 'TINYINT DEFAULT 0' },
 

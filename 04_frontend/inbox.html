@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>กล่องข้อความเจรจาซื้อขาย & ติดตามคำสั่งซื้อ | PC Builder Pro</title>
+  <title>กล่องข้อความเจรจาซื้อขาย & ติดตามคำสั่งซื้อ | Second-hand Computer Marketplace System</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
     .inbox-container {
@@ -550,7 +550,7 @@
           <line x1="8" y1="21" x2="16" y2="21"></line>
           <line x1="12" y1="17" x2="12" y2="21"></line>
         </svg>
-        ประกอบ PC <span>Pro</span>
+        <span class="navbar-logo-text">Second-hand Computer Marketplace <span>System</span></span>
       </a>
       <button class="mobile-menu-toggle" id="mobile-menu-btn" aria-label="Toggle menu">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -560,12 +560,12 @@
         </svg>
       </button>
       <ul class="navbar-links">
-        <li><a href="/index.html">หน้าแรก</a></li>
+        <li><a href="/index.html">Home</a></li>
         <li><a href="/products.html">Marketplace</a></li>
-        <li><a href="/builder.html">ประกอบ PC</a></li>
+        <li><a href="/builder.html">PC Builder</a></li>
 
-        <li><a href="/sell-product.html">ลงขายสินค้า</a></li>
-        <li><a href="/inbox.html" class="active">ข้อความเจรจา</a></li>
+        <li><a href="/sell-product.html">Sell Product</a></li>
+        <li><a href="/inbox.html" class="active">Messages</a></li>
       </ul>
       <div class="navbar-auth" id="navbar-auth"></div>
     </div>
@@ -797,8 +797,7 @@
           is_seller_verified: chatData.is_seller_verified || 0,
           tracking_number: chatData.tracking_number,
           courier_name: chatData.courier_name,
-          packing_proof_url: chatData.packing_proof_url,
-          slip_verification_status: chatData.slip_verification_status
+          proof_of_packing_url: chatData.proof_of_packing_url
         };
         
         const counterpartName = isBuyer ? currentRoom.seller_name : currentRoom.buyer_name;
@@ -951,8 +950,8 @@
                         เว็บทางการ
                       </a>
                     ` : ''}
-                    ${activeRoomDetails.packing_proof_url ? `
-                      <a href="${activeRoomDetails.packing_proof_url}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 3px 10px; text-decoration: none;">
+                    ${activeRoomDetails.proof_of_packing_url ? `
+                      <a href="${activeRoomDetails.proof_of_packing_url}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 3px 10px; text-decoration: none;">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"></path><circle cx="12" cy="13" r="3"></circle></svg>
                         ดูภาพแพ็กของ
                       </a>
@@ -1225,7 +1224,7 @@
           status: 'shipped',
           courier_name: courier,
           tracking_number: tracking,
-          packing_proof_url: packingProofUrl || null
+          proof_of_packing_url: packingProofUrl || null
         });
         Toast.success('ระบุการจัดส่งสินค้าและเลขพัสดุเรียบร้อยแล้ว!');
         if (activeRoomId) selectChatRoom(activeRoomId);
@@ -1411,7 +1410,7 @@
             <div class="header">
               <div class="title" style="display: flex; align-items: center; gap: 8px;">${ICONS.scale} แฟ้มเอกสารหลักฐานธุรกรรมซื้อขาย (Transaction Evidence Dossier)</div>
               <div>รหัสคำสั่งซื้อ: #BO-${orderId} | วันที่ออกเอกสาร: ${new Date().toLocaleString('th-TH')}</div>
-              <div style="font-size: 12px; color: #666;">เอกสารนี้ออกโดยระบบ PC Builder Pro เพื่อใช้เป็นหลักฐานทางกฎหมายในการดำเนินคดีหรือยืนยันความโปร่งใส</div>
+              <div style="font-size: 12px; color: #666;">เอกสารนี้ออกโดยระบบ Second-hand Computer Marketplace System เพื่อใช้เป็นหลักฐานทางกฎหมายในการดำเนินคดีหรือยืนยันความโปร่งใส</div>
             </div>
 
             <div class="section">
@@ -1496,10 +1495,10 @@
                     <img src="${evidence.order.payment_slip_url}" class="evidence-img">
                   </div>
                 ` : ''}
-                ${evidence.order.packing_proof_url ? `
+                ${evidence.order.proof_of_packing_url ? `
                   <div style="display: inline-block;">
                     <div style="font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 4px;">${ICONS.package} ภาพถ่ายขณะบรรจุหีบห่อ (Packing Proof):</div>
-                    <img src="${evidence.order.packing_proof_url}" class="evidence-img">
+                    <img src="${evidence.order.proof_of_packing_url}" class="evidence-img">
                   </div>
                 ` : ''}
               </div>
@@ -1550,6 +1549,9 @@
           if (activeRoomId && activeRoomDetails && activeRoomDetails.order_id === data.orderId) {
             activeRoomDetails.order_status = data.status;
             if (data.payment_slip_url !== undefined) activeRoomDetails.payment_slip_url = data.payment_slip_url;
+            if (data.courier_name !== undefined) activeRoomDetails.courier_name = data.courier_name;
+            if (data.tracking_number !== undefined) activeRoomDetails.tracking_number = data.tracking_number;
+            if (data.proof_of_packing_url !== undefined) activeRoomDetails.proof_of_packing_url = data.proof_of_packing_url;
             const isBuyer = Number(activeRoomDetails.buyer_id) === Number(currentUserId);
             renderChatWindowLayout(isBuyer ? activeRoomDetails.seller_name : activeRoomDetails.buyer_name, isBuyer, data.orderId);
           }

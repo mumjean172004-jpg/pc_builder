@@ -60,9 +60,8 @@ exports.productValidator = [
     .withMessage('สภาพสินค้าไม่ถูกต้อง'),
 
   body('serial_number')
-    .trim()
-    .notEmpty()
-    .withMessage('กรุณาระบุ Serial Number ของสินค้า'),
+    .optional({ checkFalsy: true })
+    .trim(),
 
   body('description')
     .optional({ checkFalsy: true })

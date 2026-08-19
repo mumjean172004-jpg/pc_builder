@@ -11,16 +11,19 @@ This note explains how second-hand product listings are analyzed for fraudulent 
 
 When a user posts or updates a marketplace listing, the backend runs evaluation checks (`evaluateSuspicion`, which delegates scoring to `scoreListing()`). If suspicious flags are raised, it logs these reasons in a JSON array inside the `suspicious_reasons` database column and computes a `suspicious_score`. **The score is NOT capped at 100** — if both rules below trigger, it reaches `160` (70+90) as-is; confirmed by unit test, don't assume a 0-100 clamp exists anywhere in the code.
 
-### 1. Catalog Reference Price Matching (Underpriced Checks)
+### 1. Cross-Listing Reference Price Matching (Underpriced Checks)
 To prevent bait-and-switch scams or listing values too good to be true:
-- **Rule**: Compare the product's selling price against the MSRP catalog reference price (`parts.price`) based on its `condition`.
-- **Condition Floors**:
-  - `new`: Minimum price must be at least **65%** of MSRP (`floor = part.price * 0.65`).
-  - `used_90`: Minimum price must be at least **50%** of MSRP (`floor = part.price * 0.50`).
-  - `used_80`: Minimum price must be at least **40%** of MSRP (`floor = part.price * 0.40`).
-  - `used_70`: Minimum price must be at least **30%** of MSRP (`floor = part.price * 0.30`).
+- **Rule** (redesigned 2026-08-17, see below): Compare the product's selling price against a reference price based on its `condition`. There is no separate admin-controlled catalog anymore (`parts` table removed) — the reference price is now `AVG(price)` across **other active, approved listings of the exact same `brand` + `model`** already on the marketplace (`productController.getCrossListingReferencePrice`, excludes the listing being scored itself). If no other listing of that exact brand+model exists yet, the price-floor check is skipped entirely for this listing (same "no ground truth, don't guess" behavior as before — a brand-new model's first-ever listing is never flagged just for being first).
+  - `products.original_price` (a seller-supplied "was" price, purely a display field) is **never** used as the reference price — it is self-reported and therefore not trustworthy as a fraud-detection input.
+- **Condition Floors** (unchanged — only the reference price source changed):
+  - `new`: Minimum price must be at least **65%** of the reference price.
+  - `used_90`: Minimum price must be at least **50%** of the reference price.
+  - `used_80`: Minimum price must be at least **40%** of the reference price.
+  - `used_70`: Minimum price must be at least **30%** of the reference price.
 - **Action**: If `price < floor`, `suspicious_score` increases by **`+70`** and the reason is recorded:
   - *"Price is unusually low compared with catalog reference price (X%)."*
+
+> ⚠️ **History**: Before 2026-08-17 this reference price came from `parts.price`, an admin-controlled MSRP in a separate reference catalog. A prior architecture change (done outside this codebase's normal workflow) switched it to the seller's own self-reported `original_price` — a critical bug, since a seller could set `original_price` to anything and always score `0`, live-proven exploitable on a real listing. Cross-listing comparison (this version) closes that gap because the reference price is derived from *other people's* independently-set listings, not anything the current seller controls.
 
 ### 2. Serial Number Duplicate Checks
 To prevent multiple fake listings using the same physical device or stolen product pictures:

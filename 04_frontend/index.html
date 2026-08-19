@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PC Builder Pro — ตลาดกลางอุปกรณ์คอมและคอมประกอบ ปลอดภัย 100%</title>
+  <title>Second-hand Computer Marketplace System — ตลาดกลางอุปกรณ์คอมและคอมประกอบ ปลอดภัย 100%</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
     /* Hero section — .marketplace-hero has a permanently dark navy background
@@ -200,7 +200,7 @@
           <line x1="8" y1="21" x2="16" y2="21"></line>
           <line x1="12" y1="17" x2="12" y2="21"></line>
         </svg>
-        ประกอบ PC <span>Pro</span>
+        <span class="navbar-logo-text">Second-hand Computer Marketplace <span>System</span></span>
       </a>
       <button class="mobile-menu-toggle" id="mobile-menu-btn" aria-label="Toggle menu">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -210,16 +210,16 @@
         </svg>
       </button>
       <ul class="navbar-links">
-        <li><a href="/index.html" class="active">หน้าแรก</a></li>
+        <li><a href="/index.html" class="active">Home</a></li>
         <li><a href="/products.html">Marketplace</a></li>
-        <li><a href="/builder.html">ประกอบ PC</a></li>
+        <li><a href="/builder.html">PC Builder</a></li>
 
-        <li><a href="/sell-product.html">ลงขายสินค้า</a></li>
-        <li><a href="/inbox.html">ข้อความเจรจา</a></li>
+        <li><a href="/sell-product.html">Sell Product</a></li>
+        <li><a href="/inbox.html">Messages</a></li>
       </ul>
       <div class="navbar-auth" id="navbar-auth">
-        <a href="/login.html" class="btn btn-ghost btn-sm">เข้าสู่ระบบ</a>
-        <a href="/login.html?register" class="btn btn-primary btn-sm">สมัครสมาชิก</a>
+        <a href="/login.html" class="btn btn-ghost btn-sm">Login</a>
+        <a href="/login.html?register" class="btn btn-primary btn-sm">Register</a>
       </div>
     </div>
   </nav>
@@ -267,10 +267,6 @@
       <a href="/products.html" class="btn btn-ghost btn-sm">ดูสินค้าทั้งหมด →</a>
     </div>
     <div class="category-grid-shopee" id="category-grid-shopee">
-      <a href="/products.html?category=full-pc" class="category-shopee-card">
-        <div class="category-shopee-name">คอมเซ็ตสำเร็จรูป</div>
-        <div class="category-count-badge" id="count-full-pc">พร้อมส่ง</div>
-      </a>
       <a href="/products.html?category=gpu" class="category-shopee-card">
         <div class="category-shopee-name">การ์ดจอ (GPU)</div>
         <div class="category-count-badge" id="count-gpu">ยอดนิยม</div>
@@ -295,24 +291,6 @@
         <div class="category-shopee-name">พาวเวอร์ซัพพลาย</div>
         <div class="category-count-badge" id="count-psu">80+ Gold</div>
       </a>
-      <a href="/products.html?category=case" class="category-shopee-card">
-        <div class="category-shopee-name">เคส & พัดลม</div>
-        <div class="category-count-badge" id="count-case">RGB / Mesh</div>
-      </a>
-    </div>
-  </section>
-
-  <!-- คอมเซ็ตสำเร็จรูปจากร้านค้า (Prebuilt PCs) -->
-  <section class="section container">
-    <div class="section-header">
-      <h2 class="section-title">คอมเซ็ตประกอบ</h2>
-      <a href="/products.html?category=full-pc" class="btn btn-outline btn-sm">ดูคอมเซ็ตทั้งหมด →</a>
-    </div>
-    <div class="card-grid" id="prebuilt-grid">
-      <div class="loading-overlay">
-        <div class="spinner"></div>
-        <p>กำลังโหลดคอมเซ็ต</p>
-      </div>
     </div>
   </section>
 
@@ -398,8 +376,8 @@
 
   <!-- ส่วนท้าย -->
   <footer class="page-footer">
-    <p>PC Builder Pro — ตลาดกลางคอมพิวเตอร์และระบบประกอบคอมพิวเตอร์อัจฉริยะ</p>
-    <p>© 2024 PC Builder Pro. All rights reserved.</p>
+    <p>Second-hand Computer Marketplace System — ตลาดกลางคอมพิวเตอร์และระบบประกอบคอมพิวเตอร์อัจฉริยะ</p>
+    <p>© 2024 Second-hand Computer Marketplace System. All rights reserved.</p>
   </footer>
 
   <script src="/js/app.js"></script>
@@ -419,29 +397,14 @@
     document.addEventListener('DOMContentLoaded', async () => {
       try {
         // Load Products
-        const prodRes = await API.get('/products?limit=20');
+        const prodRes = await API.get('/products?limit=12');
         const products = prodRes.data || [];
 
-        // 1. Filter Prebuilt PC Sets
-        const prebuilts = products.filter(p => p.is_prebuilt_set === 1 || p.category_slug === 'full-pc');
-        const prebuiltContainer = document.getElementById('prebuilt-grid');
-
-        if (prebuilts.length > 0) {
-          prebuiltContainer.innerHTML = prebuilts.slice(0, 4).map(renderProductCard).join('');
-        } else {
-          prebuiltContainer.innerHTML = `
-            <div class="empty-state-box">
-              ยังไม่มีคอมเซ็ตวางขายในขณะนี้ <a href="/sell-product.html">ลงขายคอมเซ็ตของคุณเป็นคนแรก</a>
-            </div>
-          `;
-        }
-
-        // 2. Filter Single Parts / Hot Listings
-        const hotParts = products.filter(p => !p.is_prebuilt_set && p.category_slug !== 'full-pc');
+        // Render Hot Listings
         const hotContainer = document.getElementById('hot-products-grid');
 
-        if (hotParts.length > 0) {
-          hotContainer.innerHTML = hotParts.slice(0, 8).map(renderProductCard).join('');
+        if (products.length > 0) {
+          hotContainer.innerHTML = products.map(renderProductCard).join('');
         } else {
           hotContainer.innerHTML = `
             <div class="empty-state-box">

@@ -1,5 +1,5 @@
 /**
- * PC Builder Pro — ตรรกะของหน้าประกอบ PC
+ * Second-hand Computer Marketplace System — ตรรกะของหน้าประกอบ PC
  * จัดการการเลือกอะไหล่ ตรวจสอบความเข้ากันได้ และบันทึกชุดประกอบ
  */
 
@@ -29,6 +29,65 @@ const ICONS = {
 };
 const ICON_SM = (name) => ICONS[name].replace('class="icon"', 'class="icon"style="width:14px;height:14px;"');
 
+// Splits getSpecsSummary()'s single "10C/16T · LGA1700 · 65W"-style string into
+// individual pill chips (reuses products.html's .spec-chip class, no new CSS).
+function specsToChips(specs, categorySlug) {
+  const summary = getSpecsSummary(specs, categorySlug);
+  if (!summary) return '';
+  return summary.split(' · ').map(seg => `<span class="spec-chip">${escapeHtml(seg)}</span>`).join('');
+}
+
+function conditionLabel(value) {
+  return {
+    new: 'New',
+    used_90: 'Used 90%',
+    used_80: 'Used 80%',
+    used_70: 'Used 70%',
+  }[value] || value;
+}
+
+// Category-specific filter sets for the Builder part picker. Each filter's option
+// list is derived from what's actually in `this.parts` for that category (only
+// values with real live listings show up — not the full master lookup), same
+// idea as the brand filter already had before this was generalized.
+const CATEGORY_FILTERS = {
+  cpu: [
+    { key: 'brand', label: 'ยี่ห้อ', get: (p) => p.brand },
+    { key: 'socket', label: 'Socket', get: (p) => p.specs?.socket },
+    { key: 'generation', label: 'เจเนอเรชัน', get: (p) => p.specs?.generation },
+    { key: 'series', label: 'ซีรีส์', get: (p) => p.specs?.series },
+  ],
+  motherboard: [
+    { key: 'socket', label: 'Socket', get: (p) => p.specs?.socket },
+    { key: 'chipset', label: 'Chipset', get: (p) => p.specs?.chipset },
+    { key: 'generation', label: 'Gen ที่รองรับ', get: (p) => p.specs?.generation },
+    { key: 'form_factor', label: 'ขนาดบอร์ด (Form Factor)', get: (p) => p.specs?.form_factor },
+    { key: 'ram_type', label: 'ชนิด RAM', get: (p) => p.specs?.ram_type },
+    { key: 'brand', label: 'ยี่ห้อ', get: (p) => p.brand },
+  ],
+  ram: [
+    { key: 'type', label: 'ประเภท', get: (p) => p.specs?.type },
+    { key: 'speed', label: 'บัส (Bus)', get: (p) => p.specs?.speed },
+    { key: 'capacity_gb', label: 'ความจุ (GB)', get: (p) => p.specs?.capacity_gb },
+    { key: 'brand', label: 'ยี่ห้อ', get: (p) => p.brand },
+  ],
+  gpu: [
+    { key: 'chip', label: 'ชิปเซ็ต', get: (p) => p.specs?.chip },
+    { key: 'series', label: 'ซีรีส์', get: (p) => p.specs?.series },
+    { key: 'brand', label: 'ยี่ห้อ', get: (p) => p.brand },
+  ],
+  psu: [
+    { key: 'brand', label: 'ยี่ห้อ', get: (p) => p.brand },
+    { key: 'modularity', label: 'ประเภทสาย', get: (p) => p.specs?.modularity },
+    { key: 'efficiency', label: 'มาตรฐาน 80 Plus', get: (p) => p.specs?.efficiency },
+  ],
+  storage: [
+    { key: 'brand', label: 'ยี่ห้อ', get: (p) => p.brand },
+    { key: 'interface', label: 'อินเทอร์เฟส', get: (p) => p.specs?.interface },
+    { key: 'capacity_gb', label: 'ความจุ (GB)', get: (p) => p.specs?.capacity_gb },
+  ],
+};
+
 const Builder = {
   categories: [],
   parts: [],
@@ -42,8 +101,8 @@ const Builder = {
       this.categories = await API.get('/parts/categories');
       this.renderCategories();
 
-      // โหลดอะไหล่ทั้งหมด
-      this.parts = await API.get('/parts');
+      // โหลดอะไหล่ที่มีคนลงขายอยู่จริง (ไม่ใช่แคตตาล็อกกลาง)
+      this.parts = await API.get('/builds/available-parts');
 
       // ตรวจสอบว่าต้องโหลดชุดประกอบที่มีอยู่ไหม
       const urlParams = new URLSearchParams(window.location.search);
@@ -84,6 +143,57 @@ const Builder = {
   selectCategory(slug) {
     this.currentCategory = slug;
     this.renderCategories();
+    this.renderCategoryFilters();
+    this.renderPartsList();
+  },
+
+  // Builds the category-specific filter dropdown row (Brand/Socket/Series, etc. —
+  // see CATEGORY_FILTERS). Rebuilt once per category switch, not on every
+  // keystroke/filter change, so an in-progress selection never gets clobbered.
+  renderCategoryFilters() {
+    const card = document.getElementById('category-filters-card');
+    const grid = document.getElementById('category-filters-grid');
+    if (!card || !grid) return;
+
+    const fields = CATEGORY_FILTERS[this.currentCategory];
+    if (!fields) {
+      card.style.display = 'none';
+      grid.innerHTML = '';
+      return;
+    }
+
+    const partsInCategory = this.parts.filter(p => p.category_slug === this.currentCategory);
+
+    grid.innerHTML = fields.map(f => {
+      const values = [...new Set(
+        partsInCategory.map(f.get).filter(v => v !== undefined && v !== null && v !== '')
+      )].sort((a, b) => String(a).localeCompare(String(b), 'th', { numeric: true }));
+
+      return `
+        <div class="category-filter-group">
+          <label for="cat-filter-${f.key}">${escapeHtml(f.label)}</label>
+          <select class="filter-select" id="cat-filter-${f.key}" data-filter-key="${f.key}">
+            <option value="">ทั้งหมด</option>
+            ${values.map(v => `<option value="${escapeHtml(String(v))}">${escapeHtml(String(v))}</option>`).join('')}
+          </select>
+        </div>
+      `;
+    }).join('');
+
+    card.style.display = 'block';
+
+    grid.querySelectorAll('select').forEach(sel => {
+      sel.addEventListener('change', () => this.renderPartsList());
+    });
+  },
+
+  resetCategoryFilters() {
+    const grid = document.getElementById('category-filters-grid');
+    if (grid) grid.querySelectorAll('select').forEach(sel => { sel.value = ''; });
+    const searchInput = document.getElementById('parts-search');
+    if (searchInput) searchInput.value = '';
+    const sortFilter = document.getElementById('sort-filter');
+    if (sortFilter) sortFilter.value = 'name';
     this.renderPartsList();
   },
 
@@ -110,10 +220,42 @@ const Builder = {
       );
     }
 
-    // กรองตามยี่ห้อ
-    const brandFilter = document.getElementById('brand-filter');
-    if (brandFilter && brandFilter.value) {
-      filtered = filtered.filter(p => p.brand === brandFilter.value);
+    // กรองตามตัวกรองเฉพาะหมวดหมู่ (ยี่ห้อ/Socket/ซีรีส์/ฯลฯ — ดู CATEGORY_FILTERS)
+    const activeFilterFields = CATEGORY_FILTERS[this.currentCategory] || [];
+    activeFilterFields.forEach(f => {
+      const el = document.getElementById(`cat-filter-${f.key}`);
+      if (el && el.value) {
+        filtered = filtered.filter(p => String(f.get(p) ?? '') === el.value);
+      }
+    });
+
+    // ล็อคความเข้ากันได้: ซ่อนอะไหล่ที่ Socket/ชนิด RAM ไม่ตรงกับสิ่งที่เลือกไว้แล้วในหมวดอื่น
+    // (CPU↔เมนบอร์ด ผ่าน socket, RAM↔เมนบอร์ด ผ่าน ram_type) — กรองแบบกำหนดตายตัวจาก specs
+    // โดยตรง ไม่ใช่การจับคู่ข้อความแบบ getPartCompatibilityStatus()
+    let lockMessage = null;
+    if (this.currentCategory === 'motherboard') {
+      const cpu = this.selectedParts.cpu;
+      const ram = this.selectedParts.ram;
+      if (cpu?.specs?.socket) {
+        filtered = filtered.filter(p => p.specs?.socket === cpu.specs.socket);
+        lockMessage = `ไม่มีเมนบอร์ดที่รองรับ Socket ${escapeHtml(cpu.specs.socket)} ของ CPU ที่เลือกไว้ (ลองเอา CPU ออกก่อน)`;
+      }
+      if (ram?.specs?.type) {
+        filtered = filtered.filter(p => p.specs?.ram_type === ram.specs.type);
+        lockMessage = `ไม่มีเมนบอร์ดที่รองรับ RAM ชนิด ${escapeHtml(ram.specs.type)} ที่เลือกไว้ (ลองเอา RAM ออกก่อน)`;
+      }
+    } else if (this.currentCategory === 'cpu') {
+      const motherboard = this.selectedParts.motherboard;
+      if (motherboard?.specs?.socket) {
+        filtered = filtered.filter(p => p.specs?.socket === motherboard.specs.socket);
+        lockMessage = `ไม่มี CPU ที่รองรับ Socket ${escapeHtml(motherboard.specs.socket)} ของเมนบอร์ดที่เลือกไว้ (ลองเอาเมนบอร์ดออกก่อน)`;
+      }
+    } else if (this.currentCategory === 'ram') {
+      const motherboard = this.selectedParts.motherboard;
+      if (motherboard?.specs?.ram_type) {
+        filtered = filtered.filter(p => p.specs?.type === motherboard.specs.ram_type);
+        lockMessage = `ไม่มี RAM ชนิด ${escapeHtml(motherboard.specs.ram_type)} ที่รองรับเมนบอร์ดที่เลือกไว้ (ลองเอาเมนบอร์ดออกก่อน)`;
+      }
     }
 
     // เรียงลำดับ
@@ -136,7 +278,7 @@ const Builder = {
       container.innerHTML = `
         <div class="empty-state">
           <div class="empty-state-icon">${ICONS.search}</div>
-          <p>ไม่พบอะไหล่</p>
+          <p>${lockMessage || 'ไม่พบอะไหล่'}</p>
         </div>
       `;
       return;
@@ -145,37 +287,49 @@ const Builder = {
     container.innerHTML = filtered.map(part => {
       const isSelected = this.selectedParts[part.category_slug]?.id === part.id;
       const compatStatus = this.getPartCompatibilityStatus(part);
+      const photoUrl = part.photos && part.photos[0];
+      const iconHtml = photoUrl
+        ? `<img src="${escapeHtml(photoUrl)}" alt="${escapeHtml(part.name)}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius);">`
+        : this.getCategoryIcon(part.category_slug);
 
       return `
         <div class="part-item ${isSelected ? 'selected' : ''} ${compatStatus.class === 'error' ? 'incompatible' : ''}"
              data-id="${part.id}" data-category="${part.category_slug}">
-          <div class="part-item-icon">${this.getCategoryIcon(part.category_slug)}</div>
+          <div class="part-item-icon">${iconHtml}</div>
           <div class="part-item-info">
             <div class="part-item-name">${escapeHtml(part.name)}</div>
-            <div class="part-item-specs">${getSpecsSummary(part.specs, part.category_slug)}</div>
+            <div class="part-item-specs">${specsToChips(part.specs, part.category_slug)}</div>
+            <div class="text-muted" style="font-size: 0.72rem; margin-top: 2px;">ร้าน ${escapeHtml(part.seller_name)} · ${conditionLabel(part.condition)}</div>
           </div>
           <div class="part-item-right">
             <div class="part-item-price">${formatPrice(part.price)}</div>
             <div class="part-item-brand">${escapeHtml(part.brand)}</div>
             ${compatStatus.html ? `<div class="part-item-compat ${compatStatus.class}">${compatStatus.html}</div>` : ''}
+            <button class="btn btn-primary btn-sm select-part-btn" data-id="${part.id}" data-category="${part.category_slug}" style="margin-top: 6px;">+ เลือก</button>
           </div>
         </div>
       `;
     }).join('');
 
+    const pickPart = (item) => {
+      const partId = parseInt(item.dataset.id);
+      const categorySlug = item.dataset.category;
+      const part = this.parts.find(p => p.id === partId);
+      if (part) {
+        this.selectPart(categorySlug, part);
+      }
+    };
+
     container.querySelectorAll('.part-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const partId = parseInt(item.dataset.id);
-        const categorySlug = item.dataset.category;
-        const part = this.parts.find(p => p.id === partId);
-        if (part) {
-          this.selectPart(categorySlug, part);
-        }
+      item.addEventListener('click', () => pickPart(item));
+    });
+    container.querySelectorAll('.select-part-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        pickPart(btn);
       });
     });
 
-    // อัปเดตตัวเลือกกรองยี่ห้อ
-    this.updateBrandFilter();
   },
 
   selectPart(categorySlug, part) {
@@ -209,14 +363,11 @@ const Builder = {
     }
 
     let total = 0;
-    let totalTdp = 0;
-    let psuWattage = 0;
 
     container.innerHTML = slugs.map(slug => {
       const part = this.selectedParts[slug];
       total += parseFloat(part.price);
-      if (part.specs.tdp) totalTdp += part.specs.tdp;
-      if (part.category_slug === 'psu') psuWattage = part.specs.wattage || 0;
+      const isUnavailable = part.available === false;
 
       return `
         <div class="summary-part" style="flex-direction: column; align-items: stretch; gap: 8px;">
@@ -230,9 +381,15 @@ const Builder = {
               <button class="summary-part-remove" data-slug="${part.category_slug}" title="ลบ">×</button>
             </div>
           </div>
-          <div style="display: flex; gap: 6px; padding-left: 28px;">
-            <a href="/products.html?search=${encodeURIComponent(part.name)}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.7rem; padding: 2px 8px; border-color: var(--primary); color: var(--primary); display: inline-flex; align-items: center; gap: 4px;">${ICON_SM('search')} หามือสองในเว็บ</a>
-            <a href="https://shopee.co.th/search?keyword=${encodeURIComponent(part.name)}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.7rem; padding: 2px 8px; border-color: #f53d2d; color: #f53d2d; display: inline-flex; align-items: center; gap: 4px;">${ICON_SM('shoppingCart')} หาของใหม่ Shopee</a>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 28px;">
+            ${isUnavailable
+              ? `<span class="text-danger" style="font-size: 0.75rem;">${ICON_SM('alertTriangle')} ไม่พร้อมขายแล้ว (สินค้าอาจถูกขายหรือถอดออก)</span>`
+              : `<span class="text-muted" style="font-size: 0.75rem;">ร้าน ${escapeHtml(part.seller_name || '')} · ${conditionLabel(part.condition)}</span>`
+            }
+            <div class="flex gap-1">
+              <a href="/product-detail.html?id=${part.id}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.7rem; padding: 2px 8px;">ดูสินค้า</a>
+              <a href="https://shopee.co.th/search?keyword=${encodeURIComponent(`${part.brand} ${part.model}`)}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm" style="font-size: 0.7rem; padding: 2px 8px;">ดูใน Shopee</a>
+            </div>
           </div>
         </div>
       `;
@@ -247,7 +404,7 @@ const Builder = {
     });
 
     this.updateTotalPrice(total);
-    this.checkMarketplaceAvailability();
+    this.renderCartPanel();
   },
 
   updateTotalPrice(total) {
@@ -257,7 +414,7 @@ const Builder = {
 
   async checkCompatibility() {
     const buildParts = Object.values(this.selectedParts).map(p => ({
-      part_id: p.id,
+      product_id: p.id,
       quantity: 1,
     }));
 
@@ -275,84 +432,6 @@ const Builder = {
 
     this.renderCompatibility();
     this.renderPartsList(); // แสดงใหม่เพื่อแสดงสถานะความเข้ากันได้
-    this.updateIntelligence();
-  },
-
-  async updateIntelligence() {
-    const buildParts = Object.values(this.selectedParts).map(p => ({
-      part_id: p.id,
-      quantity: 1,
-    }));
-
-    const slider = document.getElementById('power-hours-slider');
-    const hours = slider ? parseInt(slider.value) || 4 : 4;
-
-    if (buildParts.length === 0) {
-      this.renderIntelligenceNull(hours);
-      return;
-    }
-
-    try {
-      const intel = await API.post('/builds/intelligence', { parts: buildParts, hours_per_day: hours });
-      this.renderIntelligence(intel);
-    } catch (e) {
-      console.warn('Intelligence API error:', e);
-    }
-  },
-
-  renderIntelligenceNull(hours) {
-    const scoreEl = document.getElementById('intel-bottleneck-score');
-    const labelEl = document.getElementById('intel-bottleneck-label');
-    const adviceEl = document.getElementById('intel-bottleneck-advice');
-    const fpsEsports = document.getElementById('fps-esports');
-    const fpsAaa1080 = document.getElementById('fps-aaa1080');
-    const fpsAaa1440 = document.getElementById('fps-aaa1440');
-    const costThb = document.getElementById('power-cost-thb');
-    const kwhEl = document.getElementById('kwh-display');
-    const hoursEl = document.getElementById('hours-display');
-
-    if (scoreEl) scoreEl.textContent = '-';
-    if (labelEl) labelEl.textContent = 'ยังไม่ได้เลือก CPU / การ์ดจอ';
-    if (adviceEl) adviceEl.textContent = 'เลือกชิ้นส่วน CPU และ GPU เพื่อประเมินความสมดุลของระบบ';
-    if (fpsEsports) fpsEsports.textContent = '- FPS';
-    if (fpsAaa1080) fpsAaa1080.textContent = '- FPS';
-    if (fpsAaa1440) fpsAaa1440.textContent = '- FPS';
-    if (costThb) costThb.textContent = '~0 บาท/เดือน';
-    if (kwhEl) kwhEl.textContent = '0 kWh/เดือน';
-    if (hoursEl) hoursEl.textContent = `${hours} ชม./วัน`;
-  },
-
-  renderIntelligence(intel) {
-    const { bottleneck, performance, monthlyElectricityTHB, monthlyKwh, hoursPerDay } = intel;
-
-    const scoreEl = document.getElementById('intel-bottleneck-score');
-    const labelEl = document.getElementById('intel-bottleneck-label');
-    const adviceEl = document.getElementById('intel-bottleneck-advice');
-    const fpsEsports = document.getElementById('fps-esports');
-    const fpsAaa1080 = document.getElementById('fps-aaa1080');
-    const fpsAaa1440 = document.getElementById('fps-aaa1440');
-    const costThb = document.getElementById('power-cost-thb');
-    const kwhEl = document.getElementById('kwh-display');
-    const hoursEl = document.getElementById('hours-display');
-
-    if (scoreEl) {
-      scoreEl.textContent = bottleneck.score ? `${bottleneck.score}%` : 'Ideal';
-      if (bottleneck.status === 'balanced') {
-        scoreEl.style.background = 'rgba(16, 185, 129, 0.2)';
-        scoreEl.style.color = '#34d399';
-      } else {
-        scoreEl.style.background = 'rgba(245, 158, 11, 0.2)';
-        scoreEl.style.color = '#fbbf24';
-      }
-    }
-
-    if (fpsEsports) fpsEsports.textContent = `${performance.esports1080p || '-'}+ FPS`;
-    if (fpsAaa1080) fpsAaa1080.textContent = `${performance.aaa1080p || '-'} FPS`;
-    if (fpsAaa1440) fpsAaa1440.textContent = `${performance.aaa1440p || '-'} FPS`;
-
-    if (costThb) costThb.textContent = `~${monthlyElectricityTHB ? monthlyElectricityTHB.toLocaleString() : 0} บาท/เดือน`;
-    if (kwhEl) kwhEl.textContent = `${monthlyKwh || 0} kWh/เดือน`;
-    if (hoursEl) hoursEl.textContent = `${hoursPerDay || 4} ชม./วัน`;
   },
 
   openQuotationModal() {
@@ -361,7 +440,7 @@ const Builder = {
     if (!modal || !printable) return;
 
     const buildName = document.getElementById('build-name')?.value.trim() || 'ชุดจัดสเปกคอมพิวเตอร์ตามสั่ง (Custom PC Build)';
-    const buildDesc = document.getElementById('build-desc')?.value.trim() || 'จัดสเปกผ่านระบบอัจฉริยะ PC Builder Pro พร้อมระบบตรวจสอบความเข้ากันได้ 100%';
+    const buildDesc = document.getElementById('build-desc')?.value.trim() || 'จัดสเปกผ่านระบบอัจฉริยะ Second-hand Computer Marketplace System พร้อมระบบตรวจสอบความเข้ากันได้ 100%';
     const parts = Object.values(this.selectedParts);
 
     if (parts.length === 0) {
@@ -370,12 +449,10 @@ const Builder = {
     }
 
     let totalPrice = 0;
-    let totalTdp = 0;
     const dateStr = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
 
     const itemsHtml = parts.map((part, index) => {
       totalPrice += parseFloat(part.price);
-      if (part.specs && part.specs.tdp) totalTdp += part.specs.tdp;
       return `
         <tr style="border-bottom: 1px solid #e2e8f0;">
           <td style="padding: 8px 10px; text-align: center; color: #64748b;">${index + 1}</td>
@@ -393,7 +470,7 @@ const Builder = {
     printable.innerHTML = `
       <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 1rem; margin-bottom: 1.5rem;">
         <div>
-          <h2 style="margin: 0; color: #0f172a; font-size: 1.6rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">${ICONS.monitor} PC Builder Pro</h2>
+          <h2 style="margin: 0; color: #0f172a; font-size: 1.6rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">${ICONS.monitor} Second-hand Computer Marketplace System</h2>
           <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.9rem;">ใบเสนอราคาจัดสเปกและประกอบคอมพิวเตอร์ (Official Specification Quotation)</p>
         </div>
         <div style="text-align: right; font-size: 0.85rem; color: #475569;">
@@ -428,12 +505,7 @@ const Builder = {
         </tfoot>
       </table>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; font-size: 0.85rem; color: #334155;">
-        <div style="background: #f1f5f9; border-radius: 8px; padding: 0.85rem;">
-          <strong style="color: #0f172a; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">${ICON_SM('zap')} สรุปกำลังไฟฟ้าและประสิทธิภาพ:</strong>
-          <div>- การใช้กำลังไฟระบบโดยประมาณ: <strong>${totalTdp}W</strong></div>
-          <div>- กำลัง PSU แนะนำ: <strong>อย่างน้อย ${Math.ceil(totalTdp * 1.25)}W</strong></div>
-        </div>
+      <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 2rem; font-size: 0.85rem; color: #334155;">
         <div style="background: #f1f5f9; border-radius: 8px; padding: 0.85rem;">
           <strong style="color: #0f172a; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">${ICON_SM('shield')} หมายเหตุและข้อกำหนด:</strong>
           <div>- ราคาสินค้าเป็นราคากลางอ้างอิง MSRP ณ วันที่ออกเอกสาร</div>
@@ -462,7 +534,7 @@ const Builder = {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>PC Builder Pro - Quotation</title>
+        <title>Second-hand Computer Marketplace System - Quotation</title>
         <style>
           body { font-family: 'TH Sarabun New', sans-serif, Arial; margin: 20px; color: #0f172a; }
           @media print {
@@ -493,7 +565,7 @@ const Builder = {
     body.innerHTML = '<div class="loading-overlay"><div class="spinner"></div><p>กำลังสแกนเปรียบเทียบชิ้นส่วนมือสองในตลาด...</p></div>';
 
     const buildParts = Object.values(this.selectedParts).map(p => ({
-      part_id: p.id,
+      product_id: p.id,
       quantity: 1,
     }));
 
@@ -621,31 +693,14 @@ const Builder = {
     return { class: '', html: '' };
   },
 
-  updateBrandFilter() {
-    const select = document.getElementById('brand-filter');
-    if (!select) return;
-
-    const currentVal = select.value;
-    const brands = [...new Set(
-      this.parts
-        .filter(p => p.category_slug === this.currentCategory)
-        .map(p => p.brand)
-    )].sort();
-
-    select.innerHTML = '<option value="">ทุกยี่ห้อ</option>' +
-      brands.map(b => `<option value="${escapeHtml(b)}" ${b === currentVal ? 'selected' : ''}>${escapeHtml(b)}</option>`).join('');
-  },
-
   getCategoryIcon(slug) {
     const icons = {
       'cpu': ICONS.cpu,
-      'cpu-cooler': ICONS.fan,
       'motherboard': ICONS.motherboard,
       'ram': ICONS.ram,
       'gpu': ICONS.gpu,
       'storage': ICONS.storage,
       'psu': ICONS.zap,
-      'case': ICONS.package,
     };
     return icons[slug] || ICONS.wrench;
   },
@@ -665,7 +720,7 @@ const Builder = {
     }
 
     const buildParts = Object.values(this.selectedParts).map(p => ({
-      part_id: p.id,
+      product_id: p.id,
       quantity: 1,
     }));
 
@@ -694,11 +749,23 @@ const Builder = {
       const build = await API.get(`/builds/${buildId}`);
       this.selectedParts = {};
 
+      // Server already tells us whether each saved listing is still active/approved
+      // (`available`) — a build saved a while ago may reference a listing that's
+      // since sold or been paused; show it as unavailable instead of silently
+      // dropping it so the user knows before re-saving.
       for (const bp of build.parts) {
-        const fullPart = this.parts.find(p => p.id === bp.part_id);
-        if (fullPart) {
-          this.selectedParts[bp.category_slug] = fullPart;
-        }
+        if (!bp.category_slug) continue;
+        this.selectedParts[bp.category_slug] = {
+          id: bp.product_id,
+          name: bp.name,
+          brand: bp.brand,
+          model: bp.model,
+          price: bp.price,
+          specs: bp.specs,
+          category_slug: bp.category_slug,
+          category_name: bp.category_name,
+          available: bp.available,
+        };
       }
 
       // ตั้งชื่อชุดประกอบ
@@ -735,303 +802,58 @@ const Builder = {
     this.checkCompatibility();
   },
 
-  marketplaceAvailability: {},
-
-  async checkMarketplaceAvailability() {
+  // Every selected part is already a real listing (Builder now picks directly from
+  // `products`), so there's no separate "check marketplace availability" step
+  // needed anymore — this panel just summarizes what's about to go in the cart.
+  renderCartPanel() {
     const panel = document.getElementById('marketplace-checkout-panel');
     const statusContainer = document.getElementById('marketplace-parts-status');
     const cartAddAllBtn = document.getElementById('cart-add-all-btn');
     if (!panel || !statusContainer) return;
 
-    const parts = Object.values(this.selectedParts);
+    const parts = Object.values(this.selectedParts).filter(p => p.available !== false);
     if (parts.length === 0) {
       panel.style.display = 'none';
       return;
     }
 
     panel.style.display = 'block';
-    statusContainer.innerHTML = '<div style="text-align: center; padding: 0.5rem; color: var(--text-muted);">กำลังตรวจสอบสินค้ามือสอง...</div>';
+    if (cartAddAllBtn) cartAddAllBtn.style.display = 'block';
 
-    try {
-      const partIds = parts.map(p => p.id);
-      const availability = await API.post('/products/availability', { partIds });
-      this.marketplaceAvailability = availability;
-
-      const availableParts = [];
-      const missingParts = [];
-
-      parts.forEach(part => {
-        const avail = availability[part.id];
-        if (avail && avail.available) {
-          availableParts.push({ part, avail });
-        } else {
-          missingParts.push(part);
-        }
-      });
-
-      let html = '';
-
-      // 1. ชิ้นส่วนที่มีพร้อมขายในระบบ
-      if (availableParts.length > 0) {
-        html += `
-          <div style="margin-bottom: 0.85rem;">
-            <div style="font-weight: bold; color: var(--success); font-size: 0.85rem; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 4px;">
-              ${ICON_SM('package')} สินค้าพร้อมสั่งซื้อในระบบ (${availableParts.length})
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 4px; background: rgba(0, 200, 80, 0.03); border: 1px solid rgba(0, 200, 80, 0.1); border-radius: var(--radius); padding: 0.5rem;">
-              ${availableParts.map(({ part, avail }) => {
-                const icon = this.getCategoryIcon(part.category_slug);
-                return `
-                  <div style="font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; padding: 2px 0;">
-                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%;" title="${escapeHtml(part.brand)} ${escapeHtml(part.name)}">
-                      ${icon} ${escapeHtml(part.brand)} ${escapeHtml(part.name)}
-                    </span>
-                    <span style="color: var(--success); font-weight: bold;">฿${formatPrice(avail.price)}</span>
-                  </div>
-                `;
-              }).join('')}
-            </div>
+    statusContainer.innerHTML = `
+      <div style="display: flex; flex-direction: column; gap: 4px; background: rgba(0, 200, 80, 0.03); border: 1px solid rgba(0, 200, 80, 0.1); border-radius: var(--radius); padding: 0.5rem;">
+        ${parts.map(part => `
+          <div style="font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; padding: 2px 0;">
+            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%;" title="${escapeHtml(part.brand)} ${escapeHtml(part.name)}">
+              ${this.getCategoryIcon(part.category_slug)} ${escapeHtml(part.brand)} ${escapeHtml(part.name)}
+            </span>
+            <span style="color: var(--success); font-weight: bold;">฿${formatPrice(part.price)}</span>
           </div>
-        `;
-        if (cartAddAllBtn) cartAddAllBtn.style.display = 'block';
-      } else {
-        if (cartAddAllBtn) cartAddAllBtn.style.display = 'none';
-      }
-
-      // 2. ชิ้นส่วนที่ขาดในระบบ (แนะนำซื้อจากแหล่งอื่นรายชิ้น)
-      if (missingParts.length > 0) {
-        html += `
-          <div>
-            <div style="font-weight: bold; color: var(--danger); font-size: 0.85rem; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 4px;">
-              ${ICON_SM('alertTriangle')} สินค้าขาดในเว็บ (แนะนำซื้อภายนอก)
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-              ${missingParts.map(part => {
-                const icon = this.getCategoryIcon(part.category_slug);
-                const query = encodeURIComponent(`${part.brand} ${part.name}`);
-                const shopeeUrl = `https://shopee.co.th/search?keyword=${query}&utm_source=pcbuilderpro`;
-                const lazadaUrl = `https://www.lazada.co.th/catalog/?q=${query}&utm_source=pcbuilderpro`;
-                return `
-                  <div style="font-size: 0.8rem; background: rgba(255, 75, 75, 0.02); border: 1px solid rgba(255, 75, 75, 0.1); border-radius: var(--radius); padding: 0.5rem;">
-                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; font-weight: 500;" title="${escapeHtml(part.brand)} ${escapeHtml(part.name)}">
-                      ${icon} ${escapeHtml(part.brand)} ${escapeHtml(part.name)}
-                    </div>
-                    <div style="display: flex; gap: 6px;">
-                      <a href="${shopeeUrl}" target="_blank" style="flex: 1; padding: 4px 6px; font-size: 0.72rem; text-align: center; border: 1px solid #ff5722; color: #ff5722; background: none; border-radius: var(--radius); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-weight: bold; transition: all 0.2s;">
-                        ${ICON_SM('shoppingCart')} Shopee
-                      </a>
-                      <a href="${lazadaUrl}" target="_blank" style="flex: 1; padding: 4px 6px; font-size: 0.72rem; text-align: center; border: 1px solid #3549ff; color: #3549ff; background: none; border-radius: var(--radius); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-weight: bold; transition: all 0.2s;">
-                        ${ICON_SM('shoppingCart')} Lazada
-                      </a>
-                    </div>
-                  </div>
-                `;
-              }).join('')}
-            </div>
-          </div>
-        `;
-      }
-
-      statusContainer.innerHTML = html;
-
-    } catch (error) {
-      statusContainer.innerHTML = `<div style="color: var(--danger); font-size: 0.8rem;">ไม่สามารถตรวจสอบราคามือสองได้: ${error.message}</div>`;
-    }
+        `).join('')}
+      </div>
+    `;
   },
 
-  addAllAvailableToCart() {
-    const parts = Object.values(this.selectedParts);
-    let addedCount = 0;
-    let missingCount = 0;
-
+  addAllToCart() {
+    const parts = Object.values(this.selectedParts).filter(p => p.available !== false);
     parts.forEach(part => {
-      const avail = this.marketplaceAvailability[part.id];
-      if (avail && avail.available) {
-        Cart.addItem({
-          product_id: avail.product_id,
-          part_id: part.id,
-          name: part.name,
-          price: avail.price,
-          brand: part.brand,
-          model: part.model,
-          condition: avail.condition,
-          seller_name: avail.seller_name
-        });
-        addedCount++;
-      } else {
-        missingCount++;
-      }
+      Cart.addItem({
+        product_id: part.id,
+        name: part.name,
+        price: part.price,
+        brand: part.brand,
+        model: part.model,
+        condition: part.condition,
+        seller_name: part.seller_name,
+      });
     });
 
-    if (addedCount > 0) {
+    if (parts.length > 0) {
       Auth.updateUI();
-      if (missingCount > 0) {
-        Toast.warning(`เพิ่มสินค้ามือสองที่มี ${addedCount} รายการลงตะกร้าแล้ว (สินค้าขาด ${missingCount} รายการ แนะนำให้คลิกค้นหาภายนอกรายชิ้น)`);
-      } else {
-        Toast.success('เพิ่มสินค้ามือสองครบถ้วนลงตะกร้าแล้ว!');
-      }
-    } else {
-      Toast.error('ไม่มีชิ้นส่วนที่พร้อมจำหน่ายในระบบมือสองเลย แนะนำสั่งซื้อภายนอกแทน');
+      Toast.success(`เพิ่มชิ้นส่วนที่เลือกไว้ ${parts.length} รายการลงตะกร้าแล้ว!`);
     }
   },
 
-  openExternalAffiliateLinks() {
-    // ฟังก์ชันนี้เก็บไว้เป็น fallback แต่หน้าเว็บใช้เป็นรายชิ้นแทน
-    const parts = Object.values(this.selectedParts);
-    parts.forEach(part => {
-      const avail = this.marketplaceAvailability[part.id];
-      if (!avail || !avail.available) {
-        const query = encodeURIComponent(`${part.brand} ${part.name}`);
-        const shopeeUrl = `https://shopee.co.th/search?keyword=${query}&utm_source=pcbuilderpro`;
-        window.open(shopeeUrl, '_blank');
-      }
-    });
-  },
-
-  async runAutoBuild() {
-    const budgetInput = document.getElementById('auto-budget');
-    const budget = parseFloat(budgetInput?.value);
-    const useCase = document.getElementById('auto-usecase')?.value;
-
-    if (isNaN(budget) || budget < 12000) {
-      Toast.warning('กรุณาระบุงบประมาณขั้นต่ำอย่างน้อย 12,000 บาท');
-      budgetInput?.focus();
-      return;
-    }
-
-    const container = document.getElementById('auto-results-container');
-    const grid = document.getElementById('auto-options-grid');
-    if (!container || !grid) return;
-
-    container.style.display = 'block';
-    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem 0;"><div class="spinner"></div><p style="margin-top: 1rem;">ระบบกำลังประมวลผล เปรียบเทียบ 3 ตัวเลือกที่ดีที่สุด...</p></div>';
-
-    try {
-      const response = await API.post('/builds/auto', { budget, useCase });
-      const options = response.options;
-
-      if (!options || options.length === 0) {
-        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 3rem 0;">ไม่พบชุดประกอบที่เหมาะสมกับงบประมาณนี้</div>';
-        return;
-      }
-
-      grid.innerHTML = options.map((opt, idx) => {
-        const hasBottleneck = opt.bottleneck.type !== 'none';
-        const bottleneckColor = opt.bottleneck.percentage > 20 ? 'var(--danger)' : 'var(--warning)';
-
-        return `
-          <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; height: 100%; box-shadow: var(--shadow);">
-            <div>
-              <div style="background: ${idx === 1 ? 'var(--highlight)' : 'var(--accent)'}; color: white; display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; margin-bottom: 0.75rem;">
-                ${opt.label}
-              </div>
-              <h4 style="font-size: 1.4rem; margin-bottom: 0.25rem; color: var(--success);">฿${formatPrice(opt.price)}</h4>
-              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.4;">${opt.description}</p>
-              
-              <div style="border-bottom: 1px solid var(--border); border-top: 1px solid var(--border); padding: 0.75rem 0; margin-bottom: 0.75rem;">
-                <div style="font-size: 0.85rem; display: flex; justify-content: space-between; margin-bottom: 4px;">
-                  <span style="color: var(--text-muted);">คะแนนประสิทธิภาพรวม</span>
-                  <span style="font-weight: bold; color: var(--success);">${opt.performanceScore.toLocaleString()}</span>
-                </div>
-                <div style="font-size: 0.85rem; display: flex; justify-content: space-between;">
-                  <span style="color: var(--text-muted);">คอขวด CPU-GPU</span>
-                  <span style="font-weight: bold; color: ${hasBottleneck ? bottleneckColor : 'var(--success)'};">
-                    ${hasBottleneck ? `${opt.bottleneck.percentage}% (${opt.bottleneck.type === 'cpu' ? 'ขวดที่ CPU' : 'ขวดที่ GPU'})` : 'สมดุลดีเยี่ยม'}
-                  </span>
-                </div>
-                ${hasBottleneck ? `<div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; border-left: 2px solid ${bottleneckColor}; padding-left: 6px;">${opt.bottleneck.message} · ${opt.bottleneck.solution}</div>` : ''}
-              </div>
-
-              <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 1.5rem;">
-                ${opt.parts.map(p => {
-                  const icon = this.getCategoryIcon(p.category_slug);
-                  const isAvailable = p.available;
-                  return `
-                    <div style="font-size: 0.82rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(255,255,255,0.03); padding-bottom: 3px;">
-                      <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 75%;" title="${escapeHtml(p.brand)} ${escapeHtml(p.name)}">
-                        ${icon} <strong>${escapeHtml(p.brand)}</strong> ${escapeHtml(p.name)}
-                      </span>
-                      <span style="color: ${isAvailable ? 'var(--success)' : 'var(--text-muted)'}; font-size: 0.78rem;">
-                        ${isAvailable ? `฿${formatPrice(p.actual_price)}` : `${ICON_SM('alertTriangle')} สินค้าขาด`}
-                      </span>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-
-            <button class="btn btn-primary auto-select-build-btn" data-index="${idx}" style="width: 100%; border-radius: var(--radius); padding: 0.6rem; font-size: 0.9rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
-              ${ICON_SM('check')} เลือกชุดนี้ไปใช้งานต่อ
-            </button>
-          </div>
-        `;
-      }).join('');
-
-      grid.querySelectorAll('.auto-select-build-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const index = parseInt(btn.dataset.index);
-          this.loadAutoBuildIntoWorkspace(options[index]);
-        });
-      });
-
-    } catch (error) {
-      grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--danger); padding: 3rem 0;">เกิดข้อผิดพลาด: ${error.message}</div>`;
-    }
-  },
-
-  loadAutoBuildIntoWorkspace(build) {
-    this.selectedParts = {};
-    build.parts.forEach(p => {
-      this.selectedParts[p.category_slug] = p;
-    });
-
-    const nameInput = document.getElementById('build-name');
-    if (nameInput) nameInput.value = `${build.label} (${formatPrice(build.price)})`;
-    const descInput = document.getElementById('build-desc');
-    if (descInput) {
-      const ucSelect = document.getElementById('auto-usecase');
-      const ucText = ucSelect?.options[ucSelect.selectedIndex]?.text || '';
-      descInput.value = `ชุดสเปคจัดอัจฉริยะ งบประมาณ ${formatPrice(build.price)} สำหรับการใช้งาน: ${ucText}`;
-    }
-
-    this.renderCategories();
-    this.renderSummary();
-    this.checkCompatibility();
-    this.switchTab('manual');
-    Toast.success(`โหลดชุด "${build.label}" สำเร็จ และสลับกลับไปที่โหมดแก้ไขแล้ว!`);
-  },
-
-  switchTab(tab) {
-    const manualBtn = document.getElementById('mode-manual-btn');
-    const autoBtn = document.getElementById('mode-auto-btn');
-    const manualLayout = document.getElementById('manual-builder-layout');
-    const autoLayout = document.getElementById('auto-builder-layout');
-    if (!manualBtn || !autoBtn || !manualLayout || !autoLayout) return;
-
-    if (tab === 'manual') {
-      manualLayout.style.display = 'grid';
-      autoLayout.style.display = 'none';
-
-      manualBtn.style.background = 'var(--accent)';
-      manualBtn.style.color = 'white';
-      manualBtn.className = 'btn tab-btn active';
-
-      autoBtn.style.background = 'transparent';
-      autoBtn.style.color = 'var(--text-secondary)';
-      autoBtn.className = 'btn tab-btn btn-ghost';
-    } else {
-      manualLayout.style.display = 'none';
-      autoLayout.style.display = 'grid';
-
-      autoBtn.style.background = 'var(--accent)';
-      autoBtn.style.color = 'white';
-      autoBtn.className = 'btn tab-btn active';
-
-      manualBtn.style.background = 'transparent';
-      manualBtn.style.color = 'var(--text-secondary)';
-      manualBtn.className = 'btn tab-btn btn-ghost';
-    }
-  }
 };
 
 // === เริ่มต้นเมื่อโหลดหน้าเว็บเสร็จ ===
@@ -1044,14 +866,14 @@ document.addEventListener('DOMContentLoaded', () => {
       Builder.renderPartsList();
     });
 
-    // ตัวกรองยี่ห้อ
-    document.getElementById('brand-filter')?.addEventListener('change', () => {
-      Builder.renderPartsList();
-    });
-
     // ตัวกรองเรียงลำดับ
     document.getElementById('sort-filter')?.addEventListener('change', () => {
       Builder.renderPartsList();
+    });
+
+    // ปุ่มล้างตัวกรองทั้งหมดกลับเป็นค่าเริ่มต้น
+    document.getElementById('filter-reset-btn')?.addEventListener('click', () => {
+      Builder.resetCategoryFilters();
     });
 
     // ปุ่มบันทึกชุดประกอบ
@@ -1069,21 +891,8 @@ document.addEventListener('DOMContentLoaded', () => {
       Builder.clearBuild();
     });
 
-    // === ผูกปุ่มโหมดและตะกร้าใหม่ ===
-    document.getElementById('mode-manual-btn')?.addEventListener('click', () => {
-      Builder.switchTab('manual');
-    });
-
-    document.getElementById('mode-auto-btn')?.addEventListener('click', () => {
-      Builder.switchTab('auto');
-    });
-
-    document.getElementById('auto-submit-btn')?.addEventListener('click', () => {
-      Builder.runAutoBuild();
-    });
-
     document.getElementById('cart-add-all-btn')?.addEventListener('click', () => {
-      Builder.addAllAvailableToCart();
+      Builder.addAllToCart();
     });
 
     document.getElementById('export-pdf-btn')?.addEventListener('click', () => {
@@ -1097,10 +906,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('close-quotation-modal')?.addEventListener('click', () => {
       const modal = document.getElementById('quotation-modal');
       if (modal) modal.style.display = 'none';
-    });
-
-    document.getElementById('power-hours-slider')?.addEventListener('input', () => {
-      Builder.updateIntelligence();
     });
 
     document.getElementById('cross-match-btn')?.addEventListener('click', () => {
