@@ -4,6 +4,15 @@
 
 SET FOREIGN_KEY_CHECKS = 0;
 
+-- Full drop list — every table this file defines, PLUS `parts` (a legacy table
+-- removed from this schema entirely on 2026-08-17, not redefined below at all).
+-- Without an explicit DROP for a table that's no longer part of the schema,
+-- re-applying this file against a database that still has it (e.g. an older
+-- deploy) leaves it behind as an orphan forever — confirmed live on 2026-08-20
+-- re-applying against a stale Railway database that still had the old `parts`
+-- table from before the product-centric migration. Keep this list in sync with
+-- every CREATE TABLE below (and any future removed table) so a re-apply is
+-- always a true clean slate, not just "whatever this file currently defines".
 DROP TABLE IF EXISTS admin_logs;
 DROP TABLE IF EXISTS reviews;
 DROP TABLE IF EXISTS otps;
@@ -19,7 +28,6 @@ DROP TABLE IF EXISTS build_parts;
 DROP TABLE IF EXISTS builds;
 DROP TABLE IF EXISTS product_review_flags;
 DROP TABLE IF EXISTS product_photos;
-DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS spec_cpu;
 DROP TABLE IF EXISTS spec_cpu_cooler;
 DROP TABLE IF EXISTS spec_motherboard;
@@ -28,12 +36,24 @@ DROP TABLE IF EXISTS spec_gpu;
 DROP TABLE IF EXISTS spec_case;
 DROP TABLE IF EXISTS spec_psu;
 DROP TABLE IF EXISTS spec_storage;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS chipset_generations;
+DROP TABLE IF EXISTS cpu_models;
+DROP TABLE IF EXISTS cpu_generations;
+DROP TABLE IF EXISTS psu_efficiency;
+DROP TABLE IF EXISTS psu_modular;
+DROP TABLE IF EXISTS gpu_chips;
+DROP TABLE IF EXISTS vga_series;
+DROP TABLE IF EXISTS cpu_series;
+DROP TABLE IF EXISTS brands;
 DROP TABLE IF EXISTS chipsets;
 DROP TABLE IF EXISTS sockets;
 DROP TABLE IF EXISTS form_factors;
 DROP TABLE IF EXISTS ram_types;
 DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS seller_profiles;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS parts;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
